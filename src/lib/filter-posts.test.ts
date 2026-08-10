@@ -44,17 +44,22 @@ const posts: PostSummary[] = [
 
 describe("filterPosts", () => {
   it("matches title, description, and topics case-insensitively", () => {
-    expect(filterPosts(posts, "  production  ", "all", "all").map((post) => post.slug)).toEqual([
-      "shipping-apis",
-    ]);
-    expect(filterPosts(posts, "native", "all", "all").map((post) => post.slug)).toEqual([
-      "mobile-state",
-    ]);
+    expect(
+      filterPosts(posts, "  production  ", "all", "all").map(
+        (post) => post.slug,
+      ),
+    ).toEqual(["shipping-apis"]);
+    expect(
+      filterPosts(posts, "native", "all", "all").map((post) => post.slug),
+    ).toEqual(["mobile-state"]);
   });
 
   it("applies exact topic and series constraints without mutating input", () => {
     const result = filterPosts(posts, "", "React", "Architecture");
-    expect(result.map((post) => post.slug)).toEqual(["react-boundaries", "mobile-state"]);
+    expect(result.map((post) => post.slug)).toEqual([
+      "react-boundaries",
+      "mobile-state",
+    ]);
     expect(posts.map((post) => post.slug)).toEqual([
       "react-boundaries",
       "shipping-apis",

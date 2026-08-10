@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { latestPostFeedSchema, buildLatestFeed, parseLatestFeedQuery } from "./latest-feed";
+import {
+  latestPostFeedSchema,
+  buildLatestFeed,
+  parseLatestFeedQuery,
+} from "./latest-feed";
 import type { PostSummary } from "./post-types";
 
 const posts: PostSummary[] = Array.from({ length: 12 }, (_, index) => ({
@@ -25,6 +29,8 @@ describe("latest post feed", () => {
   it("defaults locale and rejects unsupported locale query values", () => {
     const parsed = parseLatestFeedQuery(new URLSearchParams());
     expect("locale" in parsed ? parsed.locale : undefined).toBe("id");
-    expect(parseLatestFeedQuery(new URLSearchParams("locale=fr"))).toEqual({ error: "Unsupported locale" });
+    expect(parseLatestFeedQuery(new URLSearchParams("locale=fr"))).toEqual({
+      error: "Unsupported locale",
+    });
   });
 });

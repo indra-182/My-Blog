@@ -11,12 +11,20 @@ export function SiteHeader({ locale }: { locale: Locale }) {
   return (
     <header className="site-header">
       <div className="shell site-header-inner">
-        <Link className="wordmark" href={`/${locale}`} aria-label="INDRA.DEV Blog">
+        <Link
+          className="wordmark"
+          href={`/${locale}`}
+          aria-label="INDRA.DEV Blog"
+        >
           INDRA<span>.</span>DEV
         </Link>
         <nav className="desktop-nav" aria-label="Primary navigation">
-          <Link href={siteConfig.portfolioUrl}>{dictionary.navigation.portfolio}</Link>
-          <Link className="active" href={`/${locale}`}>{dictionary.navigation.blog}</Link>
+          <Link href={siteConfig.portfolioUrl}>
+            {dictionary.navigation.portfolio}
+          </Link>
+          <Link className="active" href={`/${locale}`}>
+            {dictionary.navigation.blog}
+          </Link>
         </nav>
         <div className="header-actions">
           <LocaleSwitcher locale={locale} dictionary={dictionary} />

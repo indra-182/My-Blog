@@ -16,9 +16,7 @@ draft: false
 State server dan state antarmuka memiliki siklus hidup yang berbeda.
 
 ```ts
-type RequestState =
-  | {status: 'idle'}
-  | {status: 'success'; data: string[]}
+type RequestState = { status: "idle" } | { status: "success"; data: string[] };
 ```
 
 ## Jaga URL tetap dapat dibagikan

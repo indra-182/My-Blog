@@ -1,0 +1,12 @@
+#!/usr/bin/env sh
+set -e
+
+staged_paths="$(mktemp)"
+trap 'rm -f "$staged_paths"' EXIT
+
+git diff --cached --name-only --diff-filter=ACMR -z > "$staged_paths"
+npm run format
+
+if [ -s "$staged_paths" ]; then
+  git add --pathspec-from-file="$staged_paths" --pathspec-file-nul
+fi

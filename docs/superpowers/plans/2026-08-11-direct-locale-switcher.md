@@ -108,7 +108,11 @@
 
   ```tsx
   return (
-    <Link className="locale-button" href={href} aria-label={`Switch language to ${label}`}>
+    <Link
+      className="locale-button"
+      href={href}
+      aria-label={`Switch language to ${label}`}
+    >
       <Languages size={16} aria-hidden="true" />
       <span>{targetLocale.toUpperCase()}</span>
     </Link>

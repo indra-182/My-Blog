@@ -1,5 +1,11 @@
 {
-  "navigation": { "portfolio": "Portfolio", "blog": "Blog", "menu": "Open menu", "close": "Close menu", "language": "Language" },
+  "navigation": {
+    "portfolio": "Portfolio",
+    "blog": "Blog",
+    "menu": "Open menu",
+    "close": "Close menu",
+    "language": "Language"
+  },
   "theme": { "label": "Theme", "light": "Light", "dark": "Dark" },
   "blog": {
     "eyebrow": "Technical notes",
@@ -18,8 +24,35 @@
     "emptyDescription": "There are no published posts yet. Come back soon for fresh engineering notes.",
     "noResults": "No posts match the active filters."
   },
-  "article": { "home": "Home", "readingTime": "min read", "published": "Published", "updated": "Updated", "toc": "On this page", "previous": "Previous", "next": "Next", "related": "Related reading", "share": "Share this post", "copyCode": "Copy code", "copied": "Copied", "copyFailed": "Unable to copy. Select the code manually.", "backToBlog": "Back to Blog", "partOf": "Part of" },
-  "footer": { "portfolio": "Portfolio", "blog": "Blog", "linkedin": "LinkedIn", "email": "Email" },
-  "errors": { "notFoundTitle": "Post not found", "notFoundDescription": "This post may still be a draft or is not available in this language.", "tryAgain": "Try again", "home": "Go home", "translation": "A translation is not available yet. Showing the Blog home instead.", "dismiss": "Dismiss notice" },
+  "article": {
+    "home": "Home",
+    "readingTime": "min read",
+    "published": "Published",
+    "updated": "Updated",
+    "toc": "On this page",
+    "previous": "Previous",
+    "next": "Next",
+    "related": "Related reading",
+    "share": "Share this post",
+    "copyCode": "Copy code",
+    "copied": "Copied",
+    "copyFailed": "Unable to copy. Select the code manually.",
+    "backToBlog": "Back to Blog",
+    "partOf": "Part of"
+  },
+  "footer": {
+    "portfolio": "Portfolio",
+    "github": "Github",
+    "linkedin": "LinkedIn",
+    "email": "Email"
+  },
+  "errors": {
+    "notFoundTitle": "Post not found",
+    "notFoundDescription": "This post may still be a draft or is not available in this language.",
+    "tryAgain": "Try again",
+    "home": "Go home",
+    "translation": "A translation is not available yet. Showing the Blog home instead.",
+    "dismiss": "Dismiss notice"
+  },
   "actions": { "viewArticle": "Read post", "resetFilters": "Reset filters" }
 }

@@ -8,12 +8,22 @@ import type { PostDocument } from "@/content/post-types";
 import type { Dictionary } from "@/i18n/dictionaries";
 import { CodeBlock } from "./code-block";
 
-export async function ArticleProse({ post, dictionary }: { post: PostDocument; dictionary: Dictionary }) {
+export async function ArticleProse({
+  post,
+  dictionary,
+}: {
+  post: PostDocument;
+  dictionary: Dictionary;
+}) {
   function extractText(node: React.ReactNode): string {
-    if (typeof node === "string" || typeof node === "number") return String(node);
+    if (typeof node === "string" || typeof node === "number")
+      return String(node);
     if (Array.isArray(node)) return node.map(extractText).join("");
     if (isValidElement(node)) {
-      const props = node.props as { children?: React.ReactNode; "data-line"?: string };
+      const props = node.props as {
+        children?: React.ReactNode;
+        "data-line"?: string;
+      };
       const text = extractText(props.children);
       return props["data-line"] !== undefined ? `${text}\n` : text;
     }
@@ -23,8 +33,14 @@ export async function ArticleProse({ post, dictionary }: { post: PostDocument; d
     pre: ({ children }: { children?: React.ReactNode }) => {
       const child = Children.toArray(children)[0];
       if (isValidElement(child)) {
-        const props = child.props as { children?: React.ReactNode; className?: string; "data-language"?: string };
-        const language = props["data-language"] ?? props.className?.match(/language-([\w-]+)/)?.[1];
+        const props = child.props as {
+          children?: React.ReactNode;
+          className?: string;
+          "data-language"?: string;
+        };
+        const language =
+          props["data-language"] ??
+          props.className?.match(/language-([\w-]+)/)?.[1];
         return (
           <CodeBlock
             code={extractText(props.children).replace(/\n$/, "")}
@@ -45,7 +61,11 @@ export async function ArticleProse({ post, dictionary }: { post: PostDocument; d
         options={{
           mdxOptions: {
             remarkPlugins: [remarkGfm],
-            rehypePlugins: [rehypeSlug, rehypeAutolinkHeadings, [rehypePrettyCode, { theme: "dracula" }]],
+            rehypePlugins: [
+              rehypeSlug,
+              rehypeAutolinkHeadings,
+              [rehypePrettyCode, { theme: "dracula" }],
+            ],
           },
         }}
       />

@@ -18,29 +18,32 @@ Setiap kali pengguna menekan tombol, aplikasi menunggu respons server sebelum me
 Hook `useOptimistic` menerima state asli dan fungsi yang mengembalikan versi optimistik. Saat aksi dikirim, React langsung menampilkan nilai optimistik, lalu otomatis kembali ke nilai asli dari server saat aksi selesai — tanpa perlu sinkronisasi manual.
 
 ```tsx
-'use client'
+"use client";
 
-import { useOptimistic, useTransition } from 'react'
+import { useOptimistic, useTransition } from "react";
 
-type Task = { id: string; done: boolean; title: string }
+type Task = { id: string; done: boolean; title: string };
 
-export function TaskList({ tasks, markDone }: {
-  tasks: Task[]
-  markDone: (id: string) => Promise<void>
+export function TaskList({
+  tasks,
+  markDone,
+}: {
+  tasks: Task[];
+  markDone: (id: string) => Promise<void>;
 }) {
   const [optimisticTasks, addOptimistic] = useOptimistic(
     tasks,
     (current, id: string) =>
-      current.map((t) => (t.id === id ? { ...t, done: !t.done } : t))
-  )
+      current.map((t) => (t.id === id ? { ...t, done: !t.done } : t)),
+  );
 
-  const [isPending, startTransition] = useTransition()
+  const [isPending, startTransition] = useTransition();
 
   function toggle(id: string) {
     startTransition(async () => {
-      addOptimistic(id)
-      await markDone(id)
-    })
+      addOptimistic(id);
+      await markDone(id);
+    });
   }
 
   return (
@@ -57,7 +60,7 @@ export function TaskList({ tasks, markDone }: {
         </li>
       ))}
     </ul>
-  )
+  );
 }
 ```
 
@@ -68,14 +71,14 @@ Kuncinya: `addOptimistic` dipanggil di dalam `startTransition` sebelum `await`. 
 Di sisi server, aksi menerima FormData atau argumen langsung, memvalidasi, lalu menulis ke database. React Query atau SWR tidak diperlukan untuk kasus ini.
 
 ```ts
-'use server'
+"use server";
 
-import { revalidatePath } from 'next/cache'
-import { db } from '@/lib/db'
+import { revalidatePath } from "next/cache";
+import { db } from "@/lib/db";
 
 export async function markDone(id: string) {
-  await db.task.update({ where: { id }, data: { done: true } })
-  revalidatePath('/tasks')
+  await db.task.update({ where: { id }, data: { done: true } });
+  revalidatePath("/tasks");
 }
 ```
 
@@ -88,7 +91,7 @@ Pendekatan ini cocok untuk aksi yang idempoten dan cepat diproses server. Untuk 
 ```tsx
 const [state, formAction, isPending] = useActionState(createComment, {
   errors: {},
-})
+});
 ```
 
 Optimistic UI bukan tentang menghilangkan state management, melainkan memindahkannya ke tempat yang tepat: transisi React menangani sinkronisasi, Server Action menangani kebenaran data. Kombinasi keduanya menghapus lapisan boilerplate yang selama ini ditangani library eksternal.

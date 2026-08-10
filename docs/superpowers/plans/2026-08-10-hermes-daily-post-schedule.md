@@ -22,10 +22,12 @@
 ### Task 1: Update and verify the existing Hermes schedule
 
 **Files:**
+
 - Modify: `/home/mahad/.hermes/cron/jobs.json` (only through the Hermes CLI)
 - Verify: `/home/mahad/.hermes/config.yaml`
 
 **Interfaces:**
+
 - Consumes: `hermes cron edit <job_id> --schedule <cron-expression>`.
 - Produces: an enabled `blog-harian` job with `schedule.expr` and `schedule_display` equal to `0 20 * * *`, plus a recalculated `next_run_at` at `20:00:00+07:00`.
 

@@ -18,10 +18,15 @@ export const postFrontmatterSchema = z
     translationKey: nonEmptyText,
     publishedAt: isoDate,
     updatedAt: isoDate.optional(),
-    topics: z.array(nonEmptyText).min(1).refine(
-      (topics) => new Set(topics.map((topic) => topic.toLowerCase())).size === topics.length,
-      "topics must be unique",
-    ),
+    topics: z
+      .array(nonEmptyText)
+      .min(1)
+      .refine(
+        (topics) =>
+          new Set(topics.map((topic) => topic.toLowerCase())).size ===
+          topics.length,
+        "topics must be unique",
+      ),
     series: nonEmptyText.optional(),
     seriesOrder: z.number().int().positive().optional(),
     cover: z.string().trim().min(1).optional(),

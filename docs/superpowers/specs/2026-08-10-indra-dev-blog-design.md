@@ -199,4 +199,3 @@ The intended schedule is 20:00 Asia/Jakarta after the Hermes repository and runn
 ## Deployment Boundary
 
 The blog is deployed as a Vercel project separate from the portfolio and receives its own domain. Public portfolio/blog URLs, email, and LinkedIn are environment-driven. Creating Git remotes, pushing, configuring Vercel, or attaching a domain requires a new explicit user instruction.
-

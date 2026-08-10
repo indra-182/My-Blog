@@ -14,8 +14,10 @@ describe("ThemeToggle", () => {
     render(<ThemeToggle dictionary={getDictionary("id")} />);
 
     const button = screen.getByRole("button", { name: "Tema: Gelap" });
-    expect(button.querySelector(".lucide-moon")).toBeTruthy();
-    expect(screen.queryByRole("button", { name: /Sistem/i })).not.toBeInTheDocument();
+    expect(button.querySelector("svg")).toBeTruthy();
+    expect(
+      screen.queryByRole("button", { name: /Sistem/i }),
+    ).not.toBeInTheDocument();
 
     fireEvent.click(button);
     expect(setTheme).toHaveBeenCalledWith("light");

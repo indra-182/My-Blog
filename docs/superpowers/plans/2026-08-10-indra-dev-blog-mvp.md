@@ -28,6 +28,7 @@
 ### Task 1: Scaffold the Blog and Test Harness
 
 **Files:**
+
 - Create: `package.json`
 - Create: `package-lock.json`
 - Create: `next.config.ts`
@@ -42,6 +43,7 @@
 - Modify: `.gitignore`
 
 **Interfaces:**
+
 - Produces npm scripts `dev`, `build`, `lint`, `typecheck`, `test`, `test:watch`, `content:validate`, and `test:e2e`.
 - Produces the `@/*` alias mapped to `src/*`.
 
@@ -116,6 +118,7 @@ git commit -m "test: configure blog quality harness"
 ### Task 2: Copy and Verify the Canonical Design Shell
 
 **Files:**
+
 - Create: `src/styles/design-tokens.css`
 - Create: `src/components/theme-provider.tsx`
 - Create: `src/components/theme-toggle.tsx`
@@ -134,6 +137,7 @@ git commit -m "test: configure blog quality harness"
 - Modify: `src/app/globals.css`
 
 **Interfaces:**
+
 - Produces byte-identical token, theme, locale, header, footer, and mobile-navigation source files for the later parity check.
 - Adds blog-specific dictionary copy without changing shared component public props.
 
@@ -191,6 +195,7 @@ git commit -m "feat: apply shared indra dev shell"
 ### Task 3: Build the Validated MDX Content Pipeline
 
 **Files:**
+
 - Create: `content/posts/id/.gitkeep`
 - Create: `content/posts/en/.gitkeep`
 - Create: `src/content/post-schema.ts`
@@ -204,6 +209,7 @@ git commit -m "feat: apply shared indra dev shell"
 - Create: `scripts/validate-content.ts`
 
 **Interfaces:**
+
 - Produces `PostFrontmatter`, `PostSummary`, `PostDocument`, and `TableOfContentsItem` types.
 - Produces `getAllPosts(locale)`, `getPostBySlug(locale, slug)`, `getRelatedPosts(post, limit)`, `getSeriesNeighbors(post)`, `getTranslationPath(translationKey, targetLocale)`, and `extractTableOfContents(source)`.
 - Published content root is `content/posts/<locale>/*.mdx`; test fixtures use a separate root injected into repository functions.
@@ -214,28 +220,28 @@ Create these core types:
 
 ```ts
 export type PostFrontmatter = {
-  title: string
-  slug: string
-  description: string
-  locale: 'id' | 'en'
-  translationKey: string
-  publishedAt: string
-  updatedAt?: string
-  topics: string[]
-  series?: string
-  seriesOrder?: number
-  cover?: string
-  draft: boolean
-  canonical?: string
-  socialTitle?: string
-  socialDescription?: string
-}
+  title: string;
+  slug: string;
+  description: string;
+  locale: "id" | "en";
+  translationKey: string;
+  publishedAt: string;
+  updatedAt?: string;
+  topics: string[];
+  series?: string;
+  seriesOrder?: number;
+  cover?: string;
+  draft: boolean;
+  canonical?: string;
+  socialTitle?: string;
+  socialDescription?: string;
+};
 
 export type PostSummary = PostFrontmatter & {
-  readingTimeMinutes: number
-}
+  readingTimeMinutes: number;
+};
 
-export type PostDocument = PostSummary & {source: string}
+export type PostDocument = PostSummary & { source: string };
 ```
 
 Tests must assert:
@@ -283,9 +289,7 @@ draft: false
 State server dan state antarmuka memiliki siklus hidup yang berbeda.
 
 ```ts
-type RequestState =
-  | {status: 'idle'}
-  | {status: 'success'; data: string[]}
+type RequestState = { status: "idle" } | { status: "success"; data: string[] };
 ```
 
 ## Jaga URL tetap dapat dibagikan
@@ -314,9 +318,7 @@ draft: false
 Server state and interface state have different lifecycles.
 
 ```ts
-type RequestState =
-  | {status: 'idle'}
-  | {status: 'success'; data: string[]}
+type RequestState = { status: "idle" } | { status: "success"; data: string[] };
 ```
 
 ## Keep the URL shareable
@@ -330,12 +332,20 @@ Use this public signature:
 
 ```ts
 export function createPostRepository(rootDirectory: string): {
-  getAllPosts(locale: Locale, options?: {includeDrafts?: boolean}): Promise<PostSummary[]>
-  getPostBySlug(locale: Locale, slug: string): Promise<PostDocument | null>
-  getRelatedPosts(post: PostSummary, limit?: number): Promise<PostSummary[]>
-  getSeriesNeighbors(post: PostSummary): Promise<{previous: PostSummary | null; next: PostSummary | null}>
-  getTranslationPath(translationKey: string, targetLocale: Locale): Promise<string | null>
-}
+  getAllPosts(
+    locale: Locale,
+    options?: { includeDrafts?: boolean },
+  ): Promise<PostSummary[]>;
+  getPostBySlug(locale: Locale, slug: string): Promise<PostDocument | null>;
+  getRelatedPosts(post: PostSummary, limit?: number): Promise<PostSummary[]>;
+  getSeriesNeighbors(
+    post: PostSummary,
+  ): Promise<{ previous: PostSummary | null; next: PostSummary | null }>;
+  getTranslationPath(
+    translationKey: string,
+    targetLocale: Locale,
+  ): Promise<string | null>;
+};
 ```
 
 Create the production repository with `path.resolve(process.env.CONTENT_ROOT ?? path.join(process.cwd(), 'content/posts'))`. Parse frontmatter with gray-matter and derive `readingTimeMinutes` as `Math.max(1, Math.ceil(readingTime(source).minutes))`.
@@ -345,7 +355,7 @@ Create the production repository with `path.resolve(process.env.CONTENT_ROOT ?? 
 Parse MDX source with unified, remark-parse, and remark-mdx; visit depth-two and depth-three headings; derive stable slugs with `github-slugger`, which matches rehype-slug behavior; and return:
 
 ```ts
-export type TableOfContentsItem = {depth: 2 | 3; title: string; id: string}
+export type TableOfContentsItem = { depth: 2 | 3; title: string; id: string };
 ```
 
 Test that headings inside fenced code blocks are ignored and duplicate headings receive unique IDs.
@@ -378,6 +388,7 @@ git commit -m "feat: add validated mdx content pipeline"
 ### Task 4: Build Blog Discovery, Search, Filters, and Load More
 
 **Files:**
+
 - Create: `src/components/blog/blog-hero.tsx`
 - Create: `src/components/blog/post-browser.tsx`
 - Create: `src/components/blog/post-browser.test.tsx`
@@ -388,6 +399,7 @@ git commit -m "feat: add validated mdx content pipeline"
 - Create: `src/app/[locale]/page.tsx`
 
 **Interfaces:**
+
 - Produces `filterPosts(posts, query, topic, series): PostSummary[]`.
 - Produces `PostBrowser({posts, locale, pageSize?: number})`; default page size is six.
 - Consumes only published summaries from Task 3.
@@ -442,6 +454,7 @@ git commit -m "feat: add technical blog discovery"
 ### Task 5: Render Accessible MDX Articles and Code Blocks
 
 **Files:**
+
 - Create: `src/mdx-components.tsx`
 - Create: `src/components/article/article-breadcrumbs.tsx`
 - Create: `src/components/article/article-header.tsx`
@@ -457,6 +470,7 @@ git commit -m "feat: add technical blog discovery"
 - Modify: `next.config.ts`
 
 **Interfaces:**
+
 - Produces statically generated localized article pages.
 - `CodeBlock` copies its rendered code text and announces success through `aria-live="polite"`.
 - Locale switch receives the resolved translated article path or the target blog index.
@@ -516,6 +530,7 @@ git commit -m "feat: render accessible technical articles"
 ### Task 6: Add Latest-Post API, RSS, Sitemap, Robots, and Social Metadata
 
 **Files:**
+
 - Create: `src/content/latest-feed-schema.ts`
 - Create: `src/content/latest-feed.ts`
 - Create: `src/content/latest-feed.test.ts`
@@ -528,6 +543,7 @@ git commit -m "feat: render accessible technical articles"
 - Create: `.env.example`
 
 **Interfaces:**
+
 - Produces versioned `LatestPostFeedV1` consumed by the portfolio integration plan.
 - Public endpoint: `GET /api/posts/latest?locale=id&limit=3`.
 - Public RSS endpoint: `GET /<locale>/rss.xml`.
@@ -538,19 +554,19 @@ Use this exact shape:
 
 ```ts
 export type LatestPostFeedV1 = {
-  version: 1
-  locale: 'id' | 'en'
-  generatedAt: string
+  version: 1;
+  locale: "id" | "en";
+  generatedAt: string;
   posts: Array<{
-    title: string
-    slug: string
-    description: string
-    locale: 'id' | 'en'
-    publishedAt: string
-    topics: string[]
-    readingTimeMinutes: number
-  }>
-}
+    title: string;
+    slug: string;
+    description: string;
+    locale: "id" | "en";
+    publishedAt: string;
+    topics: string[];
+    readingTimeMinutes: number;
+  }>;
+};
 ```
 
 Tests assert limit clamps between one and ten, drafts never appear, locale defaults to `id`, unsupported locale returns 400, and the response validates against its Zod schema.
@@ -603,6 +619,7 @@ git commit -m "feat: expose blog feeds and metadata"
 ### Task 7: Add Loading, Empty, Error, and Localization Recovery States
 
 **Files:**
+
 - Create: `src/app/[locale]/loading.tsx`
 - Create: `src/app/[locale]/error.tsx`
 - Create: `src/app/[locale]/not-found.tsx`
@@ -611,6 +628,7 @@ git commit -m "feat: expose blog feeds and metadata"
 - Modify: `src/components/locale-switcher.tsx`
 
 **Interfaces:**
+
 - Missing article translation navigates to `/<targetLocale>` and displays a nonblocking localized explanation.
 - Route errors expose Retry and Home actions.
 
@@ -656,12 +674,14 @@ git commit -m "feat: add localized blog recovery states"
 ### Task 8: Verify Blog Discovery, Reading, Accessibility, and Responsive Flows
 
 **Files:**
+
 - Create: `e2e/blog.spec.ts`
 - Create: `e2e/article.spec.ts`
 - Create: `e2e/accessibility.spec.ts`
 - Modify: `README.md`
 
 **Interfaces:**
+
 - Produces the Blog MVP acceptance suite and content-authoring instructions.
 
 - [ ] **Step 1: Add one private E2E fixture publication**

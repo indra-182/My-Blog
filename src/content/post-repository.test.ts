@@ -11,7 +11,10 @@ describe("post repository", () => {
     const repository = createPostRepository(fixtureRoot);
     const posts = await repository.getAllPosts("id");
 
-    expect(posts.map((post) => post.slug)).toEqual(["typescript-errors", "react-state"]);
+    expect(posts.map((post) => post.slug)).toEqual([
+      "typescript-errors",
+      "react-state",
+    ]);
     expect(posts[0]?.readingTimeMinutes).toBeGreaterThanOrEqual(1);
   });
 
