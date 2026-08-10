@@ -6,7 +6,7 @@ import { useState } from "react";
 import type { Locale } from "@/content/post-types";
 import type { Dictionary } from "@/i18n/dictionaries";
 
-const portfolioUrl = process.env.NEXT_PUBLIC_PORTFOLIO_URL ?? "https://portfolio-mahadi-indra.vercel.app/";
+const portfolioUrl = process.env.NEXT_PUBLIC_PORTFOLIO_URL ?? "https://portfolio-indradev.vercel.app/";
 
 export function MobileNavigation({ locale, dictionary }: { locale: Locale; dictionary: Dictionary }) {
   const [open, setOpen] = useState(false);

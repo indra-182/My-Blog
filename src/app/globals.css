@@ -89,13 +89,15 @@ button, a, input, select { outline-offset: 3px; }
 .prose p, .prose ul, .prose ol, .prose blockquote { margin: 1.2em 0; }
 .prose a { color: var(--accent-strong); text-decoration: underline; text-underline-offset: 3px; }
 .prose code:not(pre code) { padding: 3px 5px; background: var(--surface); font-family: var(--font-geist-mono), monospace; font-size: .82em; }
-.prose pre { overflow-x: auto; margin: 1.5em 0; border: 1px solid #30363d; background: #0d1117; color: #f0f6fc; padding: 18px; font-family: var(--font-geist-mono), monospace; font-size: .82rem; line-height: 1.7; }
+.prose pre { overflow-x: auto; margin: 1.5em 0; border: 1px solid #44475a; background: #282a36; color: #f8f8f2; padding: 18px; font-family: var(--font-geist-mono), monospace; font-size: .82rem; line-height: 1.7; }
 .prose blockquote { border-left: 3px solid var(--accent); padding-left: 18px; color: var(--muted); }
-.code-block { position: relative; margin: 1.5em 0; border: 1px solid #30363d; background: #0d1117; color: #f0f6fc; }
-.code-block pre { margin: 0; border: 0; padding: 48px 18px 18px; }
-.code-label { position: absolute; left: 16px; top: 12px; color: #c9d1d9; font-family: var(--font-geist-mono), monospace; font-size: .65rem; text-transform: uppercase; }
-.copy-code { position: absolute; right: 10px; top: 8px; min-height: 40px; border: 1px solid var(--border); background: var(--background); color: var(--muted); padding: 0 10px; cursor: pointer; font-size: .72rem; }
-.copy-code:hover { color: var(--foreground); border-color: var(--accent); }
+.code-block { position: relative; margin: 1.5em 0; border: 1px solid #44475a; background: #282a36; color: #f8f8f2; box-shadow: 0 12px 28px rgb(40 42 54 / 0.18); }
+.code-block pre { margin: 0; border: 0; background: transparent; color: inherit; padding: 48px 18px 18px; }
+.code-block code { display: grid; min-width: max-content; color: inherit; }
+.code-block .line { display: block; min-height: 1lh; }
+.code-label { position: absolute; left: 16px; top: 12px; color: #6272a4; font-family: var(--font-geist-mono), monospace; font-size: .65rem; font-weight: 600; text-transform: uppercase; }
+.copy-code { position: absolute; right: 10px; top: 8px; min-height: 40px; border: 1px solid #6272a4; background: #44475a; color: #f8f8f2; padding: 0 10px; cursor: pointer; font-size: .72rem; }
+.copy-code:hover { border-color: #ff79c6; background: #6272a4; color: #fff; }
 .article-footer { margin-top: 70px; border-top: 1px solid var(--border); padding-top: 36px; }
 .series-nav { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .series-link { display: grid; gap: 8px; border: 1px solid var(--border); padding: 18px; }

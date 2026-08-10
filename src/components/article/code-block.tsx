@@ -2,9 +2,10 @@
 
 import { Check, Copy } from "lucide-react";
 import { useState } from "react";
+import type { ReactNode } from "react";
 import type { Dictionary } from "@/i18n/dictionaries";
 
-export function CodeBlock({ code, language, dictionary }: { code: string; language?: string; dictionary: Dictionary }) {
+export function CodeBlock({ code, highlightedCode, language, dictionary }: { code: string; highlightedCode?: ReactNode; language?: string; dictionary: Dictionary }) {
   const [status, setStatus] = useState<"idle" | "copied" | "failed">("idle");
 
   async function copyCode() {
@@ -21,7 +22,7 @@ export function CodeBlock({ code, language, dictionary }: { code: string; langua
   return (
     <div className="code-block">
       {language ? <span className="code-label">{language}</span> : null}
-      <pre><code>{code}</code></pre>
+      <pre><code>{highlightedCode ?? code}</code></pre>
       <button className="copy-code" type="button" onClick={copyCode} aria-label={label}>
         {status === "copied" ? <Check size={15} aria-hidden="true" /> : <Copy size={15} aria-hidden="true" />} {label}
       </button>

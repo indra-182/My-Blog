@@ -12,7 +12,11 @@ export async function ArticleProse({ post, dictionary }: { post: PostDocument; d
   function extractText(node: React.ReactNode): string {
     if (typeof node === "string" || typeof node === "number") return String(node);
     if (Array.isArray(node)) return node.map(extractText).join("");
-    if (isValidElement(node)) return extractText((node.props as { children?: React.ReactNode }).children);
+    if (isValidElement(node)) {
+      const props = node.props as { children?: React.ReactNode; "data-line"?: string };
+      const text = extractText(props.children);
+      return props["data-line"] !== undefined ? `${text}\n` : text;
+    }
     return "";
   }
   const components = {
@@ -21,7 +25,14 @@ export async function ArticleProse({ post, dictionary }: { post: PostDocument; d
       if (isValidElement(child)) {
         const props = child.props as { children?: React.ReactNode; className?: string; "data-language"?: string };
         const language = props["data-language"] ?? props.className?.match(/language-([\w-]+)/)?.[1];
-        return <CodeBlock code={extractText(props.children).replace(/\n$/, "")} language={language} dictionary={dictionary} />;
+        return (
+          <CodeBlock
+            code={extractText(props.children).replace(/\n$/, "")}
+            highlightedCode={props.children}
+            language={language}
+            dictionary={dictionary}
+          />
+        );
       }
       return <pre>{children}</pre>;
     },
@@ -34,7 +45,7 @@ export async function ArticleProse({ post, dictionary }: { post: PostDocument; d
         options={{
           mdxOptions: {
             remarkPlugins: [remarkGfm],
-            rehypePlugins: [rehypeSlug, rehypeAutolinkHeadings, [rehypePrettyCode, { themes: { light: "github-light", dark: "github-dark" } }]],
+            rehypePlugins: [rehypeSlug, rehypeAutolinkHeadings, [rehypePrettyCode, { theme: "dracula" }]],
           },
         }}
       />
