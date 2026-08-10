@@ -1,0 +1,94 @@
+---
+title: "Optimistic UI Tanpa Library Form"
+slug: "optimistic-ui-server-actions"
+description: "Pola useOptimistic dengan Server Actions untuk antarmuka yang terasa instan."
+locale: "id"
+translationKey: "optimistic-ui-server-actions"
+publishedAt: "2026-08-10T20:00:00+07:00"
+topics: ["React", "Next.js"]
+draft: false
+---
+
+## Masalah: latensi terasa di setiap aksi
+
+Setiap kali pengguna menekan tombol, aplikasi menunggu respons server sebelum memperbarui layar. Untuk aksi kecil seperti menandai tugas selesai atau mengirim komentar, tunggu 300-800 ms terasa lama. Solusi klasiknya menambah library state management dan menulis logika rollback manual. Padahal React sudah punya primitif bawaan untuk pola ini.
+
+## useOptimistic: nilai sementara
+
+Hook `useOptimistic` menerima state asli dan fungsi yang mengembalikan versi optimistik. Saat aksi dikirim, React langsung menampilkan nilai optimistik, lalu otomatis kembali ke nilai asli dari server saat aksi selesai — tanpa perlu sinkronisasi manual.
+
+```tsx
+'use client'
+
+import { useOptimistic, useTransition } from 'react'
+
+type Task = { id: string; done: boolean; title: string }
+
+export function TaskList({ tasks, markDone }: {
+  tasks: Task[]
+  markDone: (id: string) => Promise<void>
+}) {
+  const [optimisticTasks, addOptimistic] = useOptimistic(
+    tasks,
+    (current, id: string) =>
+      current.map((t) => (t.id === id ? { ...t, done: !t.done } : t))
+  )
+
+  const [isPending, startTransition] = useTransition()
+
+  function toggle(id: string) {
+    startTransition(async () => {
+      addOptimistic(id)
+      await markDone(id)
+    })
+  }
+
+  return (
+    <ul>
+      {optimisticTasks.map((task) => (
+        <li key={task.id}>
+          <input
+            type="checkbox"
+            checked={task.done}
+            onChange={() => toggle(task.id)}
+            disabled={isPending}
+          />
+          {task.title}
+        </li>
+      ))}
+    </ul>
+  )
+}
+```
+
+Kuncinya: `addOptimistic` dipanggil di dalam `startTransition` sebelum `await`. Urutan ini penting. Kalau dipanggil setelah aksi selesai, tidak ada gunanya — layar sudah terupdate dari hasil server.
+
+## Server Action sebagai sumber kebenaran
+
+Di sisi server, aksi menerima FormData atau argumen langsung, memvalidasi, lalu menulis ke database. React Query atau SWR tidak diperlukan untuk kasus ini.
+
+```ts
+'use server'
+
+import { revalidatePath } from 'next/cache'
+import { db } from '@/lib/db'
+
+export async function markDone(id: string) {
+  await db.task.update({ where: { id }, data: { done: true } })
+  revalidatePath('/tasks')
+}
+```
+
+`revalidatePath` memastikan Server Component di bawahnya di-render ulang dengan data baru. Hasilnya: UI optimistik langsung tampil, lalu server mengonfirmasi dengan data final. Jika terjadi error, React mengembalikan tampilan ke nilai asli — rollback gratis.
+
+## Batasan yang perlu disadari
+
+Pendekatan ini cocok untuk aksi yang idempoten dan cepat diproses server. Untuk kasus yang bergantung pada respons server untuk validasi (misal cek ketersediaan username), lebih baik tunggu hasil asli dulu. Gunakan `useActionState` untuk pola submit form dengan pesan error dari server.
+
+```tsx
+const [state, formAction, isPending] = useActionState(createComment, {
+  errors: {},
+})
+```
+
+Optimistic UI bukan tentang menghilangkan state management, melainkan memindahkannya ke tempat yang tepat: transisi React menangani sinkronisasi, Server Action menangani kebenaran data. Kombinasi keduanya menghapus lapisan boilerplate yang selama ini ditangani library eksternal.

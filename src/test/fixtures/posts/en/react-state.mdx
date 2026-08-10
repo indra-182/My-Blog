@@ -1,0 +1,26 @@
+---
+title: "Separating Server State from UI State"
+slug: "react-state"
+description: "A practical boundary between server cache, interface state, and the URL."
+locale: "en"
+translationKey: "react-server-state"
+publishedAt: "2026-08-01T20:00:00+07:00"
+topics: ["React", "TypeScript"]
+series: "React Architecture"
+seriesOrder: 1
+draft: false
+---
+
+## Define the source of truth
+
+Server state and interface state have different lifecycles.
+
+```ts
+type RequestState =
+  | {status: 'idle'}
+  | {status: 'success'; data: string[]}
+```
+
+## Keep the URL shareable
+
+Use the URL for filters that must survive a reload or shared link.

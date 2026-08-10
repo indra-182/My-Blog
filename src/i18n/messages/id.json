@@ -1,0 +1,25 @@
+{
+  "navigation": { "portfolio": "Portfolio", "blog": "Blog", "menu": "Buka menu", "close": "Tutup menu", "language": "Bahasa" },
+  "theme": { "label": "Tema", "light": "Terang", "dark": "Gelap", "system": "Sistem" },
+  "blog": {
+    "eyebrow": "Catatan teknis",
+    "title": "Membangun dengan lebih sengaja.",
+    "description": "Tulisan praktis tentang React, Next.js, TypeScript, React Native, dan keputusan kecil yang membuat produk produksi lebih tahan lama.",
+    "search": "Cari tulisan",
+    "searchPlaceholder": "Cari judul, topik, atau kata kunci",
+    "topic": "Topik",
+    "series": "Seri",
+    "allTopics": "Semua topik",
+    "allSeries": "Semua seri",
+    "resultCount": "{count} tulisan ditemukan",
+    "loadMore": "Muat lebih banyak",
+    "reset": "Reset filter",
+    "emptyTitle": "Tulisan sedang disiapkan.",
+    "emptyDescription": "Belum ada tulisan yang dipublikasikan. Datang lagi segera untuk catatan engineering yang baru.",
+    "noResults": "Tidak ada tulisan yang cocok dengan filter aktif."
+  },
+  "article": { "home": "Beranda", "readingTime": "menit baca", "published": "Terbit", "updated": "Diperbarui", "toc": "Di halaman ini", "previous": "Sebelumnya", "next": "Berikutnya", "related": "Bacaan terkait", "share": "Bagikan tulisan", "copyCode": "Salin kode", "copied": "Tersalin", "copyFailed": "Tidak dapat menyalin. Pilih kode secara manual.", "backToBlog": "Kembali ke Blog", "partOf": "Bagian dari seri" },
+  "footer": { "portfolio": "Portfolio", "blog": "Blog", "linkedin": "LinkedIn", "email": "Email" },
+  "errors": { "notFoundTitle": "Tulisan tidak ditemukan", "notFoundDescription": "Tulisan ini mungkin masih draft atau belum tersedia dalam bahasa tersebut.", "tryAgain": "Coba lagi", "home": "Ke beranda", "translation": "Versi bahasa ini belum tersedia. Kami menampilkan halaman Blog sebagai gantinya.", "dismiss": "Tutup pemberitahuan" },
+  "actions": { "viewArticle": "Baca tulisan", "resetFilters": "Reset filter" }
+}
