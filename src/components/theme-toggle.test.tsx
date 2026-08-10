@@ -6,7 +6,7 @@ import { ThemeToggle } from "./theme-toggle";
 const setTheme = vi.fn();
 
 vi.mock("next-themes", () => ({
-  useTheme: () => ({ theme: "system", resolvedTheme: "dark", setTheme }),
+  useTheme: () => ({ theme: "dark", resolvedTheme: "dark", setTheme }),
 }));
 
 describe("ThemeToggle", () => {

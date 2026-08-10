@@ -23,7 +23,7 @@ export default async function LocaleLayout({ children, params }: Readonly<{ chil
   if (!isLocale(value)) notFound();
   const locale = value as Locale;
   return (
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+    <ThemeProvider attribute="class" defaultTheme="dark">
       <a href="#main-content" className="skip-link">Skip to content</a>
       <SiteHeader locale={locale} />
       {children}

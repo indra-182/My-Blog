@@ -1,6 +1,6 @@
 {
   "navigation": { "portfolio": "Portfolio", "blog": "Blog", "menu": "Open menu", "close": "Close menu", "language": "Language" },
-  "theme": { "label": "Theme", "light": "Light", "dark": "Dark", "system": "System" },
+  "theme": { "label": "Theme", "light": "Light", "dark": "Dark" },
   "blog": {
     "eyebrow": "Technical notes",
     "title": "Build with more intent.",

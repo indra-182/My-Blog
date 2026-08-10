@@ -1,6 +1,6 @@
 {
   "navigation": { "portfolio": "Portfolio", "blog": "Blog", "menu": "Buka menu", "close": "Tutup menu", "language": "Bahasa" },
-  "theme": { "label": "Tema", "light": "Terang", "dark": "Gelap", "system": "Sistem" },
+  "theme": { "label": "Tema", "light": "Terang", "dark": "Gelap" },
   "blog": {
     "eyebrow": "Catatan teknis",
     "title": "Membangun dengan lebih sengaja.",
