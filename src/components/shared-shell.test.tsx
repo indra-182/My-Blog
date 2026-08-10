@@ -8,6 +8,10 @@ vi.mock("next-themes", () => ({
   useTheme: () => ({ theme: "system", setTheme: vi.fn() }),
 }));
 
+vi.mock("next/navigation", () => ({
+  usePathname: () => "/id",
+}));
+
 describe("shared shell", () => {
   it("exposes identity, navigation, theme, and locale actions", () => {
     render(
@@ -24,7 +28,8 @@ describe("shared shell", () => {
     expect(screen.getByRole("link", { name: "Email" })).toHaveAttribute("href", `mailto:${siteConfig.contactEmail}`);
     expect(screen.getAllByRole("link", { name: /Blog/i }).length).toBeGreaterThanOrEqual(1);
     expect(screen.getByRole("button", { name: /theme|tema/i })).toBeInTheDocument();
-    expect(screen.getAllByRole("button", { name: /language|bahasa/i }).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByRole("link", { name: "Switch language to English" })).toHaveLength(1);
+    expect(screen.queryAllByRole("button", { name: /language|bahasa/i })).toHaveLength(0);
     expect(screen.getByText(/Mahadi Indra Manurung/)).toBeInTheDocument();
   });
 });

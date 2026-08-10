@@ -7,8 +7,7 @@ test("search and locale navigation preserve the editorial discovery flow", async
   await page.getByLabel("Cari tulisan").fill("URL");
   await expect(page).toHaveURL(/q=URL/i);
   await expect(page.getByRole("link", { name: /Memisahkan Server State/i })).toBeVisible();
-  await page.getByRole("button", { name: "Bahasa" }).first().click();
-  await page.getByRole("link", { name: /English/i }).click();
+  await page.getByRole("link", { name: "Switch language to English" }).click();
   await expect(page).toHaveURL(/\/en$/);
 });
 

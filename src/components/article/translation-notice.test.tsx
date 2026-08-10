@@ -16,7 +16,6 @@ describe("translation recovery", () => {
     expect(screen.getByText(/translation is not available/i)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /dismiss/i }));
     expect(screen.queryByText(/translation is not available/i)).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: /language|bahasa/i }));
-    expect(screen.getByRole("link", { name: /English/i })).toHaveAttribute("href", "/en?translation=unavailable");
+    expect(screen.getByRole("link", { name: "Switch language to English" })).toHaveAttribute("href", "/en?translation=unavailable");
   });
 });

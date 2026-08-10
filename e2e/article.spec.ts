@@ -8,6 +8,8 @@ test("article exposes reading primitives and copy code", async ({ page }) => {
   await expect(page.getByRole("button", { name: /Copy code/i })).toBeVisible();
   await expect(page.getByText("React Architecture")).toBeVisible();
   await expect(page.getByText(/Baca dalam Bahasa Indonesia/i)).toBeVisible();
+  await expect(page.getByRole("link", { name: /Switch language to/i })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: /language|bahasa/i })).toHaveCount(0);
 });
 
 test("RSS is available for each explicit locale", async ({ request }) => {

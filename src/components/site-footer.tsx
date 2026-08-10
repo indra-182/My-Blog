@@ -2,7 +2,6 @@ import Link from "next/link";
 import type { Locale } from "@/content/post-types";
 import { getDictionary } from "@/i18n/dictionaries";
 import { siteConfig } from "@/lib/site-config";
-import { LocaleSwitcher } from "./locale-switcher";
 
 export function SiteFooter({ locale }: { locale: Locale }) {
   const dictionary = getDictionary(locale);
@@ -19,7 +18,6 @@ export function SiteFooter({ locale }: { locale: Locale }) {
           <Link href={siteConfig.linkedinUrl}>{dictionary.footer.linkedin}</Link>
           <Link href={`mailto:${siteConfig.contactEmail}`}>{dictionary.footer.email}</Link>
         </nav>
-        <LocaleSwitcher locale={locale} dictionary={dictionary} />
       </div>
       <div className="shell footer-bottom">
         <span>© {new Date().getFullYear()} Mahadi Indra Manurung</span>

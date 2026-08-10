@@ -22,9 +22,6 @@ button, a, input, select { outline-offset: 3px; }
 .icon-button, .locale-button { min-width: 44px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid transparent; color: var(--muted); background: transparent; cursor: pointer; transition: color 180ms ease, border-color 180ms ease, background 180ms ease; }
 .icon-button:hover, .locale-button:hover { border-color: var(--border); color: var(--foreground); background: var(--surface); }
 .locale-button { gap: 6px; padding: 0 10px; font-family: var(--font-geist-mono), monospace; font-size: 0.72rem; }
-.locale-switcher { position: relative; }
-.locale-menu { position: absolute; right: 0; top: calc(100% + 8px); z-index: 30; min-width: 150px; padding: 12px 14px; border: 1px solid var(--border); background: var(--surface); box-shadow: 0 12px 30px rgb(0 0 0 / 0.12); font-size: 0.85rem; }
-.locale-menu:hover { color: var(--accent); }
 .mobile-nav { display: none; position: relative; }
 .mobile-nav-panel { position: absolute; right: 0; top: 52px; display: grid; gap: 4px; min-width: 190px; padding: 10px; border: 1px solid var(--border); background: var(--surface); box-shadow: 0 12px 30px rgb(0 0 0 / 0.12); }
 .mobile-nav-panel a { padding: 12px; }
@@ -135,7 +132,6 @@ button, a, input, select { outline-offset: 3px; }
   .toc { position: static; order: -1; }
   .related-grid { grid-template-columns: 1fr; }
   .footer-grid { grid-template-columns: 1fr 1fr; }
-  .footer-grid > .locale-switcher { justify-self: end; }
 }
 @media (max-width: 520px) {
   .site-header-inner { min-height: 64px; }
@@ -145,7 +141,6 @@ button, a, input, select { outline-offset: 3px; }
   .series-link.next { text-align: left; }
   .share-section { align-items: start; flex-direction: column; }
   .footer-grid { grid-template-columns: 1fr; gap: 24px; }
-  .footer-grid > .locale-switcher { justify-self: start; }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
