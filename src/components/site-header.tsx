@@ -4,6 +4,7 @@ import { MobileNavigation } from "./mobile-navigation";
 import { ThemeToggle } from "./theme-toggle";
 import type { Locale } from "@/content/post-types";
 import { getDictionary } from "@/i18n/dictionaries";
+import { siteConfig } from "@/lib/site-config";
 
 export function SiteHeader({ locale }: { locale: Locale }) {
   const dictionary = getDictionary(locale);
@@ -14,7 +15,7 @@ export function SiteHeader({ locale }: { locale: Locale }) {
           INDRA<span>.</span>DEV
         </Link>
         <nav className="desktop-nav" aria-label="Primary navigation">
-          <Link href="https://indra.dev">{dictionary.navigation.portfolio}</Link>
+          <Link href={siteConfig.portfolioUrl}>{dictionary.navigation.portfolio}</Link>
           <Link className="active" href={`/${locale}`}>{dictionary.navigation.blog}</Link>
         </nav>
         <div className="header-actions">

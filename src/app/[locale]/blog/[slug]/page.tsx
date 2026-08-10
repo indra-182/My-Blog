@@ -11,6 +11,7 @@ import { postRepository } from "@/content/post-repository";
 import { extractTableOfContents } from "@/content/toc";
 import { isLocale, locales, otherLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
+import { siteConfig } from "@/lib/site-config";
 
 export async function generateStaticParams() {
   const entries = await Promise.all(locales.map(async (locale) => (await postRepository.getAllPosts(locale)).map((post) => ({ locale, slug: post.slug }))));
@@ -22,7 +23,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   if (!isLocale(value)) return {};
   const post = await postRepository.getPostBySlug(value, slug);
   if (!post) return {};
-  const baseUrl = process.env.NEXT_PUBLIC_BLOG_URL ?? "http://localhost:3000";
+  const baseUrl = siteConfig.blogUrl;
   return { title: post.socialTitle ?? post.title, description: post.socialDescription ?? post.description, alternates: { canonical: post.canonical ?? `${baseUrl}/${value}/blog/${post.slug}`, languages: { id: `${baseUrl}/id/blog/${post.slug}`, en: `${baseUrl}/en/blog/${post.slug}` } }, openGraph: { title: post.socialTitle ?? post.title, description: post.socialDescription ?? post.description, type: "article", publishedTime: post.publishedAt, modifiedTime: post.updatedAt } };
 }
 

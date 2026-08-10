@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Locale } from "@/content/post-types";
 import { getDictionary } from "@/i18n/dictionaries";
+import { siteConfig } from "@/lib/site-config";
 import { LocaleSwitcher } from "./locale-switcher";
 
 export function SiteFooter({ locale }: { locale: Locale }) {
@@ -13,10 +14,10 @@ export function SiteFooter({ locale }: { locale: Locale }) {
           <p className="footer-note">Engineering notes for software that lasts.</p>
         </div>
         <nav className="footer-links" aria-label="Footer navigation">
-          <Link href="https://portfolio-mahadi-indra.vercel.app/">{dictionary.footer.portfolio}</Link>
+          <Link href={siteConfig.portfolioUrl}>{dictionary.footer.portfolio}</Link>
           <Link href={`/${locale}`}>{dictionary.footer.blog}</Link>
-          <Link href="https://www.linkedin.com/in/mahadindra/">{dictionary.footer.linkedin}</Link>
-          <Link href="mailto:mahadiindra2@gmail.com">{dictionary.footer.email}</Link>
+          <Link href={siteConfig.linkedinUrl}>{dictionary.footer.linkedin}</Link>
+          <Link href={`mailto:${siteConfig.contactEmail}`}>{dictionary.footer.email}</Link>
         </nav>
         <LocaleSwitcher locale={locale} dictionary={dictionary} />
       </div>

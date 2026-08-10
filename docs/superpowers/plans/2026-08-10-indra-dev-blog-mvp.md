@@ -575,7 +575,7 @@ RSS contains localized title, canonical article URLs, descriptions, publication 
 
 - [ ] **Step 5: Validate site configuration**
 
-Use Zod to read `NEXT_PUBLIC_BLOG_URL`, `NEXT_PUBLIC_PORTFOLIO_URL`, `NEXT_PUBLIC_CONTACT_EMAIL`, and `NEXT_PUBLIC_LINKEDIN_URL`. `.env.example` uses localhost values and documents production replacement.
+Use Zod to read `NEXT_PUBLIC_BLOG_URL`, `NEXT_PUBLIC_PORTFOLIO_URL`, `NEXT_PUBLIC_CONTACT_EMAIL`, and `NEXT_PUBLIC_LINKEDIN_URL`. `.env.example` holds the production values: `https://blog-indra.vercel.app/`, `https://portfolio-mahadi-indra.vercel.app/`, `mahadiindra2@gmail.com`, and `https://www.linkedin.com/in/mahadindra/`. Source fallbacks in `src/lib/site-config.ts` match them.
 
 - [ ] **Step 6: Run feed and build verification**
 
