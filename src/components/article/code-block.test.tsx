@@ -20,7 +20,7 @@ describe("CodeBlock", () => {
     );
 
     await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: "Salin kode" }));
+      fireEvent.click(screen.getByRole("button", { name: "Salin" }));
     });
     expect(writeText).toHaveBeenCalledWith("const value = 1");
     expect(
@@ -30,9 +30,7 @@ describe("CodeBlock", () => {
     act(() => {
       vi.advanceTimersByTime(2200);
     });
-    expect(
-      screen.getByRole("button", { name: "Salin kode" }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Salin" })).toBeInTheDocument();
     vi.useRealTimers();
   });
 
@@ -58,7 +56,7 @@ describe("CodeBlock", () => {
       codeBlock.getByText("const value = 1", { selector: "span" }),
     ).toHaveStyle({ color: "rgb(255, 121, 198)" });
     await act(async () => {
-      fireEvent.click(codeBlock.getByRole("button", { name: "Salin kode" }));
+      fireEvent.click(codeBlock.getByRole("button", { name: "Salin" }));
     });
     expect(writeText).toHaveBeenCalledWith("const value = 1");
   });
