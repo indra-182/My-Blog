@@ -303,15 +303,20 @@ ke Blog`, and `Memuat tulisan`. Keep “INDRA.DEV”, product names, and
   Implement the Open Graph image at `src/app/opengraph-image.tsx` using the
   single Indonesian dictionary and no locale fallback.
 
-- [ ] **Step 5: Delete the dynamic route tree and run typecheck.**
+- [ ] **Step 5: Delete the dynamic route tree and verify the route file map.**
 
   Delete every file listed under `src/app/[locale]`, then run:
 
   ```bash
-  rtk npm run typecheck
+  test ! -d 'src/app/[locale]'
+  rg --files src/app | rg '^(src/app/(page|layout|loading|error|not-found|opengraph-image|sitemap|rss\.xml/route)|src/app/blog/\[slug\]/(page|not-found))'
+  rtk git diff --check
   ```
 
-  Expected result: PASS with no imports from the deleted locale route tree.
+  Expected result: the locale route directory is absent, the root route file
+  map is present, and the diff has no whitespace errors. Full typecheck is
+  intentionally deferred until Task 4 finishes the feed/API signature
+  migration.
 
 - [ ] **Step 6: Commit the root route migration.**
 
