@@ -1,15 +1,8 @@
 import { ImageResponse } from "next/og";
 import { getDictionary } from "@/i18n/dictionaries";
-import { isLocale } from "@/i18n/config";
 
-export default async function OpenGraphImage({
-  params,
-}: {
-  params: Promise<{ locale: string }>;
-}) {
-  const { locale: value } = await params;
-  const locale = isLocale(value) ? value : "id";
-  const dictionary = getDictionary(locale);
+export default async function OpenGraphImage() {
+  const dictionary = getDictionary();
   return new ImageResponse(
     <div
       style={{

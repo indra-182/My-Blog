@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
 import { Inter, Geist_Mono } from "next/font/google";
+import { SiteFooter } from "@/components/site-footer";
+import { SiteHeader } from "@/components/site-header";
+import { ThemeProvider } from "@/components/theme-provider";
 import { siteConfig } from "@/lib/site-config";
 import "./globals.css";
 
@@ -13,7 +16,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.blogUrl),
   title: { default: "INDRA.DEV Blog", template: "%s — INDRA.DEV" },
   description:
-    "Technical writing about React, Next.js, TypeScript, and React Native.",
+    "Tulisan teknis tentang React, Next.js, TypeScript, dan React Native.",
 };
 
 export default function RootLayout({
@@ -26,7 +29,16 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${inter.variable} ${geistMono.variable}`}
     >
-      <body>{children}</body>
+      <body>
+        <ThemeProvider attribute="class" defaultTheme="dark">
+          <a href="#main-content" className="skip-link">
+            Lewati ke konten
+          </a>
+          <SiteHeader />
+          {children}
+          <SiteFooter />
+        </ThemeProvider>
+      </body>
     </html>
   );
 }

@@ -14,19 +14,19 @@ export default function Error({
   useEffect(() => {
     console.error(error);
   }, [error]);
-  const dictionary = getDictionary("id");
+  const dictionary = getDictionary();
   return (
     <main className="page-main">
       <div className="shell not-found">
         <div>
           <div className="eyebrow">500</div>
-          <h1>Something went wrong</h1>
-          <p>{dictionary.errors.notFoundDescription}</p>
+          <h1>Terjadi kesalahan</h1>
+          <p>Terjadi kendala saat memuat halaman ini.</p>
           <button className="load-more" type="button" onClick={() => reset()}>
             {dictionary.errors.tryAgain}
           </button>
           <br />
-          <Link href="/id">{dictionary.errors.home}</Link>
+          <Link href="/">{dictionary.errors.home}</Link>
         </div>
       </div>
     </main>

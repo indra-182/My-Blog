@@ -1,6 +1,6 @@
 export default function Loading() {
   return (
-    <main className="page-main" aria-busy="true">
+    <main className="page-main" aria-busy="true" aria-label="Memuat tulisan">
       <div className="shell blog-hero">
         <div className="loading-block" style={{ maxWidth: 120 }} />
         <div

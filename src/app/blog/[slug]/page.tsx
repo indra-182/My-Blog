@@ -9,41 +9,28 @@ import { ShareLinks } from "@/components/article/share-links";
 import { TableOfContents } from "@/components/article/table-of-contents";
 import { postRepository } from "@/content/post-repository";
 import { extractTableOfContents } from "@/content/toc";
-import { isLocale, locales, otherLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
 import { siteConfig } from "@/lib/site-config";
 
 export async function generateStaticParams() {
-  const entries = await Promise.all(
-    locales.map(async (locale) =>
-      (await postRepository.getAllPosts(locale)).map((post) => ({
-        locale,
-        slug: post.slug,
-      })),
-    ),
-  );
-  return entries.flat();
+  const posts = await postRepository.getAllPosts();
+  return posts.map((post) => ({ slug: post.slug }));
 }
 
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ locale: string; slug: string }>;
+  params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
-  const { locale: value, slug } = await params;
-  if (!isLocale(value)) return {};
-  const post = await postRepository.getPostBySlug(value, slug);
+  const { slug } = await params;
+  const post = await postRepository.getPostBySlug(slug);
   if (!post) return {};
   const baseUrl = siteConfig.blogUrl;
   return {
     title: post.socialTitle ?? post.title,
     description: post.socialDescription ?? post.description,
     alternates: {
-      canonical: post.canonical ?? `${baseUrl}/${value}/blog/${post.slug}`,
-      languages: {
-        id: `${baseUrl}/id/blog/${post.slug}`,
-        en: `${baseUrl}/en/blog/${post.slug}`,
-      },
+      canonical: post.canonical ?? `${baseUrl}/blog/${post.slug}`,
     },
     openGraph: {
       title: post.socialTitle ?? post.title,
@@ -58,15 +45,13 @@ export async function generateMetadata({
 export default async function ArticlePage({
   params,
 }: {
-  params: Promise<{ locale: string; slug: string }>;
+  params: Promise<{ slug: string }>;
 }) {
-  const { locale: value, slug } = await params;
-  if (!isLocale(value)) notFound();
-  const post = await postRepository.getPostBySlug(value, slug);
+  const { slug } = await params;
+  const post = await postRepository.getPostBySlug(slug);
   if (!post) notFound();
-  const dictionary = getDictionary(value);
-  const [translationPath, neighbors, related] = await Promise.all([
-    postRepository.getTranslationPath(post.translationKey, otherLocale(value)),
+  const dictionary = getDictionary();
+  const [neighbors, related] = await Promise.all([
     postRepository.getSeriesNeighbors(post),
     postRepository.getRelatedPosts(post, 3),
   ]);
@@ -74,16 +59,8 @@ export default async function ArticlePage({
   return (
     <main id="main-content" className="page-main">
       <div className="shell article-layout">
-        <ArticleBreadcrumbs
-          locale={value}
-          title={post.title}
-          dictionary={dictionary}
-        />
-        <ArticleHeader
-          post={post}
-          dictionary={dictionary}
-          translationPath={translationPath}
-        />
+        <ArticleBreadcrumbs title={post.title} dictionary={dictionary} />
+        <ArticleHeader post={post} dictionary={dictionary} />
         <div className="article-body-grid">
           <ArticleProse post={post} dictionary={dictionary} />
           <TableOfContents items={toc} dictionary={dictionary} />
