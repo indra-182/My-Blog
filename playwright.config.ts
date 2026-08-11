@@ -10,7 +10,7 @@ export default defineConfig({
   },
   webServer: {
     command: "CONTENT_ROOT=src/test/fixtures/posts npm run dev -- --port 3001",
-    url: "http://127.0.0.1:3001/id",
+    url: "http://127.0.0.1:3001/",
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
   },

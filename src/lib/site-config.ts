@@ -1,7 +1,10 @@
 import { z } from "zod";
 
 const siteConfigSchema = z.object({
-  blogUrl: z.string().url(),
+  blogUrl: z
+    .string()
+    .url()
+    .transform((url) => url.replace(/\/+$/, "")),
   portfolioUrl: z.string().url(),
   contactEmail: z.string().email(),
   linkedinUrl: z.string().url(),

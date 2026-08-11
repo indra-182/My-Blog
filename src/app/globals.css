@@ -93,8 +93,7 @@ select {
   gap: 10px;
   margin-left: auto;
 }
-.icon-button,
-.locale-button {
+.icon-button {
   min-width: 44px;
   min-height: 44px;
   display: inline-flex;
@@ -109,17 +108,10 @@ select {
     border-color 180ms ease,
     background 180ms ease;
 }
-.icon-button:hover,
-.locale-button:hover {
+.icon-button:hover {
   border-color: var(--border);
   color: var(--foreground);
   background: var(--surface);
-}
-.locale-button {
-  gap: 6px;
-  padding: 0 10px;
-  font-family: var(--font-geist-mono), monospace;
-  font-size: 0.72rem;
 }
 .mobile-nav {
   display: none;
@@ -552,7 +544,7 @@ select {
   position: absolute;
   left: 16px;
   top: 12px;
-  color: #6272a4;
+  color: #a6adb8;
   font-family: var(--font-geist-mono), monospace;
   font-size: 0.65rem;
   font-weight: 600;
@@ -725,8 +717,7 @@ select {
   .shell {
     width: min(calc(100% - 32px), var(--content-max));
   }
-  .desktop-nav,
-  .header-actions > .locale-switcher {
+  .desktop-nav {
     display: none;
   }
   .mobile-nav {

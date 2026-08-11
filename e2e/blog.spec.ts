@@ -1,9 +1,7 @@
 import { expect, test } from "@playwright/test";
 
-test("search and locale navigation preserve the editorial discovery flow", async ({
-  page,
-}) => {
-  await page.goto("/id");
+test("search preserves the editorial discovery flow", async ({ page }) => {
+  await page.goto("/");
   await expect(
     page.getByRole("heading", { name: /Membangun dengan lebih sengaja/i }),
   ).toBeVisible();
@@ -15,27 +13,31 @@ test("search and locale navigation preserve the editorial discovery flow", async
   await expect(
     page.getByRole("link", { name: /Memisahkan Server State/i }),
   ).toBeVisible();
-  await page.getByRole("link", { name: "Switch language to English" }).click();
-  await expect(page).toHaveURL(/\/en$/);
 });
 
 test("latest feed validates published metadata only", async ({ request }) => {
-  const response = await request.get("/api/posts/latest?locale=id&limit=3");
+  const response = await request.get("/api/posts/latest?limit=3");
   expect(response.ok()).toBeTruthy();
   const body = await response.json();
   expect(body.version).toBe(1);
+  expect(body).not.toHaveProperty("locale");
   expect(
     body.posts.every(
       (post: Record<string, unknown>) =>
-        !("source" in post) && !("draft" in post),
+        !("source" in post) && !("draft" in post) && !("locale" in post),
     ),
   ).toBe(true);
+});
+
+test("legacy locale routes are unavailable", async ({ request }) => {
+  expect((await request.get("/id")).status()).toBe(404);
+  expect((await request.get("/en")).status()).toBe(404);
 });
 
 test("theme hydration uses only light and dark icons", async ({ page }) => {
   const pageErrors: string[] = [];
   page.on("pageerror", (error) => pageErrors.push(error.message));
-  await page.goto("/id");
+  await page.goto("/");
   const toggle = page.getByRole("button", { name: /Tema: (Terang|Gelap)/i });
   await expect(toggle).toBeVisible();
   await expect(toggle.locator(".lucide-monitor")).toHaveCount(0);
