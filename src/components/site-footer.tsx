@@ -78,7 +78,7 @@ export function SiteFooter({ locale }: { locale: Locale }) {
       </div>
       <div className="shell footer-bottom">
         <span>© {new Date().getFullYear()} Mahadi Indra Manurung</span>
-        <span>Asia/Jakarta</span>
+        <span>Bogor/Indonesia</span>
       </div>
     </footer>
   );

@@ -150,7 +150,7 @@ select {
 }
 .footer-grid {
   display: grid;
-  grid-template-columns: 1.4fr 1fr auto;
+  grid-template-columns: 1.4fr auto;
   gap: 40px;
   align-items: start;
 }
@@ -218,24 +218,61 @@ select {
 }
 .field {
   display: grid;
-  gap: 8px;
+  gap: 9px;
 }
 .field label {
   color: var(--muted);
-  font-size: 0.75rem;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.68rem;
   font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 .field input,
 .field select {
   width: 100%;
   min-height: 48px;
   border: 1px solid var(--border);
-  border-radius: 0;
+  border-radius: 10px;
   background: var(--surface);
   color: var(--foreground);
   padding: 0 14px;
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    background 180ms ease;
+  appearance: none;
+  -webkit-appearance: none;
+}
+.field input:hover,
+.field select:hover {
+  border-color: var(--accent);
+}
+.field select {
+  cursor: pointer;
+  padding-right: 38px;
+}
+.field select option {
+  background: var(--surface-strong);
+}
+.field input:focus-visible,
+.field select:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
 }
 .field input::placeholder {
+  color: var(--muted);
+}
+.select-wrap {
+  position: relative;
+}
+.select-wrap svg {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
   color: var(--muted);
 }
 .search-input {
@@ -243,8 +280,9 @@ select {
 }
 .search-input svg {
   position: absolute;
-  left: 14px;
-  top: 16px;
+  left: 15px;
+  top: 50%;
+  transform: translateY(-50%);
   color: var(--muted);
 }
 .search-input input {

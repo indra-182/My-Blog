@@ -1,6 +1,6 @@
 "use client";
 
-import { LuSearch } from "react-icons/lu";
+import { LuChevronDown, LuSearch } from "react-icons/lu";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import type { Locale, PostSummary } from "@/content/post-types";
@@ -98,39 +98,45 @@ export function PostBrowser({
         </div>
         <div className="field">
           <label htmlFor="topic-filter">{dictionary.blog.topic}</label>
-          <select
-            id="topic-filter"
-            value={topic}
-            onChange={(event) => {
-              setTopic(event.target.value);
-              updateState({ topic: event.target.value });
-            }}
-          >
-            <option value="all">{dictionary.blog.allTopics}</option>
-            {topics.map((item) => (
-              <option key={item} value={item}>
-                {item}
-              </option>
-            ))}
-          </select>
+          <div className="select-wrap">
+            <LuChevronDown size={16} aria-hidden="true" />
+            <select
+              id="topic-filter"
+              value={topic}
+              onChange={(event) => {
+                setTopic(event.target.value);
+                updateState({ topic: event.target.value });
+              }}
+            >
+              <option value="all">{dictionary.blog.allTopics}</option>
+              {topics.map((item) => (
+                <option key={item} value={item}>
+                  {item}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
         <div className="field">
           <label htmlFor="series-filter">{dictionary.blog.series}</label>
-          <select
-            id="series-filter"
-            value={series}
-            onChange={(event) => {
-              setSeries(event.target.value);
-              updateState({ series: event.target.value });
-            }}
-          >
-            <option value="all">{dictionary.blog.allSeries}</option>
-            {seriesOptions.map((item) => (
-              <option key={item} value={item}>
-                {item}
-              </option>
-            ))}
-          </select>
+          <div className="select-wrap">
+            <LuChevronDown size={16} aria-hidden="true" />
+            <select
+              id="series-filter"
+              value={series}
+              onChange={(event) => {
+                setSeries(event.target.value);
+                updateState({ series: event.target.value });
+              }}
+            >
+              <option value="all">{dictionary.blog.allSeries}</option>
+              {seriesOptions.map((item) => (
+                <option key={item} value={item}>
+                  {item}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
       <div className="result-count" aria-live="polite">
