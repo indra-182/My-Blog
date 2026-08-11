@@ -44,7 +44,7 @@ export function SiteFooter() {
             Catatan engineering untuk perangkat lunak yang bertahan lama.
           </p>
         </div>
-        <nav className="footer-links" aria-label="Footer navigation">
+        <nav className="footer-links" aria-label="Navigasi footer">
           <Link
             href={siteConfig.portfolioUrl}
             aria-label={dictionary.footer.portfolio}

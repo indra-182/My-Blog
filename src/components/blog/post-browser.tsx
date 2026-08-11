@@ -78,7 +78,7 @@ export function PostBrowser({
   }
 
   return (
-    <section className="browser shell" aria-label="Post browser">
+    <section className="browser shell" aria-label="Penjelajah tulisan">
       <div className="browser-toolbar">
         <div className="field">
           <label htmlFor="post-search">{dictionary.blog.search}</label>

@@ -29,7 +29,7 @@ export function MobileNavigation({ dictionary }: { dictionary: Dictionary }) {
         )}
       </button>
       {open ? (
-        <nav className="mobile-nav-panel" aria-label="Mobile navigation">
+        <nav className="mobile-nav-panel" aria-label="Navigasi seluler">
           <Link href={portfolioUrl} onClick={() => setOpen(false)}>
             {dictionary.navigation.portfolio}
           </Link>

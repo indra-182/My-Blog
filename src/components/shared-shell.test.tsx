@@ -1,6 +1,12 @@
-import { render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
+import type { PostSummary } from "@/content/post-types";
+import { getDictionary } from "@/i18n/dictionaries";
 import { siteConfig } from "@/lib/site-config";
+import { ArticleBreadcrumbs } from "./article/article-breadcrumbs";
+import { SeriesNavigation } from "./article/series-navigation";
+import { PostBrowser } from "./blog/post-browser";
+import { MobileNavigation } from "./mobile-navigation";
 import { SiteFooter } from "./site-footer";
 import { SiteHeader } from "./site-header";
 
@@ -9,8 +15,20 @@ vi.mock("next-themes", () => ({
 }));
 
 vi.mock("next/navigation", () => ({
-  usePathname: () => "/id",
+  usePathname: () => "/",
+  useRouter: () => ({ replace: vi.fn() }),
+  useSearchParams: () => new URLSearchParams(),
 }));
+
+const post: PostSummary = {
+  title: "Tulisan contoh",
+  slug: "tulisan-contoh",
+  description: "Deskripsi tulisan contoh.",
+  publishedAt: "2026-01-01",
+  topics: ["React"],
+  draft: false,
+  readingTimeMinutes: 3,
+};
 
 describe("shared shell", () => {
   it("exposes the Indonesian identity, navigation, and theme actions", () => {
@@ -58,5 +76,44 @@ describe("shared shell", () => {
       screen.queryAllByRole("button", { name: /language|bahasa/i }),
     ).toHaveLength(0);
     expect(screen.getByText(/Mahadi Indra Manurung/)).toBeInTheDocument();
+  });
+
+  it("uses Indonesian labels for navigational landmarks", () => {
+    const dictionary = getDictionary();
+    cleanup();
+
+    render(
+      <>
+        <SiteHeader />
+        <SiteFooter />
+        <MobileNavigation dictionary={dictionary} />
+        <PostBrowser posts={[post]} dictionary={dictionary} />
+        <ArticleBreadcrumbs title={post.title} dictionary={dictionary} />
+        <SeriesNavigation previous={post} next={null} dictionary={dictionary} />
+      </>,
+    );
+
+    fireEvent.click(
+      screen.getAllByRole("button", { name: "Buka menu" }).at(-1)!,
+    );
+
+    expect(
+      screen.getByRole("navigation", { name: "Navigasi utama" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("navigation", { name: "Navigasi footer" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("navigation", { name: "Navigasi seluler" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("region", { name: "Penjelajah tulisan" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("navigation", { name: "Jejak navigasi" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("navigation", { name: "Navigasi seri" }),
+    ).toBeInTheDocument();
   });
 });

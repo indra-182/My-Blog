@@ -9,7 +9,7 @@ export function ArticleBreadcrumbs({
   dictionary: Dictionary;
 }) {
   return (
-    <nav className="breadcrumbs" aria-label="Breadcrumb">
+    <nav className="breadcrumbs" aria-label="Jejak navigasi">
       <Link href="/">{dictionary.article.home}</Link>
       <span aria-hidden="true">/</span>
       <Link href="/">{dictionary.navigation.blog}</Link>

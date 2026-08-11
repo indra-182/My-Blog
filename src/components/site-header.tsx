@@ -12,7 +12,7 @@ export function SiteHeader() {
         <Link className="wordmark" href="/" aria-label="INDRA.DEV Blog">
           INDRA<span>.</span>DEV
         </Link>
-        <nav className="desktop-nav" aria-label="Primary navigation">
+        <nav className="desktop-nav" aria-label="Navigasi utama">
           <Link href={siteConfig.portfolioUrl}>
             {dictionary.navigation.portfolio}
           </Link>

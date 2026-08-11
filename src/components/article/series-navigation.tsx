@@ -13,7 +13,7 @@ export function SeriesNavigation({
 }) {
   if (!previous && !next) return null;
   return (
-    <nav className="series-nav" aria-label="Series navigation">
+    <nav className="series-nav" aria-label="Navigasi seri">
       {previous ? (
         <Link className="series-link" href={`/blog/${previous.slug}`}>
           <span>← {dictionary.article.previous}</span>
