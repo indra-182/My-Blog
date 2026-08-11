@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { LuArrowUpRight } from "react-icons/lu";
-import type { Locale, PostSummary } from "@/content/post-types";
+import type { PostSummary } from "@/content/post-types";
 
-function formatDate(date: string, locale: Locale) {
-  return new Intl.DateTimeFormat(locale === "id" ? "id-ID" : "en-US", {
+function formatDate(date: string) {
+  return new Intl.DateTimeFormat("id-ID", {
     dateStyle: "medium",
     timeZone: "Asia/Jakarta",
   }).format(new Date(date));
@@ -14,9 +14,9 @@ export function PostCard({ post }: { post: PostSummary }) {
     <article className="post-card">
       <div>
         <div className="post-meta">
-          <span>{formatDate(post.publishedAt, post.locale)}</span>
+          <span>{formatDate(post.publishedAt)}</span>
           <span>·</span>
-          <span>{post.readingTimeMinutes} min read</span>
+          <span>{post.readingTimeMinutes} menit baca</span>
           {post.series ? (
             <>
               <span>·</span>
@@ -25,7 +25,7 @@ export function PostCard({ post }: { post: PostSummary }) {
           ) : null}
         </div>
         <h2>
-          <Link href={`/${post.locale}/blog/${post.slug}`}>{post.title}</Link>
+          <Link href={`/blog/${post.slug}`}>{post.title}</Link>
         </h2>
         <p>{post.description}</p>
         <div className="topic-list">

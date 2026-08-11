@@ -1,10 +1,7 @@
-import type { Locale } from "@/content/post-types";
-import en from "./messages/en.json";
 import id from "./messages/id.json";
 
-export const dictionaries = { id, en } as const;
-export type Dictionary = (typeof dictionaries)[Locale];
+export type Dictionary = typeof id;
 
-export function getDictionary(locale: Locale): Dictionary {
-  return dictionaries[locale];
+export function getDictionary(): Dictionary {
+  return id;
 }

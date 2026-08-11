@@ -13,11 +13,11 @@ vi.mock("next/navigation", () => ({
 }));
 
 describe("shared shell", () => {
-  it("exposes identity, navigation, theme, and locale actions", () => {
+  it("exposes the Indonesian identity, navigation, and theme actions", () => {
     render(
       <>
-        <SiteHeader locale="id" />
-        <SiteFooter locale="id" />
+        <SiteHeader />
+        <SiteFooter />
       </>,
     );
 
@@ -47,8 +47,13 @@ describe("shared shell", () => {
       screen.getByRole("button", { name: /theme|tema/i }),
     ).toBeInTheDocument();
     expect(
-      screen.getAllByRole("link", { name: "Switch language to English" }),
-    ).toHaveLength(1);
+      screen.getByText(
+        "Catatan engineering untuk perangkat lunak yang bertahan lama.",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryAllByRole("link", { name: /switch language|bahasa/i }),
+    ).toHaveLength(0);
     expect(
       screen.queryAllByRole("button", { name: /language|bahasa/i }),
     ).toHaveLength(0);

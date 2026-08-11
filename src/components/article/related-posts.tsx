@@ -17,7 +17,7 @@ export function RelatedPosts({
         {posts.map((post) => (
           <Link
             className="related-card"
-            href={`/${post.locale}/blog/${post.slug}`}
+            href={`/blog/${post.slug}`}
             key={post.slug}
           >
             <h3>{post.title}</h3>

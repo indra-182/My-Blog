@@ -3,20 +3,13 @@
 import Link from "next/link";
 import { LuMenu, LuX } from "react-icons/lu";
 import { useState } from "react";
-import type { Locale } from "@/content/post-types";
 import type { Dictionary } from "@/i18n/dictionaries";
 
 const portfolioUrl =
   process.env.NEXT_PUBLIC_PORTFOLIO_URL ??
   "https://portfolio-indradev.vercel.app/";
 
-export function MobileNavigation({
-  locale,
-  dictionary,
-}: {
-  locale: Locale;
-  dictionary: Dictionary;
-}) {
+export function MobileNavigation({ dictionary }: { dictionary: Dictionary }) {
   const [open, setOpen] = useState(false);
   return (
     <div className="mobile-nav">
@@ -40,7 +33,7 @@ export function MobileNavigation({
           <Link href={portfolioUrl} onClick={() => setOpen(false)}>
             {dictionary.navigation.portfolio}
           </Link>
-          <Link href={`/${locale}`} onClick={() => setOpen(false)}>
+          <Link href="/" onClick={() => setOpen(false)}>
             {dictionary.navigation.blog}
           </Link>
         </nav>

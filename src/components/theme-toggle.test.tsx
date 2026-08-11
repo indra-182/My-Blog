@@ -11,7 +11,7 @@ vi.mock("next-themes", () => ({
 
 describe("ThemeToggle", () => {
   it("uses the resolved light/dark theme and never exposes System as an icon state", () => {
-    render(<ThemeToggle dictionary={getDictionary("id")} />);
+    render(<ThemeToggle dictionary={getDictionary()} />);
 
     const button = screen.getByRole("button", { name: "Tema: Gelap" });
     expect(button.querySelector("svg")).toBeTruthy();

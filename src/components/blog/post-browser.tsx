@@ -3,7 +3,7 @@
 import { LuChevronDown, LuSearch } from "react-icons/lu";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
-import type { Locale, PostSummary } from "@/content/post-types";
+import type { PostSummary } from "@/content/post-types";
 import type { Dictionary } from "@/i18n/dictionaries";
 import { filterPosts } from "@/lib/filter-posts";
 import { PostCard } from "./post-card";
@@ -14,7 +14,6 @@ export function PostBrowser({
   pageSize = 6,
 }: {
   posts: PostSummary[];
-  locale: Locale;
   dictionary: Dictionary;
   pageSize?: number;
 }) {

@@ -3,8 +3,7 @@
     "portfolio": "Portfolio",
     "blog": "Blog",
     "menu": "Buka menu",
-    "close": "Tutup menu",
-    "language": "Bahasa"
+    "close": "Tutup menu"
   },
   "theme": { "label": "Tema", "light": "Terang", "dark": "Gelap" },
   "blog": {
@@ -48,11 +47,9 @@
   },
   "errors": {
     "notFoundTitle": "Tulisan tidak ditemukan",
-    "notFoundDescription": "Tulisan ini mungkin masih draft atau belum tersedia dalam bahasa tersebut.",
+    "notFoundDescription": "Tulisan ini mungkin masih draft atau belum tersedia.",
     "tryAgain": "Coba lagi",
-    "home": "Ke beranda",
-    "translation": "Versi bahasa ini belum tersedia. Kami menampilkan halaman Blog sebagai gantinya.",
-    "dismiss": "Tutup pemberitahuan"
+    "home": "Ke beranda"
   },
   "actions": { "viewArticle": "Baca tulisan", "resetFilters": "Reset filter" }
 }

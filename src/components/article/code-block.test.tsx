@@ -15,21 +15,23 @@ describe("CodeBlock", () => {
       <CodeBlock
         code="const value = 1"
         language="ts"
-        dictionary={getDictionary("en")}
+        dictionary={getDictionary()}
       />,
     );
 
     await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: "Copy code" }));
+      fireEvent.click(screen.getByRole("button", { name: "Salin kode" }));
     });
     expect(writeText).toHaveBeenCalledWith("const value = 1");
-    expect(screen.getByRole("button", { name: "Copied" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Tersalin" }),
+    ).toBeInTheDocument();
 
     act(() => {
       vi.advanceTimersByTime(2200);
     });
     expect(
-      screen.getByRole("button", { name: "Copy code" }),
+      screen.getByRole("button", { name: "Salin kode" }),
     ).toBeInTheDocument();
     vi.useRealTimers();
   });
@@ -47,7 +49,7 @@ describe("CodeBlock", () => {
           <span style={{ color: "#ff79c6" }}>const value = 1</span>
         }
         language="ts"
-        dictionary={getDictionary("en")}
+        dictionary={getDictionary()}
       />,
     );
 
@@ -56,7 +58,7 @@ describe("CodeBlock", () => {
       codeBlock.getByText("const value = 1", { selector: "span" }),
     ).toHaveStyle({ color: "rgb(255, 121, 198)" });
     await act(async () => {
-      fireEvent.click(codeBlock.getByRole("button", { name: "Copy code" }));
+      fireEvent.click(codeBlock.getByRole("button", { name: "Salin kode" }));
     });
     expect(writeText).toHaveBeenCalledWith("const value = 1");
   });

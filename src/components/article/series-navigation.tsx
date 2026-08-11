@@ -15,10 +15,7 @@ export function SeriesNavigation({
   return (
     <nav className="series-nav" aria-label="Series navigation">
       {previous ? (
-        <Link
-          className="series-link"
-          href={`/${previous.locale}/blog/${previous.slug}`}
-        >
+        <Link className="series-link" href={`/blog/${previous.slug}`}>
           <span>← {dictionary.article.previous}</span>
           <strong>{previous.title}</strong>
         </Link>
@@ -26,10 +23,7 @@ export function SeriesNavigation({
         <span />
       )}
       {next ? (
-        <Link
-          className="series-link next"
-          href={`/${next.locale}/blog/${next.slug}`}
-        >
+        <Link className="series-link next" href={`/blog/${next.slug}`}>
           <span>{dictionary.article.next} →</span>
           <strong>{next.title}</strong>
         </Link>

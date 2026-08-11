@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { LuBriefcase, LuMail } from "react-icons/lu";
-import type { Locale } from "@/content/post-types";
 import { getDictionary } from "@/i18n/dictionaries";
 import { siteConfig } from "@/lib/site-config";
 
@@ -32,17 +31,17 @@ function LinkedinIcon() {
   );
 }
 
-export function SiteFooter({ locale }: { locale: Locale }) {
-  const dictionary = getDictionary(locale);
+export function SiteFooter() {
+  const dictionary = getDictionary();
   return (
     <footer className="site-footer">
       <div className="shell footer-grid">
         <div>
-          <Link className="wordmark" href={`/${locale}`}>
+          <Link className="wordmark" href="/">
             INDRA<span>.</span>DEV
           </Link>
           <p className="footer-note">
-            Engineering notes for software that lasts.
+            Catatan engineering untuk perangkat lunak yang bertahan lama.
           </p>
         </div>
         <nav className="footer-links" aria-label="Footer navigation">
