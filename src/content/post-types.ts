@@ -1,12 +1,7 @@
-export const LOCALES = ["id", "en"] as const;
-export type Locale = (typeof LOCALES)[number];
-
 export type PostFrontmatter = {
   title: string;
   slug: string;
   description: string;
-  locale: Locale;
-  translationKey: string;
   publishedAt: string;
   updatedAt?: string;
   topics: string[];

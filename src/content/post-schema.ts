@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { LOCALES } from "./post-types";
 
 const nonEmptyText = z.string().trim().min(1);
 const slug = z
@@ -14,8 +13,6 @@ export const postFrontmatterSchema = z
     title: nonEmptyText,
     slug,
     description: nonEmptyText,
-    locale: z.enum(LOCALES),
-    translationKey: nonEmptyText,
     publishedAt: isoDate,
     updatedAt: isoDate.optional(),
     topics: z
