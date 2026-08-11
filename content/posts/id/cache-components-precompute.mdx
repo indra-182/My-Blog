@@ -1,0 +1,90 @@
+---
+title: "cacheComponents: Precompute Server Component di Waktu Build"
+slug: "cache-components-precompute"
+description: "Menggeser kerja render Server Component ke fase build dengan cacheComponents."
+locale: "id"
+translationKey: "cache-components-precompute"
+publishedAt: "2026-08-11T20:00:00+07:00"
+topics: ["React", "Next.js"]
+draft: true
+---
+
+## Masalah: render ulang di setiap request
+
+Server Component di-render per request. Untuk halaman yang datanya jarang berubah, ini buang waktu: pohon komponen diurai, props di-resolve, JSX diserialisasi — padahal hasilnya sama dengan request kemarin. `fetch` dengan `cache: "force-cache"` hanya menyimpan data, bukan hasil render. Setiap request tetap membayar biaya eksekusi komponen, dan komponen yang lambat (parse Markdown, transform AST, generate OG image) ikut memperlambat TTFB setiap kali.
+
+## cacheComponents: hasil render sebagai cache
+
+React 19.2 memperkenalkan `cacheComponents` untuk memindahkan kerja ini ke fase build. Ide dasarnya: render bagian pohon komponen sekali, simpan hasilnya sebagai payload serialisasi, lalu muat ulang di request berikutnya tanpa eksekusi ulang. API-nya berpasangan dengan `renderToString` pada versi yang sama:
+
+```ts
+import { cacheComponents, renderToString } from "react-dom/server";
+
+const cached = await cacheComponents(
+  <BlogPost id="123" />,
+  { cacheKey: "blog-post-123", ttl: 3600 },
+);
+
+const html = await renderToString(cached);
+```
+
+`cacheKey` menentukan entri cache, `ttl` mengontrol umur. Saat `renderToString` dipanggil dengan komponen yang sudah di-cache, React memakai payload tersimpan dan melewati eksekusi komponen sepenuhnya.
+
+## Mengapa ini beda dari memo atau fetch cache
+
+`memo` mencegah re-render di dalam satu sesi render — tidak menyentuh lintas request. Fetch cache menyimpan data JSON, tapi komponen tetap dieksekusi untuk membangun kembali pohonnya. `cacheComponents` menyimpan hasil akhir: pohon sudah jadi, serialisasi tinggal diambilkan. Ini paling berguna untuk bagian pohon yang mahal dan deterministik:
+
+```tsx
+async function BlogPost({ id }: { id: string }) {
+  const content = await parseMarkdown(
+    await readFile(`content/posts/${id}.mdx`, "utf8"),
+  );
+  return (
+    <article>
+      <Prose html={content} />
+    </article>
+  );
+}
+```
+
+Kalau `parseMarkdown` memakan 200 ms, cacheComponents memangkasnya menjadi pembacaan cache. Efeknya terasa di TTFB halaman yang menampilkan banyak konten turunan.
+
+## Batasan: jangan cache yang bergantung request
+
+`cacheComponents` bukan pengganti dynamic rendering. Komponen yang membaca cookies, headers, atau searchParams harus tetap dieksekusi per request — me-cache-nya menghasilkan data basi atau kebocoran antar pengguna. Batasi cache pada subtree yang deterministik terhadap props-nya saja.
+
+```ts
+const cached = await cacheComponents(
+  <Nav user={session.user} />, // ❌ data spesifik user
+  { cacheKey: "nav-user-" + session.user.id },
+);
+```
+
+Kuncinya ada di `cacheKey`: pastikan semua input yang memengaruhi output masuk ke dalam key. Kalau tidak, dua pengguna berbeda bisa saling melihat data.
+
+## Integrasi dengan Next.js
+
+Di Next.js 16, `cacheComponents` bisa dikombinasikan dengan API lain yang sudah eksis. Untuk konten yang jarang berubah, gabungkan dengan `unstable_cache` agar data dan hasil render sama-sama di-cache:
+
+```ts
+import { unstable_cache } from "next/cache";
+import { cacheComponents, renderToString } from "react-dom/server";
+
+const getCachedPost = unstable_cache(
+  async (id: string) => {
+    const cached = await cacheComponents(<BlogPost id={id} />, {
+      cacheKey: `post-${id}`,
+      ttl: 86400,
+    });
+    return renderToString(cached);
+  },
+  ["blog-post"],
+  { revalidate: 86400 },
+);
+```
+
+Pola ini menaruh hasil render di cache data Next.js, jadi halaman bisa disajikan dari Incremental Static Regeneration tanpa membangun ulang komponen. Untuk halaman statis penuh, `generateStaticParams` tetap pilihan paling sederhana — cacheComponents menangkap kasus di mana render per request masih diperlukan tapi bagian tertentu terlalu mahal untuk diulang.
+
+## Kapan memakainya
+
+Gunakan `cacheComponents` saat: render deterministik terhadap props, biaya eksekusi tinggi, dan hasil tidak bergantung konteks request. Hindari untuk data real-time, konten personal, atau A/B test. Mulai dari subtree terkecil yang mahal, ukur TTFB sebelum dan sesudah, lalu perluas cakupan perlahan. Optimasi paling efektif adalah yang diukur, bukan ditebak.

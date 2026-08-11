@@ -1,0 +1,72 @@
+---
+title: "React Compiler: Memo Otomatis Tanpa useMemo"
+slug: "react-compiler-memo-otomatis"
+description: "React Compiler mengotomatiskan memoization sehingga useMemo dan useCallback bisa dihapus dari kode."
+locale: "id"
+translationKey: "react-compiler-memo-otomatis"
+publishedAt: "2026-08-12T01:07:22+07:00"
+topics: ["React", "TypeScript"]
+draft: true
+---
+
+## Masalah: memo manual rapuh
+
+`useMemo` dan `useCallback` menuntut developer selalu menebak apa yang mahal. Tebakan itu sering salah: dependency array tidak lengkap, nilai yang sebenarnya murah di-memo, atau memo yang diperlukan justru terlewat. Hasilnya dua hal sekaligus — kode lebih berisik dan re-render tetap bocor. React Compiler menjawab ini dengan menghilangkan tebakan: kompiler menganalisis kode dan menyisipkan memoization secara otomatis saat dibutuhkan.
+
+## Cara kerja
+
+Compiler bekerja pada fase build, bukan runtime. Ia membangun grafik dependensi antar nilai dalam satu komponen, lalu menentukan operasi mana yang bisa di-cache. Hasil transformasi kurang lebih setara dengan menulis `useMemo` secara manual — tapi dihasilkan mesin dan selalu sinkron dengan kode.
+
+```tsx
+// Sebelum: manual, rentan dependency array salah
+const filtered = useMemo(
+  () => items.filter((i) => i.price < maxPrice),
+  [items, maxPrice],
+);
+
+// Sesudah: cukup tulis logikanya
+const filtered = items.filter((i) => i.price < maxPrice);
+```
+
+Compiler menganalisis `filtered` bergantung pada `items` dan `maxPrice`, lalu menambahkan cache sendiri. Kode sumber tetap bersih, perilaku memoization dijamin konsisten.
+
+## Mengaktifkannya di Next.js 16
+
+Komponen yang dikompilasi harus memenuhi aturan React (hooks dipanggil di top level, nilai tidak di-mutasi). Untuk proyek baru, aktifkan sekali dan biarkan bawaan:
+
+```ts
+// next.config.ts
+const nextConfig = {
+  reactCompiler: true,
+};
+
+export default nextConfig;
+```
+
+Setelah itu verifikasi dengan ESLint. Plugin resmi menandai pelanggaran aturan yang membuat compiler menyerah pada sebuah komponen — pindah ke mode `annotation` untuk menandai komponen yang perlu ditangani manual:
+
+```json
+{
+  "plugins": ["eslint-plugin-react-hooks"],
+  "rules": {
+    "react-hooks/compiler": "error"
+  }
+}
+```
+
+## Batasan yang perlu disadari
+
+Compiler berhenti berfungsi saat kode melakukan mutasi nilai yang direferensikan komponen lain. Pola seperti `ref.current` yang ditulis lalu dibaca di render, atau menyimpan nilai ke variabel luar, membuat analisis tidak aman:
+
+```tsx
+function Badge({ count }: { count: number }) {
+  cache.set("count", count); // ❌ efek samping di render
+  return <span>{count}</span>;
+}
+```
+
+Dalam kasus seperti ini compiler melewati komponen (atau menuntut `use no memo`), dan developer bertanggung jawab manual. Komponen yang dianalisis tapi tidak memenuhi aturan tetap bekerja — hanya tanpa optimasi.
+
+## Kapan memakainya
+
+Aktifkan compiler untuk kode baru sekarang. Untuk basis kode lama, aktifkan bertahap per direktori lewat `babel-plugin-react-compiler` dan ukur impact bundle serta re-render sebelum memperluas cakupan. Compiler tidak menghapus kebutuhan memahami re-render — tapi menghapus pekerjaan menulis memo yang berulang dan rawan salah. Konsistensi yang dijamin mesin selalu lebih baik daripada disiplin manual tim.
