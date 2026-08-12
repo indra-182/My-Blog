@@ -1,0 +1,100 @@
+---
+title: "Partial Prerendering di Next.js 16: Static dan Dynamic dalam Satu Halaman"
+slug: "partial-prerendering-nextjs"
+description: "Menggabungkan kecepatan static shell dengan konten dynamic tanpa mengorbankan caching."
+publishedAt: "2026-08-13T00:02:13+07:00"
+topics: ["React", "Next.js"]
+draft: false
+---
+
+## Masalah: pilih antara static atau dynamic
+
+Dahulu halaman Next.js dipaksa memilih: `getStaticProps` untuk kecepatan cache penuh, atau `getServerSideProps` untuk data fresh per request. Tidak ada tengah. Jika bagian kecil butuh data real-time (notifikasi, keranjang, A/B test), seluruh halaman jadi dynamic — cache CDN tidak bisa dipakai, TTFB naik, biaya server tumbuh.
+
+Partial Prerendering (PPR) memecahkan ini dengan membagi halaman menjadi static shell dan dynamic islands. Shell di-render sekali saat build, disimpan sebagai static file, lalu disajikan instan dari CDN. Island dynamic di-stream dari server saat request masuk. Pengguna melihat shell dalam milidetik, island muncul bertahap.
+
+## Cara kerja PPR
+
+Next.js 16 memperkenalkan `experimental.ppr` di `next.config.ts` dan API `unstable_noStore` untuk menandai bagian dynamic. Saat build, Next.js memisahkan pohon komponen: subtree yang tidak memanggil `noStore()` jadi bagian static shell, subtree yang memanggilnya jadi dynamic island.
+
+```tsx
+// app/dashboard/page.tsx
+import { unstable_noStore as noStore } from "next/cache";
+import { Suspense } from "react";
+
+export default async function Dashboard() {
+  const staticShell = await getStaticData(); // di-cache build time
+
+  return (
+    <div className="dashboard">
+      <Header user={staticShell.user} />
+      <Sidebar navigation={staticShell.nav} />
+      <main>
+        <StaticStats data={staticShell.stats} />
+        <Suspense fallback={<StatsSkeleton />}>
+          <DynamicNotifications />
+        </Suspense>
+      </main>
+    </div>
+  );
+}
+
+async function DynamicNotifications() {
+  noStore(); // tandai dynamic
+  const notifications = await fetchNotifications(); // fresh per request
+  return <NotificationList items={notifications} />;
+}
+```
+
+`noStore()` di `DynamicNotifications` memberitahu Next.js: subtree ini jangan di-prerender. Seluruh sibling dan ancestor yang tidak memanggil `noStore` tetap static. Hasil build menghasilkan static HTML untuk shell + manifest island dynamic.
+
+## Streaming dengan Suspense
+
+PPR bergantung pada React streaming. Shell dikirim dulu sebagai HTML statis. Browser mulai parse dan paint sebelum island dynamic siap. `Suspense` boundary mengontrol fallback saat island loading.
+
+```tsx
+<Suspense fallback={<CommentsSkeleton />}>
+  <Comments postId={post.id} />
+</Suspense>
+```
+
+Kalau `Comments` memanggil `noStore()`, Next.js menunda render island sampai request. Selama itu shell sudah interaktif: navigasi, search, filter static data — semua jalan tanpa menunggu server.
+
+## Kapan memakai PPR
+
+Gunakan PPR saat halaman punya campuran konten: kebanyakan static, sebagian butuh fresh data. Contoh khas:
+
+- Dashboard: nav, header, ringkasan statis → notifikasi, aktivitas real-time dynamic
+- E-commerce PDP: deskripsi produk, review, rekomendasi static → harga, stok, keranjang dynamic
+- Blog: artikel, related posts static → komentar, like count, personalisasi dynamic
+
+Hindari PPR untuk halaman fully static (blog post murni) — `generateStaticParams` lebih simpel. Hindari juga untuk fully dynamic (admin panel) — overhead static shell tidak berguna.
+
+## Batasan dan gotcha
+
+`noStore()` bersifat viral: kalau dipanggil di helper yang dipakai static component, seluruh subtree jadi dynamic. Audit dengan `next build --dry-run` dan cek output `ppr` di `.next/required-server-files.json`.
+
+```bash
+next build --dry-run 2>&1 | grep -i ppr
+```
+
+Shell static tidak bisa mengakses cookies, headers, atau searchParams. Data request-specific harus dilewatkan via props dari dynamic island atau dibaca di Client Component.
+
+```tsx
+// ❌ salah: static shell baca cookies
+export default async function Page() {
+  const theme = cookies().get("theme"); // error di build
+  return <Layout theme={theme} />;
+}
+
+// ✅ benar: baca di dynamic island
+async function DynamicHeader() {
+  noStore();
+  const theme = cookies().get("theme");
+  return <Header theme={theme?.value} />;
+}
+```
+
+## Migrasi bertahap
+
+Aktifkan PPR per route dengan `export const ppr = true` di file page/layout. Mulai dari halaman dengan traffic tinggi dan dynamic island kecil. Ukur TTFB, cache hit rate, dan server cost sebelum memperluas. PPR bukan magic — tapi ketika dipakai tepat, ia memberikan kecepatan static tanpa kehilangan kemampuan dynamic.

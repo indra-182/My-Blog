@@ -1,0 +1,204 @@
+---
+title: "useActionState dan useFormStatus: Form Handling Modern di React 19"
+slug: "useactionstate-form-status-react19"
+description: "Menggantikan library form dengan hook bawaan React 19 untuk server action, pending state, dan validasi."
+publishedAt: "2026-08-13T01:00:00+07:00"
+topics: ["React", "Next.js", "TypeScript"]
+draft: false
+---
+
+## Masalah: form library untuk tugas sederhana
+
+Bertahun-tahun developer memasang React Hook Form, Formik, atau Zod hanya untuk menangani form submit, loading state, dan menampilkan error. Library ini powerful tapi berat untuk kasus umum: form login, komentar, atau update profil. React 19 memperkenalkan `useActionState` dan `useFormStatus` — dua hook yang memindahkan logika ini ke core framework, menghapus kebutuhan library eksternal untuk mayoritas kasus.
+
+## useActionState: state dari Server Action
+
+Hook `useActionState` menerima Server Action dan initial state, lalu mengembalikan `[state, action, isPending]`. Saat form disubmit, React memanggil action, menunggu promise selesai, lalu mengupdate state dengan return value action. Tidak perlu `useState` manual, tidak perlu `useTransition` terpisah.
+
+```tsx
+"use client";
+
+import { useActionState } from "react";
+import { createComment } from "@/actions/comments";
+
+type FormState = {
+  errors?: { content?: string };
+  message?: string;
+};
+
+function CommentForm({ postId }: { postId: string }) {
+  const [state, formAction, isPending] = useActionState(
+    async (prev: FormState, formData: FormData) => {
+      const content = formData.get("content")?.toString().trim();
+      if (!content)
+        return { errors: { content: "Komentar tidak boleh kosong" } };
+      await createComment(postId, content);
+      return { message: "Komentar terkirim" };
+    },
+    { errors: {}, message: "" },
+  );
+
+  return (
+    <form action={formAction}>
+      {state.errors?.content && <p className="error">{state.errors.content}</p>}
+      {state.message && <p className="success">{state.message}</p>}
+      <textarea name="content" disabled={isPending} />
+      <button type="submit" disabled={isPending}>
+        {isPending ? "Mengirim..." : "Kirim"}
+      </button>
+    </form>
+  );
+}
+```
+
+Server Action `createComment` berjalan di server, memiliki akses database, dan bisa melempar error validasi. Return value jadi state berikutnya — pola request/response native tanpa boilerplate.
+
+## useFormStatus: akses pending state di component turunan
+
+`useActionState` memberi `isPending` di component yang memanggil hook. Tapi tombol submit sering berada di component terpisah (`<SubmitButton />`, `<FormFooter />`). `useFormStatus` memecahkan ini dengan membaca status form terdekat via context.
+
+```tsx
+"use client";
+
+import { useFormStatus } from "react-dom";
+
+export function SubmitButton() {
+  const { pending } = useFormStatus();
+  return (
+    <button type="submit" disabled={pending}>
+      {pending ? "Menyimpan..." : "Simpan"}
+    </button>
+  );
+}
+```
+
+Component ini bisa ditempatkan di mana saja di dalam `<form action={...}>` dan akan otomatis mengetahui apakah form sedang submitting. Tidak perlu pass prop `isPending` turun-turun.
+
+## Kombinasi keduanya: form lengkap tanpa library
+
+```tsx
+"use client";
+
+import { useActionState } from "react";
+import { useFormStatus } from "react-dom";
+import { updateProfile } from "@/actions/profile";
+
+type ProfileFormState = {
+  errors?: { name?: string; bio?: string };
+  success?: boolean;
+};
+
+function ProfileForm({
+  initialName,
+  initialBio,
+}: {
+  initialName: string;
+  initialBio: string;
+}) {
+  const [state, formAction, isPending] = useActionState(
+    async (prev: ProfileFormState, formData: FormData) => {
+      const name = formData.get("name")?.toString().trim();
+      const bio = formData.get("bio")?.toString().trim();
+      const errors: ProfileFormState["errors"] = {};
+      if (!name) errors.name = "Nama wajib diisi";
+      if (bio && bio.length > 200) errors.bio = "Bio maksimal 200 karakter";
+      if (Object.keys(errors).length > 0) return { errors };
+      await updateProfile({ name, bio });
+      return { success: true };
+    },
+    { errors: {}, success: false },
+  );
+
+  return (
+    <form action={formAction}>
+      <div>
+        <label htmlFor="name">Nama</label>
+        <input
+          id="name"
+          name="name"
+          defaultValue={initialName}
+          disabled={isPending}
+        />
+        {state.errors?.name && (
+          <span className="error">{state.errors.name}</span>
+        )}
+      </div>
+      <div>
+        <label htmlFor="bio">Bio</label>
+        <textarea
+          id="bio"
+          name="bio"
+          defaultValue={initialBio}
+          disabled={isPending}
+        />
+        {state.errors?.bio && <span className="error">{state.errors.bio}</span>}
+      </div>
+      <FormActions isPending={isPending} success={state.success} />
+    </form>
+  );
+}
+
+function FormActions({
+  isPending,
+  success,
+}: {
+  isPending: boolean;
+  success?: boolean;
+}) {
+  const { pending } = useFormStatus();
+  const submitting = isPending || pending;
+  return (
+    <div className="actions">
+      {success && <span className="success">Tersimpan</span>}
+      <button type="submit" disabled={submitting}>
+        {submitting ? "Menyimpan..." : "Simpan"}
+      </button>
+    </div>
+  );
+}
+```
+
+`useFormStatus` di `FormActions` membaca `pending` dari form parent. `FormActions` tidak perlu tahu action apa yang dijalankan — hanya butuh status submitting. Pemisahan ini memungkinkan Komponen UI form reusable tanpa logic bisnis.
+
+## Validasi server-side dengan Zod (opsional)
+
+Untuk validasi kompleks, Zod tetap berguna di Server Action — tapi bukan dependency form library.
+
+```ts
+"use server";
+
+import { z } from "zod";
+import { db } from "@/lib/db";
+
+const profileSchema = z.object({
+  name: z.string().min(1).max(100),
+  bio: z.string().max(200).optional(),
+});
+
+export async function updateProfile(data: { name: string; bio?: string }) {
+  const parsed = profileSchema.safeParse(data);
+  if (!parsed.success) {
+    return { errors: parsed.error.flatten().fieldErrors };
+  }
+  await db.user.update({ where: { id: getUserId() }, data: parsed.data });
+  revalidatePath("/profile");
+  return { success: true };
+}
+```
+
+Zod dipakai di server untuk validasi ketat, client hanya menerima error terstruktur. Tidak ada schema ganda, tidak ada library form yang menduplikasi logika validasi.
+
+## Kapan masih butuh library
+
+`useActionState` + `useFormStatus` menutupi 90% kasus: form CRUD, auth, settings. Masih butuh library saat:
+
+- **Field array dinamis** (tambah/hapus baris invoice) — butuh state lokal kompleks
+- **Validasi cross-field client-side** (konfirmasi password, conditional required) — `useActionState` hanya validasi server
+- **Wizards multi-step** dengan navigasi mundur/maju — butuh state machine
+- **Integrasi UI library** yang butuh controller ref (react-hook-form `Controller`)
+
+Untuk kasus di luar daftar itu, dua hook bawaan React 19 sudah cukup. Kode lebih sedikit, bundle lebih kecil, dan mental model menyatu dengan React Server Components — action di server, state di client, framework yang menghubungkannya.
+
+## Migrasi bertahap
+
+Tidak perlu rewrite semua form sekaligus. Mulai dari form paling sederhana: login, newsletter subscribe, toggle preference. Ganti `useState` + `onSubmit` handler dengan `useActionState`, pindahkan logic ke Server Action, hapus library form dari `package.json`. Ukur bundle size dan developer experience sebelum lanjut ke form kompleks. React 19 tidak memaksa migrasi — tapi menyediakan alternatif native yang untuk mayoritas tim, sudah lebih baik.
