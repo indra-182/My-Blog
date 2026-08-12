@@ -1,12 +1,25 @@
 "use client";
 
 import { LuChevronDown, LuSearch } from "react-icons/lu";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useMemo, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useMemo, useState, useSyncExternalStore } from "react";
 import type { PostSummary } from "@/content/post-types";
 import type { Dictionary } from "@/i18n/dictionaries";
 import { filterPosts } from "@/lib/filter-posts";
 import { PostCard } from "./post-card";
+
+function subscribeToLocation(onStoreChange: () => void) {
+  window.addEventListener("popstate", onStoreChange);
+  return () => window.removeEventListener("popstate", onStoreChange);
+}
+
+function getClientSearch() {
+  return window.location.search;
+}
+
+function getServerSearch() {
+  return "";
+}
 
 export function PostBrowser({
   posts,
@@ -17,12 +30,17 @@ export function PostBrowser({
   dictionary: Dictionary;
   pageSize?: number;
 }) {
-  const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
-  const [query, setQuery] = useState(searchParams.get("q") ?? "");
-  const [topic, setTopic] = useState(searchParams.get("topic") ?? "all");
-  const [series, setSeries] = useState(searchParams.get("series") ?? "all");
+  const search = useSyncExternalStore(
+    subscribeToLocation,
+    getClientSearch,
+    getServerSearch,
+  );
+  const searchParams = useMemo(() => new URLSearchParams(search), [search]);
+  const query = searchParams.get("q") ?? "";
+  const topic = searchParams.get("topic") ?? "all";
+  const series = searchParams.get("series") ?? "all";
   const [visibleCount, setVisibleCount] = useState(pageSize);
   const topics = useMemo(
     () => Array.from(new Set(posts.flatMap((post) => post.topics))).sort(),
@@ -53,16 +71,15 @@ export function PostBrowser({
     if (values.series !== "all") params.set("series", values.series);
     const nextUrl = `${pathname}${params.toString() ? `?${params.toString()}` : ""}`;
     window.history.replaceState(null, "", nextUrl);
+    window.dispatchEvent(new PopStateEvent("popstate"));
     router.replace(nextUrl, { scroll: false });
     setVisibleCount(pageSize);
   }
 
   function resetFilters() {
-    setQuery("");
-    setTopic("all");
-    setSeries("all");
     setVisibleCount(pageSize);
     window.history.replaceState(null, "", pathname);
+    window.dispatchEvent(new PopStateEvent("popstate"));
     router.replace(pathname, { scroll: false });
   }
 
@@ -88,7 +105,6 @@ export function PostBrowser({
               id="post-search"
               value={query}
               onChange={(event) => {
-                setQuery(event.target.value);
                 updateState({ query: event.target.value });
               }}
               placeholder={dictionary.blog.searchPlaceholder}
@@ -103,7 +119,6 @@ export function PostBrowser({
               id="topic-filter"
               value={topic}
               onChange={(event) => {
-                setTopic(event.target.value);
                 updateState({ topic: event.target.value });
               }}
             >
@@ -124,7 +139,6 @@ export function PostBrowser({
               id="series-filter"
               value={series}
               onChange={(event) => {
-                setSeries(event.target.value);
                 updateState({ series: event.target.value });
               }}
             >

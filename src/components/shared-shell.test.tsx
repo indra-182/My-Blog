@@ -116,4 +116,32 @@ describe("shared shell", () => {
       screen.getByRole("navigation", { name: "Navigasi seri" }),
     ).toBeInTheDocument();
   });
+
+  it("restores URL filters while keeping the post list rendered", () => {
+    const otherPost: PostSummary = {
+      ...post,
+      title: "Tulisan lain",
+      slug: "tulisan-lain",
+      topics: ["TypeScript"],
+    };
+
+    cleanup();
+    window.history.replaceState(null, "", "/?q=React");
+    try {
+      render(
+        <PostBrowser posts={[post, otherPost]} dictionary={getDictionary()} />,
+      );
+
+      expect(screen.getByLabelText("Cari tulisan")).toHaveValue("React");
+      expect(
+        screen.getByRole("link", { name: "Tulisan contoh" }),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByRole("link", { name: "Tulisan lain" }),
+      ).not.toBeInTheDocument();
+    } finally {
+      cleanup();
+      window.history.replaceState(null, "", "/");
+    }
+  });
 });
