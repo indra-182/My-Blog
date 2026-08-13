@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { LuBriefcase, LuMail } from "react-icons/lu";
 import { getDictionary } from "@/i18n/dictionaries";
 import { siteConfig } from "@/lib/site-config";
+import { Briefcase, Mail } from "@/components/icons";
 
 function GithubIcon() {
   return (
@@ -50,7 +50,7 @@ export function SiteFooter() {
             aria-label={dictionary.footer.portfolio}
             title={dictionary.footer.portfolio}
           >
-            <LuBriefcase size={18} strokeWidth={1.8} aria-hidden="true" />
+            <Briefcase size={18} strokeWidth={1.8} aria-hidden="true" />
           </Link>
           <Link
             href={siteConfig.githubUrl}
@@ -71,7 +71,7 @@ export function SiteFooter() {
             aria-label={dictionary.footer.email}
             title={dictionary.footer.email}
           >
-            <LuMail size={18} strokeWidth={1.8} aria-hidden="true" />
+            <Mail size={18} strokeWidth={1.8} aria-hidden="true" />
           </Link>
         </nav>
       </div>

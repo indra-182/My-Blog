@@ -1,8 +1,8 @@
 "use client";
 
-import { LuChevronDown, LuSearch } from "react-icons/lu";
 import { usePathname, useRouter } from "next/navigation";
 import { useMemo, useState, useSyncExternalStore } from "react";
+import { ChevronDown, Search } from "@/components/icons";
 import type { PostSummary } from "@/content/post-types";
 import type { Dictionary } from "@/i18n/dictionaries";
 import { filterPosts } from "@/lib/filter-posts";
@@ -100,7 +100,7 @@ export function PostBrowser({
         <div className="field">
           <label htmlFor="post-search">{dictionary.blog.search}</label>
           <div className="search-input">
-            <LuSearch size={16} aria-hidden="true" />
+            <Search size={16} aria-hidden="true" />
             <input
               id="post-search"
               value={query}
@@ -114,7 +114,7 @@ export function PostBrowser({
         <div className="field">
           <label htmlFor="topic-filter">{dictionary.blog.topic}</label>
           <div className="select-wrap">
-            <LuChevronDown size={16} aria-hidden="true" />
+            <ChevronDown size={16} aria-hidden="true" />
             <select
               id="topic-filter"
               value={topic}
@@ -134,7 +134,7 @@ export function PostBrowser({
         <div className="field">
           <label htmlFor="series-filter">{dictionary.blog.series}</label>
           <div className="select-wrap">
-            <LuChevronDown size={16} aria-hidden="true" />
+            <ChevronDown size={16} aria-hidden="true" />
             <select
               id="series-filter"
               value={series}

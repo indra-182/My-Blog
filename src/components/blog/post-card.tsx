@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { LuArrowUpRight } from "react-icons/lu";
+import { ArrowUpRight } from "@/components/icons";
 import type { PostSummary } from "@/content/post-types";
 
 function formatDate(date: string) {
@@ -37,7 +37,7 @@ export function PostCard({ post }: { post: PostSummary }) {
         </div>
       </div>
       <div className="post-card-aside">
-        <LuArrowUpRight
+        <ArrowUpRight
           className="post-card-arrow"
           size={20}
           aria-hidden="true"

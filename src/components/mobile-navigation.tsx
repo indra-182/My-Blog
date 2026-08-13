@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { LuMenu, LuX } from "react-icons/lu";
 import { useState } from "react";
+import { Menu, X } from "@/components/icons";
 import type { Dictionary } from "@/i18n/dictionaries";
 
 const portfolioUrl =
@@ -23,9 +23,9 @@ export function MobileNavigation({ dictionary }: { dictionary: Dictionary }) {
         onClick={() => setOpen((value) => !value)}
       >
         {open ? (
-          <LuX size={20} aria-hidden="true" />
+          <X size={20} aria-hidden="true" />
         ) : (
-          <LuMenu size={20} aria-hidden="true" />
+          <Menu size={20} aria-hidden="true" />
         )}
       </button>
       {open ? (
