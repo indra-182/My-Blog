@@ -15,6 +15,7 @@ describe("post repository", () => {
       "typescript-errors",
       "react-state",
     ]);
+    expect(posts[0]).not.toHaveProperty("source");
     expect(posts[0]?.readingTimeMinutes).toBeGreaterThanOrEqual(1);
   });
 

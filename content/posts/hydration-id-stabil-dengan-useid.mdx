@@ -1,0 +1,99 @@
+---
+title: "Hydration Tanpa Mismatch: Menstabilkan ID Client dengan useId"
+slug: "hydration-id-stabil-dengan-useid"
+description: "Gunakan useId untuk menghindari hydration mismatch pada elemen yang butuh id unik di React 19."
+publishedAt: "2026-08-14T05:14:10+07:00"
+topics: ["React", "Next.js", "TypeScript"]
+draft: false
+---
+
+## Masalah: id unik yang berubah tiap render
+
+Banyak komponen butuh atribut `id` yang stabil: label yang terhubung ke `input`, `aria-describedby` untuk pesan error, atau anchor scroll. Kebiasaan lama adalah menghitung id dari `Math.random()` atau `Date.now()` di body komponen. Di Server Component ini aman, tapi begitu komponen menjadi Client Component, React merender di server lalu di client. Dua lingkungan menghasilkan nilai acak berbeda → hydration mismatch: React membuang hasil client dan memaksa re-render, atau memunculkan peringatan `Text content did not match`.
+
+```tsx
+"use client";
+
+// ❌ salah: id berubah antara server dan client
+function BadField() {
+  const id = "field-" + Math.random().toString(36).slice(2);
+  return (
+    <>
+      <label htmlFor={id}>Email</label>
+      <input id={id} type="email" />
+    </>
+  );
+}
+```
+
+Masalahnya tidak terlihat di development selalu, tapi menghancurkan aksesibilitas: `label[for]` tidak lagi menunjuk ke `input` yang benar setelah mismatch diatasi paksa oleh React.
+
+## useId: id deterministik lintas lingkungan
+
+React 18+ menyediakan `useId` yang menjamin string sama persis di server dan client untuk posisi komponen yang sama dalam pohon. Ia bekerja dengan menyisipkan nilai ke dalam tree render, bukan mengandalkan acak.
+
+```tsx
+"use client";
+
+import { useId } from "react";
+
+function EmailField() {
+  const id = useId();
+  const errorId = `${id}-error`;
+  return (
+    <>
+      <label htmlFor={id}>Email</label>
+      <input
+        id={id}
+        type="email"
+        aria-invalid={false}
+        aria-describedby={errorId}
+      />
+      <span id={errorId} role="alert" />
+    </>
+  );
+}
+```
+
+`useId` mengembalikan nilai seperti `:r1:` — diawali `:` agar tidak bentrok dengan selector CSS biasa. Karena dihasilkan dari posisi tree, id tetap konsisten walau komponen dirender berkali-kali, asalkan urutan sibling tidak berubah.
+
+## Komposisi: jangan concat id mentah di dalam map
+
+Saat membuat banyak field dalam `map`, jangan gabungkan `useId()` dengan index untuk membuat key. `useId` harus dipanggil di top level komponen, bukan di dalam loop. Pecah menjadi komponen kecil agar setiap instance dapat id sendiri:
+
+```tsx
+function Field({ label, name }: { label: string; name: string }) {
+  const id = useId();
+  return (
+    <div>
+      <label htmlFor={id}>{label}</label>
+      <input id={id} name={name} />
+    </div>
+  );
+}
+
+function Form() {
+  return (
+    <>
+      <Field label="Nama" name="name" />
+      <Field label="Email" name="email" />
+    </>
+  );
+}
+```
+
+Setiap `<Field>` mendapat `useId` dari posisinya, sehingga Nama dan Email tidak berbagi id. Memanggil `useId` di dalam `map` langsung melanggar aturan hooks (hook dipanggil dalam callback) dan memicu error runtime.
+
+## Trap umum: SSR + client berbeda versi
+
+Hydration mismatch id juga muncul saat bundle client tidak sinkron dengan server — misalnya dua versi React di `node_modules` karena `npm dedupe` gagal, atau micro-frontend memuat React ganda. `useId` sendiri sudah aman; kalau masih mismatch, periksa duplikasi React, bukan kode komponenmu.
+
+```bash
+npm ls react react-dom
+```
+
+Pastikan hanya satu versi `react` dan `react-dom` yang terinstall. Di Next.js 16, cek `next build` warning tentang duplicate React — biasanya akibat dependency yang mengunci versi lawas.
+
+## Kapan memakainya
+
+Gunakan `useId` untuk setiap atribut `id` yang dibutuhkan oleh aksesibilitas atau relasi DOM (label, aria, anchor). Jangan pakai untuk key list — gunakan `id` data dari database. Jangan pakai sebagai CSS selector tanpa membersihkan `:` di awal. Untuk kasus sederhana, satu panggilan `useId` per komponen sudah cukup; untuk field group, pecah ke subkomponen agar id tetap unik dan stabil.
