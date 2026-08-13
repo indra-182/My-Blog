@@ -114,7 +114,12 @@ export function createPostRepository(rootDirectory = defaultRootDirectory()) {
           new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime(),
       );
 
-    return uniqueBySlug(posts) satisfies PostSummary[];
+    return uniqueBySlug(
+      posts.map(({ source, ...post }) => {
+        void source;
+        return post;
+      }),
+    ) satisfies PostSummary[];
   }
 
   async function getPostBySlug(slug: string) {
@@ -127,7 +132,7 @@ export function createPostRepository(rootDirectory = defaultRootDirectory()) {
       (item): item is Extract<PostFileResult, { success: true }> =>
         item.success && item.data.slug === slug,
     );
-    return document?.data ?? (post as PostDocument);
+    return document?.data ?? null;
   }
 
   async function getRelatedPosts(post: PostSummary, limit = 3) {

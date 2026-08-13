@@ -4,6 +4,11 @@
 * {
   box-sizing: border-box;
 }
+:root {
+  --font-inter: ui-sans-serif, system-ui, sans-serif;
+  --font-geist-mono:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
 html {
   scroll-behavior: smooth;
 }
