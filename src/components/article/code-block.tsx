@@ -1,8 +1,8 @@
 "use client";
 
-import { LuCheck, LuCopy } from "react-icons/lu";
 import { useState } from "react";
 import type { ReactNode } from "react";
+import { Check, Copy } from "@/components/icons";
 import type { Dictionary } from "@/i18n/dictionaries";
 
 export function CodeBlock({
@@ -45,9 +45,9 @@ export function CodeBlock({
         aria-label={label}
       >
         {status === "copied" ? (
-          <LuCheck size={15} aria-hidden="true" />
+          <Check size={15} aria-hidden="true" />
         ) : (
-          <LuCopy size={15} aria-hidden="true" />
+          <Copy size={15} aria-hidden="true" />
         )}{" "}
         {label}
       </button>

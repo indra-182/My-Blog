@@ -6,7 +6,7 @@ import { ZodError } from "zod";
 import { postFrontmatterSchema } from "./post-schema";
 import type { PostDocument, PostFrontmatter, PostSummary } from "./post-types";
 
-export type PostFileResult =
+type PostFileResult =
   | { success: true; data: PostDocument; filePath: string }
   | { success: false; filePath: string; error: ZodError | Error };
 

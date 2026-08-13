@@ -10,10 +10,6 @@ import { MobileNavigation } from "./mobile-navigation";
 import { SiteFooter } from "./site-footer";
 import { SiteHeader } from "./site-header";
 
-vi.mock("next-themes", () => ({
-  useTheme: () => ({ theme: "dark", setTheme: vi.fn() }),
-}));
-
 vi.mock("next/navigation", () => ({
   usePathname: () => "/",
   useRouter: () => ({ replace: vi.fn() }),

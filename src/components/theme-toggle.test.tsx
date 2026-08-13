@@ -1,13 +1,13 @@
-import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it } from "vitest";
 import { getDictionary } from "@/i18n/dictionaries";
 import { ThemeToggle } from "./theme-toggle";
 
-const setTheme = vi.fn();
-
-vi.mock("next-themes", () => ({
-  useTheme: () => ({ theme: "dark", resolvedTheme: "dark", setTheme }),
-}));
+afterEach(() => {
+  cleanup();
+  window.localStorage.clear();
+  document.documentElement.classList.remove("dark");
+});
 
 describe("ThemeToggle", () => {
   it("uses the resolved light/dark theme and never exposes System as an icon state", () => {
@@ -20,6 +20,8 @@ describe("ThemeToggle", () => {
     ).not.toBeInTheDocument();
 
     fireEvent.click(button);
-    expect(setTheme).toHaveBeenCalledWith("light");
+    expect(window.localStorage.getItem("theme")).toBe("light");
+    expect(document.documentElement).not.toHaveClass("dark");
+    expect(screen.getByRole("button", { name: "Tema: Terang" })).toBeVisible();
   });
 });

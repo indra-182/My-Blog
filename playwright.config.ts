@@ -1,3 +1,4 @@
+import path from "node:path";
 import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({
@@ -9,9 +10,12 @@ export default defineConfig({
     trace: "retain-on-failure",
   },
   webServer: {
-    command: "CONTENT_ROOT=src/test/fixtures/posts npm run dev -- --port 3001",
+    command: "npm run dev -- --port 3001",
+    env: {
+      CONTENT_ROOT: path.resolve("src/test/fixtures/posts"),
+    },
     url: "http://127.0.0.1:3001/",
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: false,
     timeout: 120_000,
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],

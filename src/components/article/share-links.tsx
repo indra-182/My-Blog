@@ -1,8 +1,8 @@
 "use client";
 
-import { LuCheck, LuCopy, LuShare2 } from "react-icons/lu";
 import { useState } from "react";
 import type { Dictionary } from "@/i18n/dictionaries";
+import { Check, Copy, Share2 } from "@/components/icons";
 
 export function ShareLinks({
   title,
@@ -40,16 +40,16 @@ export function ShareLinks({
       <h2 id="share-title">{dictionary.article.share}</h2>
       <div className="share-actions">
         <button type="button" onClick={share}>
-          <LuShare2 size={15} aria-hidden="true" /> Share
+          <Share2 size={15} aria-hidden="true" /> Share
         </button>
         <button type="button" onClick={shareToLinkedIn}>
           LinkedIn
         </button>
         <button type="button" onClick={copyLink}>
           {copied ? (
-            <LuCheck size={15} aria-hidden="true" />
+            <Check size={15} aria-hidden="true" />
           ) : (
-            <LuCopy size={15} aria-hidden="true" />
+            <Copy size={15} aria-hidden="true" />
           )}{" "}
           {copied ? dictionary.article.copied : "Copy link"}
         </button>
