@@ -1,0 +1,133 @@
+---
+title: "Streaming Data dengan Suspense dan use() di React 19"
+slug: "streaming-data-suspense-react19"
+description: "Beri respons instan lewat Suspense dan baca promise langsung di komponen dengan hook use() tanpa useEffect."
+publishedAt: "2026-08-15T20:00:00+07:00"
+topics: ["React", "Next.js", "TypeScript"]
+draft: false
+---
+
+## Masalah: layar kosong menunggu data paling lambat
+
+Halaman berita atau dashboard sering menarik beberapa sumber sekaligus: profil, statistik, dan daftar terbaru. Bila semua di-fetch berurutan di komponen atas, pengguna menatap layar kosong sampai sumber paling lambat selesai. Pendekatan lama memakai `useEffect` + `useState` untuk tiap bagian, lalu menumpuk loading flag yang saling bergantung. Hasilnya komponen gemuk dan waktu hingga konten pertama muncul (TTFB visual) buruk.
+
+## use(): baca promise tanpa useEffect
+
+React 19 memperkenalkan `use()`, hook yang menerima promise dan menghentikan render sampai promise tersebut selesai. Berbeda dengan `useEffect` yang baru jalan setelah mount, `use()` dipanggil langsung di body komponen sehingga data mengalir sebagai bagian dari render:
+
+```tsx
+import { use } from "react";
+
+async function getStats() {
+  const res = await fetch("https://api.example.com/stats");
+  return res.json() as Promise<{ views: number; likes: number }>;
+}
+
+const statsPromise = getStats();
+
+export function Stats() {
+  const stats = use(statsPromise);
+  return (
+    <dl>
+      <dt>Tayangan</dt>
+      <dd>{stats.views}</dd>
+      <dt>Suka</dt>
+      <dd>{stats.likes}</dd>
+    </dl>
+  );
+}
+```
+
+`use()` melempar promise ke atas hingga menemui batas `Suspense` terdekat. Saat promise resolve, React melanjutkan render komponen tersebut tanpa efek samping tambahan.
+
+## Memecah pohon dengan Suspense
+
+Kunci streaming adalah menaruh beberapa batas `Suspense` agar tiap bagian mengalir sendiri. Bagian cepat tampil duluan, bagian lambat menyusul dengan fallback:
+
+```tsx
+import { Suspense } from "react";
+import { Profile } from "./profile";
+import { Stats } from "./stats";
+import { RecentList } from "./recent-list";
+
+export function Dashboard({ userId }: { userId: string }) {
+  return (
+    <section>
+      <Suspense fallback={<p>Memuat profil…</p>}>
+        <Profile userId={userId} />
+      </Suspense>
+      <Suspense fallback={<p>Memuat statistik…</p>}>
+        <Stats />
+      </Suspense>
+      <Suspense fallback={<p>Memuat daftar…</p>}>
+        <RecentList userId={userId} />
+      </Suspense>
+    </section>
+  );
+}
+```
+
+Di Next.js 16, saat komponen Server Component mengalir, framework mengirimkan HTML bagian demi bagian (streaming) ke klien. Pengguna langsung melihat profil meski daftar masih berputar.
+
+## Promise sekali buat, dipakai banyak komponen
+
+Agar `use()` aman, promise harus dibuat di luar komponen yang merendernya ulang. Pola umum: buat promise di level halaman, lalu teruskan sebagai prop ke beberapa komponen turunan:
+
+```tsx
+async function getFeed(userId: string) {
+  const res = await fetch(`https://api.example.com/feed/${userId}`, {
+    cache: "no-store",
+  });
+  return res.json() as Promise<FeedItem[]>;
+}
+
+export default async function Page({
+  params,
+}: {
+  params: Promise<{ userId: string }>;
+}) {
+  const { userId } = await params;
+  const feedPromise = getFeed(userId);
+  return <FeedView feedPromise={feedPromise} />;
+}
+```
+
+Dengan cara ini komponen bisa memanggil `use(feedPromise)` berulang tanpa memicu fetch ganda. Promise yang sama juga bisa dibagikan antar `Suspense` berbeda.
+
+## Integrasi dengan loading.tsx di Next.js
+
+Selain `Suspense` manual, Next.js menyediakan `loading.tsx` untuk batas streaming di level route. Ini fallback otomatis sebelum seluruh Server Component selesai:
+
+```tsx
+// app/dashboard/loading.tsx
+export default function Loading() {
+  return <p>Sedang menyiapkan dashboard…</p>;
+}
+```
+
+Gunakan `loading.tsx` untuk kulit halaman, dan `Suspense` di dalamnya untuk memperhalus bagian per bagian. Kombinasi memberi respons instan di tepi luar sekaligus mengalirkan konten dalam.
+
+## Error tetap harus dijinakkan
+
+`use()` melempar error dari promise gagal ke batas `Error Boundary` terdekat, bukan ke `try/catch` di komponen. Sediakan boundary agar satu bagian rusak tidak meruntuhkan halaman:
+
+```tsx
+import { Suspense } from "react";
+import { ErrorBoundary } from "react-error-boundary";
+
+export function SafeStats() {
+  return (
+    <ErrorBoundary fallback={<p>Statistik tidak tersedia</p>}>
+      <Suspense fallback={<p>Memuat…</p>}>
+        <Stats />
+      </Suspense>
+    </ErrorBoundary>
+  );
+}
+```
+
+Tanpa boundary, reject pada promise akan naik ke root dan menampilkan layar error penuh.
+
+## Kapan memakainya
+
+Pakai `use()` + `Suspense` saat halaman menyatukan beberapa sumber data dengan kecepatan berbeda, atau saat sebagian konten boleh tampil lebih lambat tanpa memblokir sisanya. Hindari untuk data yang harus lengkap sebelum interaksi pertama (form otorisasi, konfigurasi kritis) — di situ lebih baik fetch sekaligus di level atas. Mulai dari satu `Suspense` di bagian paling lambat, ukur TTFB visual, lalu pecah batas lain bila perlu.
