@@ -21,3 +21,13 @@ Use the default labels: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-
 ### Domain docs
 
 This is a single-context repo. Read `CONTEXT.md` and relevant ADRs under `docs/adr/` when they exist. See `docs/agents/domain.md`.
+
+## Validation workflow
+
+Run the narrowest relevant check first. Before handing off shared code, route, or content-pipeline changes, run:
+
+```text
+npm run verify
+```
+
+Review `git diff` and run `git diff --check`. Report every check and result, and explain any check that could not run. Leave changes uncommitted unless the user explicitly asks for a commit.
