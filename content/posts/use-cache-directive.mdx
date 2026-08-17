@@ -1,0 +1,180 @@
+---
+title: "Directiva use cache: Cache Components di Next.js 16"
+slug: "use-cache-directive"
+description: "Mengoptimalkan performa dengan directive 'use cache' untuk memoisasi komponen dan fungsi di level build"
+publishedAt: "2026-08-17T20:00:00+07:00"
+topics: ["React", "Next.js"]
+draft: false
+---
+
+## Masalah: render ulang di setiap request
+
+Sebelum Next.js 16, setiap request ke halaman aplikasi memaksa render ulang seluruh pohon Server Component. Untuk konten yang jarang berubah - seperti artikel blog, dokumentasi, atau halaman statis - ini merupakan pemborosan sumber daya: pohon komponen diurai, props di-resolve, dan JSX diserialisasi dari awal, meski hasilnya sama persis dengan request sebelumnya. Pengguna tetap menunggu TTFB (Time to First Byte) yang mungkin bertahan ratusan milidetik, sementara CDN dan cache HTTP sudah siap menyajikan halaman yang sama dengan instan.
+
+Partial Prerendering (PPR) sudah memecahkan sebagian masalah ini dengan membagi halaman menjadi shell static dan island dynamic, tetapi tetap memerlukan konfigurasi `experimental.ppr` dan tidak semuanya dapat dikash secara efisien di lingkungan serverless.
+
+## Directiva `use cache`: Cache Components bawaan Next.js 16
+
+Next.js 16 memperkenalkan fitur **Cache Components** dengan directive sederhana: `use cache`. Dengan menambahkan `'use cache'` di paling atas file, komponen atau fungsi async menjadi otomatis cacheable - hasil rendernya disimpan sebagai payload serialisasi dan dipulihkan di request berikutnya tanpa harus dieksekusi ulang.
+
+Fitur ini bekerja sama dengan opsi `cacheComponents: true` di `next.config.ts`. Setelah diaktifkan, Anda dapat menempatkan directive ini di berbagai tingkat:
+
+### File level
+
+Semua export dalam file menjadi cached:
+
+```tsx
+// app/layout.tsx
+"use cache";
+
+export default async function Layout({ children }: { children: ReactNode }) {
+  return <div>{children}</div>;
+}
+```
+
+### Komponen level
+
+```tsx
+export async function UserCard({
+  id,
+  config,
+}: {
+  id: string;
+  config: { theme: string };
+}) {
+  "use cache";
+  return <div>{id}</div>;
+}
+```
+
+### Fungsi level
+
+```tsx
+"use cache";
+async function getUserData(userId: string) {
+  return fetch(`/api/users/${userId}`).then((res) => res.json());
+}
+```
+
+### Contoh praktis: Blog page dengan caching
+
+```tsx
+// app/page.tsx
+"use cache";
+import { cacheLife } from "next/cache";
+
+async function getBlogPosts() {
+  const res = await fetch("https://api.example.com/blog-posts", {
+    cache: "force-cache",
+    next: { revalidate: 86400 },
+  });
+  return res.json();
+}
+
+export default async function Page() {
+  cacheLife("days"); // Blog hanya berubah harian
+
+  const posts = await getBlogPosts();
+  return (
+    <main>
+      {posts.map((post) => (
+        <article key={post.id}>
+          <h2>{post.title}</h2>
+          <p>{post.excerpt}</p>
+        </article>
+      ))}
+    </main>
+  );
+}
+```
+
+Di sini, `cacheLife('days')` menentukan bahwa konten blog perlu refresh sekali sehari. Jika omitted, profil `default` berlaku (5 menit client, 15 menit server, never expire by time).
+
+## Cara kerja di balik layar
+
+Setelah `cacheComponents: true` diaktifkan dan `use cache` ditempatkan:
+
+1. **Cache key** dibangun dari:
+   - Build ID (atau `deploymentId` jika dikonfigurasi)
+   - Function ID (hash lokasi & signature kode)
+   - Argumen serializable (props komponen, argumen fungsi)
+   - HMR refresh hash (hanya development)
+
+2. **Serialization**: Argumen dan return value wajib serializable. Types didukung: primitives, plain objects, arrays, Dates, Maps, Sets, TypedArrays, ArrayBuffers, React elements (pass-through). Class instances, functions, Symbols, WeakMaps, WeakSets, dan URL tidak didukung.
+
+3. **Request-time APIs terlarang**: `cookies()`, `headers()`, `searchParams` tidak dapat diakses langsung di dalam cakupan `use cache`. Harus dibaca di luar scope dan dipass sebagai argumen.
+
+4. **Runtime caching**: Secara default, cache in-memory. Serverless: entries tidak persist crossing requests. Self-hosted: persist hingga `cacheMaxMemorySize` penuh.
+
+## `cacheLife` profiles presets
+
+| Profile   | Kasus penggunaan                  | Client stale | Server revalidate |
+| --------- | --------------------------------- | ------------ | ----------------- |
+| `seconds` | Data real-time (saham, skor live) | 0 detik      | 0 detik           |
+| `minutes` | Feed sosial, news                 | 1 menit      | 1 menit           |
+| `hours`   | Inventory produk, weather         | 1 jam        | 15 menit          |
+| `days`    | Blog post, artikel (rekomendasi)  | 1 hari       | 15 menit          |
+| `weeks`   | Podcast, newsletter               | 1 minggu     | 15 menit          |
+| `max`     | Legal pages, archived content     | tak berakhir | tak berakhir      |
+
+Jika tidak ditulis, `default` profile berlaku dengan batas waktu yang tidak eksplisit di call site - membuat lebih sulit dipahami di kasus nested caching.
+
+## On-demand revalidation dengan `cacheTag`
+
+Cache bisa dinvalidasi secara otomatis setelah mutasi data:
+
+```tsx
+'use cache'
+import { cacheTag } from 'next/cache'
+
+async function getProducts() {
+  cacheTag('products') // mark cache invalidatable
+  return fetch('/api/products')
+}
+
+export async function productsAction() {
+  'use server'
+  await db.products.update(...)
+  updateTag('products') // semua cache 'products' invalidate
+}
+```
+
+## Constraints & best practices
+
+- **Hanya async**: Function/komponen menggunakan `use cache` wajib `async`.
+- **Jangan akses runtime APIs**: Baca cookies/headers di luar cache scope, lalu pass argumen.
+- **Jangan gunakan di edge runtime**: Cache Components butuh Node.js runtime. Migrasi `runtime = 'edge'` terdaftar dulu.
+- **Hindari class instance & non-serializable**: Return value harus serializable menurut React Server Components.
+- **Komponen turunan lewat `children`**: Boleh dilewatkan tanpa mempengaruhi cache entry, selama tidak direference di body fungsi.
+
+## Kapan sebaiknya pakai
+
+Gunakan `use cache` saat:
+
+- Komponen/fungsi **deterministik** terhadap props-nya
+- Biaya eksekusi **tinggi** (fetch lambat, parse MDX, transform AST)
+- Output **tidak bergantung** konteks request (cookies, headers, searchParams)
+- Konten **jarang berubah** (blog, dokumentasi, halaman statis)
+
+Hindari untuk:
+
+- Data real-time (harga saham, skor pertandingan live)
+- Konten personal per-user (harus dibaca dari session/cookies setiap request)
+- A/B testing atau feature flag yang berubah-ubah
+- Komponen yang bergantung `ref.current` atau mutasi luar
+
+## Migrasi dari `experimental.useCache`
+
+Jika sebelumnya menggunakan `experimental.useCache` di Next.js 15, langkah migrasi:
+
+1. Aktifkan `cacheComponents: true` di `next.config.ts`
+2. Ganti `use cache` (bukan experimental)
+3. Periksa `runtime = 'edge'` export - hapus atau migrasi ke Node.js
+4. Gunakan `cacheLife` dan `cacheTag` secara eksplisit di codebase baru
+5. Verifikasi build tanpa error `NEXT_PRIVATE_DEBUG_CACHE=1`
+
+## Kesimpulan
+
+Directiva `use cache` di Next.js 16 memberikan cara deklaratif untuk memaksimalkan Cache Components. Dengan hanya menambahkan satu baris `'use cache'` di komponen atau fungsi yang tepat, Anda bisa menurunkan TTFB secara signifikan untuk konten yang jarang berubah, tanpa perlu library eksternal atau konfigurasi yang rumit. Kombinasi dengan `cacheLife` untuk profile kadaluarsa dan `cacheTag` untuk invalidasi on-demand memberikan kontrol total atas perilaku cache di aplikasi produksi.
+
+Selain meningkatkan performa, pendekatan ini juga mengurangi beban server dan biaya bandwidth, karena shell static bisa disajikan langsung dari CDN sambil konten dynamic streaming tiba-tiba muncul saat ready.
