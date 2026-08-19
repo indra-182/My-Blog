@@ -1,0 +1,185 @@
+---
+title: "catchError dan retry(): Error Handling Modern di Next.js 16"
+slug: "catcherror-error-boundary-nextjs-16"
+description: "Tangani error per-komponen dengan catchError dari next/error dan prop retry() yang menggantikan reset di error.tsx."
+publishedAt: "2026-08-19T20:00:00+07:00"
+topics: ["Next.js", "React"]
+draft: false
+---
+
+## Error handling itu sering jadi "yang penting jalan dulu"
+
+Coba jujur: berapa lama kamu membiarkan layar putih Next.js default muncul tiap ada error runtime di produksi? Atau menulis error boundary manual pakai class component yang membingungkan (`getDerivedStateFromError`, `componentDidCatch`, dan entah kenapa harus extends `Component` padahal projectmu full function component)?
+
+Di Next.js 16, dua hal berubah signifikan. Pertama, prop `retry()` di `error.tsx` resmi stabil dan menggantikan `reset()` sebagai cara utama pemulihan. Kedua, ada fungsi baru `catchError` dari `next/error` yang memungkinkan error boundary di level komponen — bukan cuma per route segment. Artikel ini membahas keduanya dengan contoh yang bisa langsung kamu pakai.
+
+## Dulu: reset() yang membingungkan
+
+Sebelum Next.js 16, `error.tsx` menerima props `{ error, reset }`. Masalahnya, banyak developer (termasuk saya) salah paham dengan `reset()`: tombol "Coba lagi" yang memanggil `reset()` ternyata tidak benar-benar me-refetch data server — dia hanya membersihkan state error dan me-render ulang, sehingga untuk error Server Component, hasilnya sering tetap gagal.
+
+Next.js 16.3 merespons ini dengan prop `retry()`: fungsi ini me-refetch **dan** me-render ulang children dari error boundary di dalam sebuah Transition. Kalau penyebab error-nya temporer (API down sebentar, timeout, race condition), `retry()` benar-benar bisa memulihkan halaman. `reset()` masih ada untuk kasus spesifik yang memang tidak butuh re-fetch, tapi jadikan `retry()` sebagai default.
+
+```tsx
+// app/dashboard/error.tsx
+"use client";
+
+import { useEffect } from "react";
+
+export default function DashboardError({
+  error,
+  retry,
+}: {
+  error: Error & { digest?: string };
+  retry: () => void;
+}) {
+  useEffect(() => {
+    console.error(error); // kirim ke Sentry atau sejenisnya
+  }, [error]);
+
+  return (
+    <div className="rounded-lg border border-red-200 bg-red-50 p-6">
+      <h2 className="font-semibold text-red-800">
+        Gagal memuat dashboard
+      </h2>
+      <p className="text-sm text-red-600">
+        Error ID: {error.digest ?? "tidak tersedia"}
+      </p>
+      <button
+        type="button"
+        onClick={retry}
+        className="mt-4 rounded bg-red-600 px-4 py-2 text-white"
+      >
+        Coba lagi
+      </button>
+    </div>
+  );
+}
+```
+
+Catatan penting: `error.tsx` harus Client Component, dan error dari Server Component di produksi dikirim dengan pesan generik plus `digest` — jangan berharap pesan error asli tampil di UI. Gunakan `digest` untuk mencocokkan log di server.
+
+## Masalah yang belum terpecahkan: error di level komponen
+
+`error.tsx` bekerja per route segment. Tapi bagaimana kalau di satu halaman ada tiga widget independen (grafik performa, feed aktivitas, daftar notifikasi) dan salah satunya error? Tanpa intervensi, satu widget yang gagal akan menjatuhkan seluruh halaman ke fallback error segment — pengguna kehilangan dua widget lain yang sebenarnya sehat.
+
+Solusi lama: menulis class `ErrorBoundary` sendiri. Solusi baru: `catchError` dari `next/error`, yang stabil sejak Next.js 16.3.
+
+```tsx
+// app/components/widget-error-boundary.tsx
+"use client";
+
+import { catchError, type ErrorInfo } from "next/error";
+
+function WidgetFallback(
+  props: { title: string },
+  { error, retry }: ErrorInfo,
+) {
+  return (
+    <div className="rounded border border-amber-300 bg-amber-50 p-4">
+      <h3 className="font-medium text-amber-900">{props.title}</h3>
+      <p className="text-sm text-amber-700">{error.message}</p>
+      <button
+        type="button"
+        onClick={retry}
+        className="mt-2 rounded bg-amber-600 px-3 py-1.5 text-sm text-white"
+      >
+        Muat ulang widget
+      </button>
+    </div>
+  );
+}
+
+export const WidgetErrorBoundary = catchError(WidgetFallback);
+```
+
+Lalu bungkus setiap widget yang independen:
+
+```tsx
+// app/dashboard/page.tsx
+import { WidgetErrorBoundary } from "@/app/components/widget-error-boundary";
+import { PerformanceChart } from "@/app/components/performance-chart";
+import { ActivityFeed } from "@/app/components/activity-feed";
+import { NotificationList } from "@/app/components/notification-list";
+
+export default function DashboardPage() {
+  return (
+    <section className="grid gap-4 md:grid-cols-2">
+      <WidgetErrorBoundary title="Grafik Performa">
+        <PerformanceChart />
+      </WidgetErrorBoundary>
+      <WidgetErrorBoundary title="Feed Aktivitas">
+        <ActivityFeed />
+      </WidgetErrorBoundary>
+      <WidgetErrorBoundary title="Notifikasi">
+        <NotificationList />
+      </WidgetErrorBoundary>
+    </section>
+  );
+}
+```
+
+Kalau `PerformanceChart` melempar error saat fetch atau render, hanya widget itu yang berganti fallback. `ActivityFeed` dan `NotificationList` tetap tampil normal — dan tombol "Muat ulang widget" di fallback memanggil `retry()` yang me-refetch dan me-render ulang hanya area widget tersebut.
+
+Contoh di atas juga memperlihatkan kelebihan `catchError` yang lain: props yang kamu berikan ke wrapper (`title`) diteruskan ke fungsi fallback sebagai argumen pertama. Kamu bisa membuat satu fallback reusable dan mengonfigurasinya per pemakaian tanpa menulis beberapa komponen error.
+
+## Kenapa tidak pakai class ErrorBoundary manual lagi?
+
+`catchError` bukan sekadar sugar syntax untuk error boundary klasik. Ada tiga perilaku framework-aware yang sulit ditiru manual:
+
+1. **`retry()` berjalan di dalam Transition** — state Client Component di luar boundary tidak ter-reset saat pemulihan, jadi UX-nya halus.
+2. **`redirect()` dan `notFound()` tidak ikut tertangkap** — keduanya melempar special error di balik layar. Error boundary naif akan menangkapnya dan menampilkan fallback error, padahal seharusnya halaman diarahkan atau menampilkan 404. `catchError` menangani ini dengan benar.
+3. **State error otomatis bersih saat client navigation** — pindah route dan kembali, boundary tidak menampilkan fallback basi.
+
+## Fallback yang dirender di server (opsional, tapi keren)
+
+Karena prop fallback bisa berupa `React.ReactNode`, kamu bisa melempar Server Component sebagai fallback yang data-driven:
+
+```tsx
+// app/error-boundary.tsx
+"use client";
+
+import { catchError, type ErrorInfo } from "next/error";
+
+function ErrorFallback(
+  props: { fallback: React.ReactNode },
+  _errorInfo: ErrorInfo,
+) {
+  return props.fallback;
+}
+
+export default catchError(ErrorFallback);
+```
+
+```tsx
+// app/some-component.tsx
+import ErrorBoundary from "@/app/error-boundary";
+
+async function WidgetFallback() {
+  const data = await getFallbackData();
+  return <div>{data.message}</div>;
+}
+
+export default function Component({ children }: { children: React.ReactNode }) {
+  return <ErrorBoundary fallback={<WidgetFallback />}>{children}</ErrorBoundary>;
+}
+```
+
+Perlu diingat: pola ini me-render fallback di setiap render halaman, bahkan saat tidak ada error — jadi hanya pakai kalau kamu memang butuh konten fallback yang kaya data.
+
+## Batasan yang wajib kamu tahu
+
+Seperti error boundary pada umumnya, `catchError` dan `error.tsx` **tidak menangkap error di event handler** (onClick, onSubmit) atau callback async yang berjalan setelah render. Error jenis ini harus kamu tangani manual — misalnya dengan `try/catch` lalu simpan ke `useState` untuk menampilkan pesan.
+
+Satu lagi: `useTransition` dan `startTransition` mengecualikan error dari boundary, tapi error di dalam `startTransition` dari `useTransition` justru **akan** naik ke error boundary terdekat — perilaku ini berguna untuk operasi yang memicu render baru.
+
+## Checklist migrasi dari Next.js 15
+
+1. Ganti `reset()` di semua `error.tsx` dengan `retry()`. Untuk kasus yang benar-benar spesifik, `reset()` masih tersedia.
+2. Ganti class `ErrorBoundary` buatan sendiri di komponen dengan `catchError` dari `next/error` — kode lebih pendek, perilaku lebih benar.
+3. Pastikan fallback function `catchError` berada di module `"use client"`.
+4. Manfaatkan `error.digest` untuk logging dan dukungan pelanggan.
+5. Tambahkan widget-level boundary di halaman dashboard/grid yang punya banyak bagian independen.
+
+## Kesimpulan
+
+Next.js 16 tidak menambah library baru untuk error handling — yang berubah adalah mental modelnya. Expected error (validasi, response API gagal) dimodelkan sebagai return value, sementara uncaught exception ditangani oleh boundary: per segment lewat `error.tsx` dengan `retry()`, dan per komponen lewat `catchError`. Dengan keduanya, kamu bisa membangun UI yang tidak pernah "mati total" karena satu kegagalan kecil — setiap bagian gagal dengan anggun, dan pengguna selalu punya jalan keluar berupa tombol coba lagi yang benar-benar berfungsi.
