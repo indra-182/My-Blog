@@ -1,0 +1,135 @@
+---
+title: "New Architecture React Native: Apa yang Berubah untuk Developer"
+slug: "new-architecture-react-native"
+description: "Memahami JSI, Fabric, TurboModules, dan Codegen — empat pilar New Architecture yang jadi default di React Native modern."
+publishedAt: "2026-08-19T20:00:00+07:00"
+topics: ["React Native"]
+draft: false
+---
+
+## Jangan-jangan app kamu masih jalan di atas bridge
+
+Coba buka `package.json` dan cek versi React Native kamu. Kalau di atas 0.76, aplikasi yang kamu build sebenarnya sudah memakai New Architecture secara default — tanpa kamu sadari. Tapi kalau kamu masih membayangkan cara kerja React Native seperti lima tahun lalu (JS ngobrol dengan native lewat JSON lewat jembatan tipis), kamu ketinggalan cukup banyak. Artikel ini membahas empat komponen inti New Architecture: JSI, Fabric, TurboModules, dan Codegen, plus apa artinya untuk pekerjaanmu sehari-hari.
+
+## Kenapa bridge dianggap masalah
+
+Arsitektur lama (kadang disebut Old Architecture) bekerja seperti ini: kode JavaScript dan kode native berjalan di dunia terpisah. Setiap kali JS butuh memanggil native — misalnya membaca status baterai atau mengukur layout — dia harus men-serialisasi data ke JSON, melewati "bridge" asinkron, lalu native membongkarnya lagi. Bayangkan dua orang di gedung berbeda yang cuma bisa berkomunikasi lewat surat yang harus dicetak dulu.
+
+Dua masalah klasik muncul:
+
+1. **Overhead serialisasi** — setiap pemanggilan native punya biaya encode/decode JSON.
+2. **Sinkronisasi yang mustahil** — karena bridge asinkron, kamu tidak bisa membaca nilai native secara sinkron dari JS. Mau cek tinggi keyboard? Harus pakai event.
+
+New Architecture tidak sekadar "memperbaiki" bridge — dia menghapusnya.
+
+## Empat pilar New Architecture
+
+### 1. JSI: JavaScript Interface
+
+JSI adalah lapisan C++ yang memungkinkan JavaScript dan native saling memegang referensi objek secara langsung, tanpa serialisasi JSON. Nilai dikirim sebagai pointer, bukan string. Ini yang membuka pintu untuk pemanggilan sinkron — sesuatu yang mustahil di era bridge.
+
+JSI juga yang membuat **Hermes** bisa berintegrasi begitu erat: Hermes ditulis di C++, dan JSI adalah bahasa perantara yang sama. Kalau kamu pernah penasaran kenapa startup Hermes jauh lebih cepat, ini jawabannya.
+
+### 2. Fabric: renderer baru
+
+Fabric menggantikan UI Manager lama. Sebelumnya, layout dihitung oleh Yoga di sisi native, lalu hasilnya dikirim balik ke JS dalam bentuk JSON — lalu dikirim lagi ke native untuk dirender. Bolak-balik. Fabric memindahkan render pipeline ke C++ dan memungkinkan rendering **sinkron**, yang berdampak langsung pada:
+
+- Interaksi yang lebih responsif, terutama saat list di-scroll cepat
+- Prioritas rendering: transisi dan gesture bisa diberi prioritas lebih tinggi dari kerja background
+- Konsistensi layout antara Android dan iOS
+
+### 3. TurboModules: native module tanpa antrian
+
+Di arsitektur lama, native module dipanggil lewat antrian asinkron. TurboModules memanggil metode native secara langsung via JSI — dan mendukung pemanggilan sinkron untuk kasus yang memang butuh. Loading-nya juga lazy: module hanya diinisialisasi saat pertama kali dipanggil, bukan saat app start.
+
+### 4. Codegen: TypeScript jadi kontrak native
+
+Ini bagian favorit saya. Dengan Codegen, kamu menulis spec module atau komponen dalam TypeScript, dan tooling otomatis menghasilkan kode C++/Java/Kotlin/Objective-C yang dibutuhkan. Artinya: tipe di JS dan native dijamin konsisten, dan error ketidakcocokan ketahuan saat build, bukan saat runtime di tangan pengguna.
+
+```ts
+// spec/NativeBatteryModule.ts
+import type { TurboModule } from "react-native";
+
+export interface Spec extends TurboModule {
+  getLevel(): number;
+  isCharging(): boolean;
+}
+```
+
+## Cek status New Architecture di app kamu
+
+Mau tahu app kamu sudah memakai New Architecture atau belum? Cek dari sisi JavaScript:
+
+```ts
+import { NativeModules, Platform } from "react-native";
+
+const isNewArchEnabled = global?.__turboModuleProxy != null;
+console.log(
+  `New Architecture: ${isNewArchEnabled ? "aktif" : "nonaktif"}`,
+);
+```
+
+Kalau kamu menjalankan app dengan New Architecture, `__turboModuleProxy` terdefinisi. Untuk memastikan di sisi native, kamu juga bisa cek log saat app start — app dengan New Architecture biasanya mencetak `Running "app" with {"fabric":true,"turbomodule":true}`.
+
+## Menulis TurboModule pertama kamu
+
+Biar tidak abstrak, mari buat native module sederhana yang membaca level baterai, lengkap dengan Codegen. Proyek yang memakai React Native 0.76+ sudah punya codegen terpasang, jadi kamu tinggal menyiapkan spec.
+
+Setelah spec di atas dibuat, jalankan codegen (otomatis saat `pod install` / Gradle sync) lalu implementasikan native-nya:
+
+```kotlin
+// android/app/src/main/java/com/yourapp/NativeBatteryModule.kt
+import com.facebook.react.bridge.ReactApplicationContext
+import com.facebook.react.bridge.ReactContextBaseJavaModule
+
+class NativeBatteryModule(
+  reactContext: ReactApplicationContext,
+) : ReactContextBaseJavaModule(reactContext) {
+  override fun getName() = "BatteryModule"
+
+  override fun getLevel(): Double {
+    val intent = reactApplicationContext.registerReceiver(
+      null,
+      android.content.IntentFilter(android.content.Intent.ACTION_BATTERY_CHANGED),
+    )
+    val level = intent?.getIntExtra("level", -1) ?: -1
+    val scale = intent?.getIntExtra("scale", 100) ?: 100
+    return if (level >= 0) level.toDouble() / scale else -1.0
+  }
+
+  override fun isCharging(): Boolean {
+    val intent = reactApplicationContext.registerReceiver(
+      null,
+      android.content.IntentFilter(android.content.Intent.ACTION_BATTERY_CHANGED),
+    )
+    return intent?.getIntExtra("status", 0) == android.os.BatteryManager.BATTERY_STATUS_CHARGING
+  }
+}
+```
+
+Dari sisi JavaScript, pemakaiannya tidak berubah banyak — tapi sekarang ada jaminan tipe:
+
+```ts
+import NativeBatteryModule from "./spec/NativeBatteryModule";
+
+export function useBattery() {
+  const level = NativeBatteryModule.getLevel();
+  const charging = NativeBatteryModule.isCharging();
+  return { level, charging };
+}
+```
+
+Perhatikan: tidak ada JSON.stringify, tidak ada dispatch queue — `getLevel()` dipanggil langsung dan nilainya kembali secara sinkron. Itulah perbedaan yang terasa nyata.
+
+## Yang perlu kamu perhatikan saat migrasi
+
+Kalau project kamu masih di React Native versi lama (di bawah 0.76), upgrade saja — New Architecture sudah stabil dan menjadi satu-satunya jalan ke depan. Tapi ada beberapa hal yang wajib dicek:
+
+1. **Library native harus kompatibel.** Library populer seperti Reanimated, Skia, dan react-native-gesture-handler sudah mendukung New Architecture penuh. Yang belum, biasanya punya `interopLayer` yang otomatis aktif — library lama tetap jalan, tapi dengan performa ala Old Architecture. Cek log untuk peringatan `LegacyNativeModules` saat app start.
+2. **Jangan gunakan pola bridge lama di kode sendiri.** Kalau kamu menulis native module manual dengan `ReactContextBaseJavaModule` tanpa spec Codegen, module kamu akan masuk interop layer. Pindahkan ke pola TurboModule + spec TypeScript untuk dapat manfaat penuh.
+3. **Hati-hati dengan sinkronisitas.** Kemampuan memanggil native secara sinkron itu menggoda, tapi jangan jadikan kebiasaan untuk hal berat. Operasi berat tetap harus async biar UI tidak tersendat.
+4. **Ukur, jangan menebak.** Sebelum migrasi, ambil baseline: waktu startup, FPS saat scroll, waktu interaksi. Setelah migrasi, bandingkan. Kebanyakan tim melihat penurunan waktu startup dan scroll yang lebih halus — tapi datamu sendiri lebih valid daripada klaim siapa pun.
+
+## Kesimpulan
+
+New Architecture bukan sekadar proyek teknis internal Meta — ini fondasi yang menentukan arah React Native ke depan. JSI menghapus biaya komunikasi JS-native, Fabric membuat rendering lebih sinkron dan responsif, TurboModules membunuh antrian yang tidak perlu, dan Codegen mengubah kontrak tipe menjadi sesuatu yang diverifikasi mesin. Sebagai developer, kamu tidak harus menguasai C++ untuk menikmati manfaatnya — cukup pahami mental modelnya, pastikan library yang kamu pakai kompatibel, dan pindahkan native module lama ke pola TurboModule. App yang lebih cepat, startup yang lebih singkat, dan tipe yang lebih aman adalah hadiah yang bisa kamu klaim hari ini juga.
