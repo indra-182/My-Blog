@@ -1,6 +1,6 @@
-import type { Dictionary } from "@/i18n/dictionaries";
+import dictionary from "@/i18n/messages/id.json";
 
-export function BlogHero({ dictionary }: { dictionary: Dictionary }) {
+export function BlogHero() {
   return (
     <section className="blog-hero">
       <div className="shell">

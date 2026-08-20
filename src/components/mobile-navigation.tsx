@@ -3,13 +3,13 @@
 import Link from "next/link";
 import { useState } from "react";
 import { Menu, X } from "@/components/icons";
-import type { Dictionary } from "@/i18n/dictionaries";
+import dictionary from "@/i18n/messages/id.json";
 
 const portfolioUrl =
   process.env.NEXT_PUBLIC_PORTFOLIO_URL ??
   "https://portfolio-indradev.vercel.app/";
 
-export function MobileNavigation({ dictionary }: { dictionary: Dictionary }) {
+export function MobileNavigation() {
   const [open, setOpen] = useState(false);
   return (
     <div className="mobile-nav">

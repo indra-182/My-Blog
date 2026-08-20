@@ -10,7 +10,7 @@ export default defineConfig({
     trace: "retain-on-failure",
   },
   webServer: {
-    command: "npm run dev -- --port 3001",
+    command: "pnpm dev --port 3001",
     env: {
       CONTENT_ROOT: path.resolve("src/test/fixtures/posts"),
     },

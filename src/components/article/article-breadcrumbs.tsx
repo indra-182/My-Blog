@@ -1,13 +1,7 @@
 import Link from "next/link";
-import type { Dictionary } from "@/i18n/dictionaries";
+import dictionary from "@/i18n/messages/id.json";
 
-export function ArticleBreadcrumbs({
-  title,
-  dictionary,
-}: {
-  title: string;
-  dictionary: Dictionary;
-}) {
+export function ArticleBreadcrumbs({ title }: { title: string }) {
   return (
     <nav className="breadcrumbs" aria-label="Jejak navigasi">
       <Link href="/">{dictionary.article.home}</Link>

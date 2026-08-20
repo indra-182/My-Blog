@@ -1,6 +1,5 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
-import { getDictionary } from "@/i18n/dictionaries";
 import { ThemeToggle } from "./theme-toggle";
 
 afterEach(() => {
@@ -11,7 +10,7 @@ afterEach(() => {
 
 describe("ThemeToggle", () => {
   it("uses the resolved light/dark theme and never exposes System as an icon state", () => {
-    render(<ThemeToggle dictionary={getDictionary()} />);
+    render(<ThemeToggle />);
 
     const button = screen.getByRole("button", { name: "Tema: Gelap" });
     expect(button.querySelector("svg")).toBeTruthy();

@@ -2,7 +2,7 @@
 
 import { useSyncExternalStore } from "react";
 import { Moon, Sun } from "@/components/icons";
-import type { Dictionary } from "@/i18n/dictionaries";
+import dictionary from "@/i18n/messages/id.json";
 
 type Theme = "light" | "dark";
 
@@ -48,7 +48,7 @@ function getServerTheme(): Theme {
   return "dark";
 }
 
-export function ThemeToggle({ dictionary }: { dictionary: Dictionary }) {
+export function ThemeToggle() {
   const active = useSyncExternalStore(
     subscribeToTheme,
     getThemeSnapshot,

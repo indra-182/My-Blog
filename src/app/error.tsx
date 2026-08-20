@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect } from "react";
-import { getDictionary } from "@/i18n/dictionaries";
+import dictionary from "@/i18n/messages/id.json";
 
 export default function Error({
   error,
@@ -14,7 +14,6 @@ export default function Error({
   useEffect(() => {
     console.error(error);
   }, [error]);
-  const dictionary = getDictionary();
   return (
     <main className="page-main">
       <div className="shell not-found">

@@ -1,7 +1,6 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import type { PostSummary } from "@/content/post-types";
-import { getDictionary } from "@/i18n/dictionaries";
 import { siteConfig } from "@/lib/site-config";
 import { ArticleBreadcrumbs } from "./article/article-breadcrumbs";
 import { SeriesNavigation } from "./article/series-navigation";
@@ -13,7 +12,7 @@ import { SiteHeader } from "./site-header";
 vi.mock("next/navigation", () => ({
   usePathname: () => "/",
   useRouter: () => ({ replace: vi.fn() }),
-  useSearchParams: () => new URLSearchParams(),
+  useSearchParams: () => new URLSearchParams(window.location.search),
 }));
 
 const post: PostSummary = {
@@ -75,17 +74,16 @@ describe("shared shell", () => {
   });
 
   it("uses Indonesian labels for navigational landmarks", () => {
-    const dictionary = getDictionary();
     cleanup();
 
     render(
       <>
         <SiteHeader />
         <SiteFooter />
-        <MobileNavigation dictionary={dictionary} />
-        <PostBrowser posts={[post]} dictionary={dictionary} />
-        <ArticleBreadcrumbs title={post.title} dictionary={dictionary} />
-        <SeriesNavigation previous={post} next={null} dictionary={dictionary} />
+        <MobileNavigation />
+        <PostBrowser posts={[post]} />
+        <ArticleBreadcrumbs title={post.title} />
+        <SeriesNavigation previous={post} next={null} />
       </>,
     );
 
@@ -124,9 +122,7 @@ describe("shared shell", () => {
     cleanup();
     window.history.replaceState(null, "", "/?q=React");
     try {
-      render(
-        <PostBrowser posts={[post, otherPost]} dictionary={getDictionary()} />,
-      );
+      render(<PostBrowser posts={[post, otherPost]} />);
 
       expect(screen.getByLabelText("Cari tulisan")).toHaveValue("React");
       expect(

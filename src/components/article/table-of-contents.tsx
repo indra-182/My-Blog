@@ -1,13 +1,7 @@
 import type { TableOfContentsItem } from "@/content/toc";
-import type { Dictionary } from "@/i18n/dictionaries";
+import dictionary from "@/i18n/messages/id.json";
 
-export function TableOfContents({
-  items,
-  dictionary,
-}: {
-  items: TableOfContentsItem[];
-  dictionary: Dictionary;
-}) {
+export function TableOfContents({ items }: { items: TableOfContentsItem[] }) {
   if (items.length < 2) return null;
   return (
     <nav className="toc" aria-label={dictionary.article.toc}>

@@ -7,7 +7,6 @@ export type PostFrontmatter = {
   topics: string[];
   series?: string;
   seriesOrder?: number;
-  cover?: string;
   draft: boolean;
   canonical?: string;
   socialTitle?: string;

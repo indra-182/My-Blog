@@ -1,14 +1,8 @@
 import Link from "next/link";
 import type { PostSummary } from "@/content/post-types";
-import type { Dictionary } from "@/i18n/dictionaries";
+import dictionary from "@/i18n/messages/id.json";
 
-export function RelatedPosts({
-  posts,
-  dictionary,
-}: {
-  posts: PostSummary[];
-  dictionary: Dictionary;
-}) {
+export function RelatedPosts({ posts }: { posts: PostSummary[] }) {
   if (posts.length === 0) return null;
   return (
     <section className="related-section" aria-labelledby="related-title">

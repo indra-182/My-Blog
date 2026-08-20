@@ -64,9 +64,7 @@ Mau tahu app kamu sudah memakai New Architecture atau belum? Cek dari sisi JavaS
 import { NativeModules, Platform } from "react-native";
 
 const isNewArchEnabled = global?.__turboModuleProxy != null;
-console.log(
-  `New Architecture: ${isNewArchEnabled ? "aktif" : "nonaktif"}`,
-);
+console.log(`New Architecture: ${isNewArchEnabled ? "aktif" : "nonaktif"}`);
 ```
 
 Kalau kamu menjalankan app dengan New Architecture, `__turboModuleProxy` terdefinisi. Untuk memastikan di sisi native, kamu juga bisa cek log saat app start — app dengan New Architecture biasanya mencetak `Running "app" with {"fabric":true,"turbomodule":true}`.
