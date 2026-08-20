@@ -1,43 +1,19 @@
 "use client";
 
-import { usePathname, useRouter } from "next/navigation";
-import { useMemo, useState, useSyncExternalStore } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useMemo, useState } from "react";
 import { ChevronDown, Search } from "@/components/icons";
 import type { PostSummary } from "@/content/post-types";
-import type { Dictionary } from "@/i18n/dictionaries";
+import dictionary from "@/i18n/messages/id.json";
 import { filterPosts } from "@/lib/filter-posts";
 import { PostCard } from "./post-card";
 
-function subscribeToLocation(onStoreChange: () => void) {
-  window.addEventListener("popstate", onStoreChange);
-  return () => window.removeEventListener("popstate", onStoreChange);
-}
+const pageSize = 6;
 
-function getClientSearch() {
-  return window.location.search;
-}
-
-function getServerSearch() {
-  return "";
-}
-
-export function PostBrowser({
-  posts,
-  dictionary,
-  pageSize = 6,
-}: {
-  posts: PostSummary[];
-  dictionary: Dictionary;
-  pageSize?: number;
-}) {
+export function PostBrowser({ posts }: { posts: PostSummary[] }) {
   const router = useRouter();
   const pathname = usePathname();
-  const search = useSyncExternalStore(
-    subscribeToLocation,
-    getClientSearch,
-    getServerSearch,
-  );
-  const searchParams = useMemo(() => new URLSearchParams(search), [search]);
+  const searchParams = useSearchParams();
   const query = searchParams.get("q") ?? "";
   const topic = searchParams.get("topic") ?? "all";
   const series = searchParams.get("series") ?? "all";
@@ -70,16 +46,12 @@ export function PostBrowser({
     if (values.topic !== "all") params.set("topic", values.topic);
     if (values.series !== "all") params.set("series", values.series);
     const nextUrl = `${pathname}${params.toString() ? `?${params.toString()}` : ""}`;
-    window.history.replaceState(null, "", nextUrl);
-    window.dispatchEvent(new PopStateEvent("popstate"));
     router.replace(nextUrl, { scroll: false });
     setVisibleCount(pageSize);
   }
 
   function resetFilters() {
     setVisibleCount(pageSize);
-    window.history.replaceState(null, "", pathname);
-    window.dispatchEvent(new PopStateEvent("popstate"));
     router.replace(pathname, { scroll: false });
   }
 

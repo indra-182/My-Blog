@@ -1,6 +1,5 @@
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { getDictionary } from "@/i18n/dictionaries";
 import { CodeBlock } from "./code-block";
 
 describe("CodeBlock", () => {
@@ -11,13 +10,7 @@ describe("CodeBlock", () => {
       configurable: true,
       value: { writeText },
     });
-    render(
-      <CodeBlock
-        code="const value = 1"
-        language="ts"
-        dictionary={getDictionary()}
-      />,
-    );
+    render(<CodeBlock code="const value = 1" language="ts" />);
 
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "Salin" }));
@@ -47,7 +40,6 @@ describe("CodeBlock", () => {
           <span style={{ color: "#ff79c6" }}>const value = 1</span>
         }
         language="ts"
-        dictionary={getDictionary()}
       />,
     );
 

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getDictionary } from "@/i18n/dictionaries";
+import dictionary from "@/i18n/messages/id.json";
 import { siteConfig } from "@/lib/site-config";
 import { Briefcase, Mail } from "@/components/icons";
 
@@ -32,7 +32,6 @@ function LinkedinIcon() {
 }
 
 export function SiteFooter() {
-  const dictionary = getDictionary();
   return (
     <footer className="site-footer">
       <div className="shell footer-grid">

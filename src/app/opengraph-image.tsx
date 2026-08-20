@@ -1,8 +1,7 @@
 import { ImageResponse } from "next/og";
-import { getDictionary } from "@/i18n/dictionaries";
+import dictionary from "@/i18n/messages/id.json";
 
 export default async function OpenGraphImage() {
-  const dictionary = getDictionary();
   return new ImageResponse(
     <div
       style={{

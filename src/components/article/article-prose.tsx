@@ -5,16 +5,9 @@ import rehypePrettyCode from "rehype-pretty-code";
 import rehypeSlug from "rehype-slug";
 import remarkGfm from "remark-gfm";
 import type { PostDocument } from "@/content/post-types";
-import type { Dictionary } from "@/i18n/dictionaries";
 import { CodeBlock } from "./code-block";
 
-export async function ArticleProse({
-  post,
-  dictionary,
-}: {
-  post: PostDocument;
-  dictionary: Dictionary;
-}) {
+export async function ArticleProse({ post }: { post: PostDocument }) {
   function extractText(node: React.ReactNode): string {
     if (typeof node === "string" || typeof node === "number")
       return String(node);
@@ -46,7 +39,6 @@ export async function ArticleProse({
             code={extractText(props.children).replace(/\n$/, "")}
             highlightedCode={props.children}
             language={language}
-            dictionary={dictionary}
           />
         );
       }

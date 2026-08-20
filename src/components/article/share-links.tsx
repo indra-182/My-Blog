@@ -1,16 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import type { Dictionary } from "@/i18n/dictionaries";
+import dictionary from "@/i18n/messages/id.json";
 import { Check, Copy, Share2 } from "@/components/icons";
 
-export function ShareLinks({
-  title,
-  dictionary,
-}: {
-  title: string;
-  dictionary: Dictionary;
-}) {
+export function ShareLinks({ title }: { title: string }) {
   const [copied, setCopied] = useState(false);
   async function copyLink() {
     try {

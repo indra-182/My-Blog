@@ -1,11 +1,10 @@
 import Link from "next/link";
 import { MobileNavigation } from "./mobile-navigation";
 import { ThemeToggle } from "./theme-toggle";
-import { getDictionary } from "@/i18n/dictionaries";
+import dictionary from "@/i18n/messages/id.json";
 import { siteConfig } from "@/lib/site-config";
 
 export function SiteHeader() {
-  const dictionary = getDictionary();
   return (
     <header className="site-header">
       <div className="shell site-header-inner">
@@ -21,8 +20,8 @@ export function SiteHeader() {
           </Link>
         </nav>
         <div className="header-actions">
-          <ThemeToggle dictionary={dictionary} />
-          <MobileNavigation dictionary={dictionary} />
+          <ThemeToggle />
+          <MobileNavigation />
         </div>
       </div>
     </header>

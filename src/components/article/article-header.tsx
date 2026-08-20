@@ -1,5 +1,5 @@
 import type { PostSummary } from "@/content/post-types";
-import type { Dictionary } from "@/i18n/dictionaries";
+import dictionary from "@/i18n/messages/id.json";
 
 function formatDate(date: string) {
   return new Intl.DateTimeFormat("id-ID", {
@@ -8,13 +8,7 @@ function formatDate(date: string) {
   }).format(new Date(date));
 }
 
-export function ArticleHeader({
-  post,
-  dictionary,
-}: {
-  post: PostSummary;
-  dictionary: Dictionary;
-}) {
+export function ArticleHeader({ post }: { post: PostSummary }) {
   return (
     <header className="article-header">
       <div className="topic-list">

@@ -3,18 +3,16 @@
 import { useState } from "react";
 import type { ReactNode } from "react";
 import { Check, Copy } from "@/components/icons";
-import type { Dictionary } from "@/i18n/dictionaries";
+import dictionary from "@/i18n/messages/id.json";
 
 export function CodeBlock({
   code,
   highlightedCode,
   language,
-  dictionary,
 }: {
   code: string;
   highlightedCode?: ReactNode;
   language?: string;
-  dictionary: Dictionary;
 }) {
   const [status, setStatus] = useState<"idle" | "copied" | "failed">("idle");
 

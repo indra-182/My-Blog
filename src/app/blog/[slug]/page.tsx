@@ -9,7 +9,6 @@ import { ShareLinks } from "@/components/article/share-links";
 import { TableOfContents } from "@/components/article/table-of-contents";
 import { postRepository } from "@/content/post-repository";
 import { extractTableOfContents } from "@/content/toc";
-import { getDictionary } from "@/i18n/dictionaries";
 import { siteConfig } from "@/lib/site-config";
 
 export async function generateStaticParams() {
@@ -50,7 +49,6 @@ export default async function ArticlePage({
   const { slug } = await params;
   const post = await postRepository.getPostBySlug(slug);
   if (!post) notFound();
-  const dictionary = getDictionary();
   const [neighbors, related] = await Promise.all([
     postRepository.getSeriesNeighbors(post),
     postRepository.getRelatedPosts(post, 3),
@@ -59,20 +57,19 @@ export default async function ArticlePage({
   return (
     <main id="main-content" className="page-main">
       <div className="shell article-layout">
-        <ArticleBreadcrumbs title={post.title} dictionary={dictionary} />
-        <ArticleHeader post={post} dictionary={dictionary} />
+        <ArticleBreadcrumbs title={post.title} />
+        <ArticleHeader post={post} />
         <div className="article-body-grid">
-          <ArticleProse post={post} dictionary={dictionary} />
-          <TableOfContents items={toc} dictionary={dictionary} />
+          <ArticleProse post={post} />
+          <TableOfContents items={toc} />
         </div>
         <footer className="article-footer">
           <SeriesNavigation
             previous={neighbors.previous}
             next={neighbors.next}
-            dictionary={dictionary}
           />
-          <RelatedPosts posts={related} dictionary={dictionary} />
-          <ShareLinks title={post.title} dictionary={dictionary} />
+          <RelatedPosts posts={related} />
+          <ShareLinks title={post.title} />
         </footer>
       </div>
     </main>

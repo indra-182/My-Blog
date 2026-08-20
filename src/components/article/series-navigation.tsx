@@ -1,15 +1,13 @@
 import Link from "next/link";
 import type { PostSummary } from "@/content/post-types";
-import type { Dictionary } from "@/i18n/dictionaries";
+import dictionary from "@/i18n/messages/id.json";
 
 export function SeriesNavigation({
   previous,
   next,
-  dictionary,
 }: {
   previous: PostSummary | null;
   next: PostSummary | null;
-  dictionary: Dictionary;
 }) {
   if (!previous && !next) return null;
   return (

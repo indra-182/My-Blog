@@ -50,6 +50,5 @@
     "notFoundDescription": "Tulisan ini mungkin masih draft atau belum tersedia.",
     "tryAgain": "Coba lagi",
     "home": "Ke beranda"
-  },
-  "actions": { "viewArticle": "Baca tulisan", "resetFilters": "Reset filter" }
+  }
 }

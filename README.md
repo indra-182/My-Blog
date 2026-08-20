@@ -5,8 +5,8 @@ Indonesian technical blog for React, Next.js, TypeScript, and React Native. The 
 ## Development
 
 ```bash
-npm install
-npm run dev
+pnpm install
+pnpm dev
 ```
 
 The root URL (`/`) is the canonical blog homepage. Articles live at `/blog/<slug>`.
@@ -24,12 +24,12 @@ topics: ["React"]
 draft: false
 ```
 
-`updatedAt`, `cover`, canonical/social overrides, and the paired `series` plus positive integer `seriesOrder` are optional. Slugs must be unique. Publication timestamps use Asia/Jakarta semantics. Future posts must remain drafts; drafts are excluded from the site, RSS, sitemap, and latest-post feed.
+`updatedAt`, canonical/social overrides, and the paired `series` plus positive integer `seriesOrder` are optional. Slugs must be unique. Publication timestamps use Asia/Jakarta semantics. Future posts must remain drafts; drafts are excluded from the site, RSS, sitemap, and latest-post feed.
 
 Validate content with:
 
 ```bash
-npm run content:validate
+pnpm content:validate
 ```
 
 The production content directory intentionally has no sample articles. Tests use private fixtures under `src/test/fixtures/posts` and Playwright injects that root through `CONTENT_ROOT`.
@@ -46,12 +46,12 @@ Environment names are documented in `.env.example`: `NEXT_PUBLIC_BLOG_URL`, `NEX
 ## Quality gate
 
 ```bash
-npm run content:validate
-npm test
-npm run lint
-npm run typecheck
-npm run build
-npm run test:e2e
+pnpm content:validate
+pnpm test
+pnpm lint
+pnpm typecheck
+pnpm build
+pnpm test:e2e
 ```
 
 Hermes scheduling, CMS publishing, analytics, comments, newsletter, and deployment automation are outside this MVP.
