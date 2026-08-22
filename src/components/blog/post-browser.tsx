@@ -4,7 +4,6 @@ import {
   startTransition,
   useCallback,
   useEffect,
-  useMemo,
   useRef,
   useState,
 } from "react";
@@ -81,21 +80,13 @@ export function PostBrowser({ posts }: { posts: PostSummary[] }) {
     return () => window.clearTimeout(timeout);
   }, [query, urlQuery, topic, series, replaceUrl]);
 
-  const topics = useMemo(
-    () => Array.from(new Set(posts.flatMap((post) => post.topics))).sort(),
-    [posts],
-  );
-  const seriesOptions = useMemo(
-    () =>
-      Array.from(
-        new Set(posts.map((post) => post.series).filter(Boolean)),
-      ).sort() as string[],
-    [posts],
-  );
-  const filteredPosts = useMemo(
-    () => filterPosts(posts, query, topic, series),
-    [posts, query, topic, series],
-  );
+  const topics = Array.from(
+    new Set(posts.flatMap((post) => post.topics)),
+  ).sort();
+  const seriesOptions = Array.from(
+    new Set(posts.map((post) => post.series).filter(Boolean)),
+  ).sort() as string[];
+  const filteredPosts = filterPosts(posts, query, topic, series);
   const visiblePosts = filteredPosts.slice(0, visibleCount);
 
   function handleQueryChange(nextQuery: string) {

@@ -36,3 +36,5 @@ export const postFrontmatterSchema = z
     (post) => Boolean(post.series) === (post.seriesOrder !== undefined),
     "series and seriesOrder must be provided together",
   );
+
+export type PostFrontmatter = z.infer<typeof postFrontmatterSchema>;

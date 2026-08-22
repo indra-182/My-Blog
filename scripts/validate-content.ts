@@ -1,9 +1,7 @@
-import path from "node:path";
+import { defaultRootDirectory } from "@/content/post-repository";
 import { validateContentDirectory } from "@/content/validate-content";
 
-const root = path.resolve(
-  process.env.CONTENT_ROOT ?? path.join(process.cwd(), "content/posts"),
-);
+const root = defaultRootDirectory();
 
 async function main() {
   const issues = await validateContentDirectory(root);

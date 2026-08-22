@@ -145,31 +145,6 @@ Body`,
     expect(String(warn.mock.calls[0]?.[0])).toContain("broken.mdx");
   });
 
-  it("hides future non-drafts publicly but includes them with includeDrafts", async () => {
-    const root = await mkdtemp(path.join(os.tmpdir(), "blog-content-"));
-    await mkdir(root, { recursive: true });
-    await writeFile(
-      path.join(root, "scheduled.mdx"),
-      `---
-title: "Scheduled"
-slug: "scheduled-post"
-description: "Scheduled"
-publishedAt: "2099-01-01T20:00:00+07:00"
-topics: ["React"]
-draft: false
----
-
-Body`,
-    );
-
-    const repository = createPostRepository(root);
-    expect(await repository.getAllPosts()).toEqual([]);
-    expect(await repository.getPostBySlug("scheduled-post")).toBeNull();
-
-    const everything = await repository.getAllPosts({ includeDrafts: true });
-    expect(everything.map((post) => post.slug)).toEqual(["scheduled-post"]);
-  });
-
   it("returns metadata and source from the same document when slugs collide", async () => {
     const root = await mkdtemp(path.join(os.tmpdir(), "blog-content-"));
     await mkdir(root, { recursive: true });

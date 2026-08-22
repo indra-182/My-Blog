@@ -3,15 +3,14 @@ import path from "node:path";
 import { cache } from "react";
 import matter from "gray-matter";
 import readingTime from "reading-time";
-import { ZodError } from "zod";
 import { postFrontmatterSchema } from "./post-schema";
-import type { PostDocument, PostFrontmatter, PostSummary } from "./post-types";
+import type { PostDocument, PostSummary } from "./post-types";
 
 type PostFileResult =
   | { success: true; data: PostDocument; filePath: string }
-  | { success: false; filePath: string; error: ZodError | Error };
+  | { success: false; filePath: string; error: Error };
 
-function defaultRootDirectory() {
+export function defaultRootDirectory() {
   return path.resolve(
     process.env.CONTENT_ROOT ?? path.join(process.cwd(), "content/posts"),
   );
@@ -36,7 +35,7 @@ export function parsePostSource(
       return { success: false, filePath, error: result.error };
     }
 
-    const frontmatter = result.data as PostFrontmatter;
+    const frontmatter = result.data;
     return {
       success: true,
       filePath,
@@ -102,12 +101,6 @@ function uniqueBySlug<T extends PostSummary>(posts: T[]): T[] {
   });
 }
 
-function toSummary(document: PostDocument): PostSummary {
-  const { source, ...summary } = document;
-  void source;
-  return summary;
-}
-
 export function createPostRepository(rootDirectory = defaultRootDirectory()) {
   // React cache dedupes reads and parses within a single server request.
   const loadDocuments = cache(async (): Promise<PostDocument[]> => {
@@ -120,11 +113,13 @@ export function createPostRepository(rootDirectory = defaultRootDirectory()) {
     return uniqueBySlug(documents.filter((document) => isPublished(document)));
   }
 
-  async function getAllPosts(options?: { includeDrafts?: boolean }) {
-    const documents = options?.includeDrafts
-      ? uniqueBySlug(await loadDocuments())
-      : await getPublicDocuments();
-    return documents.map(toSummary);
+  async function getAllPosts() {
+    const documents = await getPublicDocuments();
+    return documents.map((document) => {
+      const { source, ...summary } = document;
+      void source;
+      return summary;
+    });
   }
 
   async function getPostBySlug(slug: string) {
