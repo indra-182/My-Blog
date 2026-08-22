@@ -1,22 +1,21 @@
 import Link from "next/link";
 import { ArrowUpRight } from "@/components/icons";
 import type { PostSummary } from "@/content/post-types";
-
-function formatDate(date: string) {
-  return new Intl.DateTimeFormat("id-ID", {
-    dateStyle: "medium",
-    timeZone: "Asia/Jakarta",
-  }).format(new Date(date));
-}
+import dictionary from "@/i18n/messages/id.json";
+import { formatDate } from "@/lib/format-date";
 
 export function PostCard({ post }: { post: PostSummary }) {
   return (
     <article className="post-card">
       <div>
         <div className="post-meta">
-          <span>{formatDate(post.publishedAt)}</span>
+          <time dateTime={post.publishedAt}>
+            {formatDate(post.publishedAt)}
+          </time>
           <span>·</span>
-          <span>{post.readingTimeMinutes} menit baca</span>
+          <span>
+            {post.readingTimeMinutes} {dictionary.article.readingTime}
+          </span>
           {post.series ? (
             <>
               <span>·</span>

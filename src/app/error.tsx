@@ -15,17 +15,18 @@ export default function Error({
     console.error(error);
   }, [error]);
   return (
-    <main className="page-main">
+    <main id="main-content" className="page-main">
       <div className="shell not-found">
         <div>
           <div className="eyebrow">500</div>
-          <h1>Terjadi kesalahan</h1>
-          <p>Terjadi kendala saat memuat halaman ini.</p>
-          <button className="load-more" type="button" onClick={() => reset()}>
-            {dictionary.errors.tryAgain}
-          </button>
-          <br />
-          <Link href="/">{dictionary.errors.home}</Link>
+          <h1>{dictionary.errors.errorTitle}</h1>
+          <p>{dictionary.errors.errorDescription}</p>
+          <div className="error-actions">
+            <button className="load-more" type="button" onClick={() => reset()}>
+              {dictionary.errors.tryAgain}
+            </button>
+            <Link href="/">{dictionary.errors.home}</Link>
+          </div>
         </div>
       </div>
     </main>

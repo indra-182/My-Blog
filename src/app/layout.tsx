@@ -4,7 +4,7 @@ import { SiteHeader } from "@/components/site-header";
 import { siteConfig } from "@/lib/site-config";
 import "./globals.css";
 
-const themeScript = `(()=>{try{const t=localStorage.getItem("theme")==="light"?"light":"dark";document.documentElement.classList.toggle("dark",t==="dark");document.documentElement.style.colorScheme=t}catch{document.documentElement.classList.add("dark");document.documentElement.style.colorScheme="dark"}})()`;
+const themeScript = `(()=>{try{const s=localStorage.getItem("theme");const t=s==="light"||s==="dark"?s:matchMedia("(prefers-color-scheme: light)").matches?"light":"dark";document.documentElement.classList.toggle("dark",t==="dark");document.documentElement.style.colorScheme=t}catch{document.documentElement.classList.add("dark");document.documentElement.style.colorScheme="dark"}})()`;
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.blogUrl),

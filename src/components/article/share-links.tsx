@@ -1,27 +1,46 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import dictionary from "@/i18n/messages/id.json";
 import { Check, Copy, Share2 } from "@/components/icons";
 
+const copiedResetMs = 1800;
+
 export function ShareLinks({ title }: { title: string }) {
   const [copied, setCopied] = useState(false);
+  const copiedTimeoutRef = useRef<number | undefined>(undefined);
+
+  useEffect(() => {
+    return () => window.clearTimeout(copiedTimeoutRef.current);
+  }, []);
+
   async function copyLink() {
     try {
       await navigator.clipboard.writeText(window.location.href);
       setCopied(true);
-      window.setTimeout(() => setCopied(false), 1800);
+      window.clearTimeout(copiedTimeoutRef.current);
+      copiedTimeoutRef.current = window.setTimeout(() => {
+        setCopied(false);
+      }, copiedResetMs);
     } catch {
       setCopied(false);
     }
   }
+
   async function share() {
-    if (navigator.share) {
-      await navigator.share({ title, url: window.location.href });
+    if (!navigator.share) {
+      await copyLink();
       return;
     }
-    await copyLink();
+    try {
+      await navigator.share({ title, url: window.location.href });
+    } catch (error) {
+      // Cancelling the native share sheet is not a failure.
+      if ((error as { name?: string })?.name === "AbortError") return;
+      await copyLink();
+    }
   }
+
   function shareToLinkedIn() {
     window.open(
       `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.href)}`,
@@ -29,12 +48,14 @@ export function ShareLinks({ title }: { title: string }) {
       "noopener,noreferrer",
     );
   }
+
   return (
     <section className="share-section" aria-labelledby="share-title">
       <h2 id="share-title">{dictionary.article.share}</h2>
       <div className="share-actions">
         <button type="button" onClick={share}>
-          <Share2 size={15} aria-hidden="true" /> Share
+          <Share2 size={15} aria-hidden="true" />{" "}
+          {dictionary.article.shareAction}
         </button>
         <button type="button" onClick={shareToLinkedIn}>
           LinkedIn
@@ -45,7 +66,7 @@ export function ShareLinks({ title }: { title: string }) {
           ) : (
             <Copy size={15} aria-hidden="true" />
           )}{" "}
-          {copied ? dictionary.article.copied : "Copy link"}
+          {copied ? dictionary.article.copied : dictionary.article.copyLink}
         </button>
       </div>
     </section>

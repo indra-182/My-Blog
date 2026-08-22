@@ -1,12 +1,6 @@
 import type { PostSummary } from "@/content/post-types";
 import dictionary from "@/i18n/messages/id.json";
-
-function formatDate(date: string) {
-  return new Intl.DateTimeFormat("id-ID", {
-    dateStyle: "long",
-    timeZone: "Asia/Jakarta",
-  }).format(new Date(date));
-}
+import { formatDate } from "@/lib/format-date";
 
 export function ArticleHeader({ post }: { post: PostSummary }) {
   return (
@@ -22,7 +16,10 @@ export function ArticleHeader({ post }: { post: PostSummary }) {
       <p className="article-description">{post.description}</p>
       <div className="article-metadata">
         <span>
-          {dictionary.article.published} {formatDate(post.publishedAt)}
+          {dictionary.article.published}{" "}
+          <time dateTime={post.publishedAt}>
+            {formatDate(post.publishedAt, "long")}
+          </time>
         </span>
         <span>·</span>
         <span>
@@ -32,7 +29,10 @@ export function ArticleHeader({ post }: { post: PostSummary }) {
           <>
             <span>·</span>
             <span>
-              {dictionary.article.updated} {formatDate(post.updatedAt)}
+              {dictionary.article.updated}{" "}
+              <time dateTime={post.updatedAt}>
+                {formatDate(post.updatedAt, "long")}
+              </time>
             </span>
           </>
         ) : null}

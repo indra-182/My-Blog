@@ -13,7 +13,9 @@ test("article exposes reading primitives and copy code", async ({ page }) => {
   await expect(
     page.getByRole("link", { name: /Jaga URL tetap dapat dibagikan/i }),
   ).toBeVisible();
-  await expect(page.getByRole("button", { name: "Salin" })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Salin", exact: true }),
+  ).toBeVisible();
   await expect(page.getByText("React Architecture")).toBeVisible();
 });
 

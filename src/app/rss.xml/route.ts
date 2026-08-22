@@ -1,19 +1,8 @@
 import { postRepository } from "@/content/post-repository";
+import { escapeXml } from "@/lib/escape-xml";
 import { siteConfig } from "@/lib/site-config";
 
-function escapeXml(value: string) {
-  return value.replace(
-    /[<>&'\"]/g,
-    (character) =>
-      ({
-        "<": "&lt;",
-        ">": "&gt;",
-        "&": "&amp;",
-        "'": "&apos;",
-        '"': "&quot;",
-      })[character] ?? character,
-  );
-}
+export const dynamic = "force-static";
 
 export async function GET() {
   const posts = await postRepository.getAllPosts();

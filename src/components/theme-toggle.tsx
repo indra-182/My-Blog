@@ -6,12 +6,26 @@ import dictionary from "@/i18n/messages/id.json";
 
 type Theme = "light" | "dark";
 
-function readStoredTheme(): Theme {
+const THEME_STORAGE_KEY = "theme";
+
+function getSystemTheme(): Theme {
   try {
-    return window.localStorage.getItem("theme") === "light" ? "light" : "dark";
+    return window.matchMedia("(prefers-color-scheme: light)").matches
+      ? "light"
+      : "dark";
   } catch {
     return "dark";
   }
+}
+
+function readStoredTheme(): Theme {
+  try {
+    const stored = window.localStorage.getItem(THEME_STORAGE_KEY);
+    if (stored === "light" || stored === "dark") return stored;
+  } catch {
+    // Fall back to the system preference when storage is unavailable.
+  }
+  return getSystemTheme();
 }
 
 function applyTheme(theme: Theme) {
@@ -21,20 +35,24 @@ function applyTheme(theme: Theme) {
 
 function storeTheme(theme: Theme) {
   try {
-    window.localStorage.setItem("theme", theme);
+    window.localStorage.setItem(THEME_STORAGE_KEY, theme);
   } catch {
     // Theme still applies for this session when storage is unavailable.
   }
 }
 
 function subscribeToTheme(onChange: () => void) {
+  const media = window.matchMedia("(prefers-color-scheme: light)");
   const handleChange = () => {
+    // An explicit choice always wins over the live system preference.
     applyTheme(readStoredTheme());
     onChange();
   };
+  media.addEventListener("change", handleChange);
   window.addEventListener("storage", handleChange);
   window.addEventListener("themechange", handleChange);
   return () => {
+    media.removeEventListener("change", handleChange);
     window.removeEventListener("storage", handleChange);
     window.removeEventListener("themechange", handleChange);
   };
@@ -57,14 +75,17 @@ export function ThemeToggle() {
 
   const next = active === "dark" ? "light" : "dark";
   const Icon = active === "dark" ? Moon : Sun;
-  const label = dictionary.theme[active];
+  const label =
+    next === "light"
+      ? dictionary.theme.switchToLight
+      : dictionary.theme.switchToDark;
 
   return (
     <button
       type="button"
       className="icon-button"
-      aria-label={`${dictionary.theme.label}: ${label}`}
-      title={`${dictionary.theme.label}: ${label}`}
+      aria-label={label}
+      title={label}
       onClick={() => {
         storeTheme(next);
         applyTheme(next);

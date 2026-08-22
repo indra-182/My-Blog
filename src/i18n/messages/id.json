@@ -5,7 +5,10 @@
     "menu": "Buka menu",
     "close": "Tutup menu"
   },
-  "theme": { "label": "Tema", "light": "Terang", "dark": "Gelap" },
+  "theme": {
+    "switchToLight": "Ganti ke tema terang",
+    "switchToDark": "Ganti ke tema gelap"
+  },
   "blog": {
     "eyebrow": "Catatan teknis",
     "title": "Membangun dengan lebih sengaja.",
@@ -33,6 +36,8 @@
     "next": "Berikutnya",
     "related": "Bacaan terkait",
     "share": "Bagikan tulisan",
+    "shareAction": "Bagikan",
+    "copyLink": "Salin tautan",
     "copyCode": "Salin",
     "copied": "Tersalin",
     "copyFailed": "Tidak dapat menyalin. Pilih kode secara manual.",
@@ -48,6 +53,10 @@
   "errors": {
     "notFoundTitle": "Tulisan tidak ditemukan",
     "notFoundDescription": "Tulisan ini mungkin masih draft atau belum tersedia.",
+    "pageNotFoundTitle": "Halaman tidak ditemukan",
+    "pageNotFoundDescription": "Halaman yang kamu minta tidak ada atau belum dipublikasikan.",
+    "errorTitle": "Terjadi kesalahan",
+    "errorDescription": "Terjadi kendala saat memuat halaman ini.",
     "tryAgain": "Coba lagi",
     "home": "Ke beranda"
   }

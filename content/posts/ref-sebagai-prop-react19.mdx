@@ -1,0 +1,115 @@
+---
+title: "React 19: Ref sebagai Prop, Selamat Tinggal forwardRef"
+slug: "ref-sebagai-prop-react19"
+description: "Ref kini bisa dikirim langsung sebagai prop biasa di React 19 — forwardRef tidak lagi wajib untuk sebagian besar kasus."
+publishedAt: "2026-08-20T20:00:00+07:00"
+topics: ["React", "TypeScript"]
+draft: true
+---
+
+## Berlama-lama dengan forwardRef
+
+`forwardRef` selalu terasa seperti boilerplate yang tidak masuk akal. Sebuah komponen tombol sederhana — yang tujuannya cuma membungkus `<button>` — harus dibungkus fungsi `forwardRef`, lalu diberi generic `<ButtonProps, HTMLButtonElement>`, supaya parent bisa mengarahkan ref ke elemen DOM di dalamnya. Tiap kali buat komponen input, select, atau modal baru, ritual yang sama diulang. Di React 19 ritual itu berakhir: **ref sekarang diterima sebagai prop biasa** oleh function component, sama seperti `className` atau `onClick`.
+
+## Ref sebagai prop: contoh paling sederhana
+
+```tsx
+import { useRef } from "react";
+
+function Input(props: {
+  label: string;
+  ref?: React.Ref<HTMLInputElement>;
+}) {
+  return (
+    <label>
+      {props.label}
+      <input ref={props.ref} {...props} />
+    </label>
+  );
+}
+
+function LoginPage() {
+  const emailRef = useRef<HTMLInputElement>(null);
+
+  return (
+    <form>
+      <Input
+        label="Email"
+        ref={emailRef}
+        placeholder="nama@perusahaan.id"
+      />
+      <button
+        type="button"
+        onClick={() => emailRef.current?.focus()}
+      >
+        Fokus ke email
+      </button>
+    </form>
+  );
+}
+```
+
+Tidak ada `forwardRef`, tidak ada generic double. `ref` dicantumkan di tipe props dengan `React.Ref<T>` dan diteruskan ke elemen DOM yang dituju. TypeScript otomatis tahu bahwa `<Input ref={...}>` valid — di React 19 tipe `ComponentProps` sudah menyertakan `ref`, sehingga pemakaian dari luar terasa persis seperti elemen HTML biasa.
+
+## Kenapa ini aman dan tidak memecah React 18
+
+Wajar kalau langsung curiga: bukankah `ref` dulu anti-prop karena harus tersedia di render pertama, sementara `useRef` tidak bisa dipanggil di awal? Solusi `forwardRef` ada justru untuk mengakali keterbatasan itu.
+
+React 19 menyelesaikan masalahnya dari dalam: ref dimasukkan ke dalam props untuk semua function component saat render. Komponen yang menerima `ref` sebagai prop tidak perlu tahu asal-usulnya — tapinya disuntikkan React. Artinya dua hal sekaligus: pola ini **resmi** didukung, dan kode yang ditulis dengan gaya react-19 ref-as-prop tetap berjalan normal di React 18, karena di versi lama `ref` hanya diperlakukan sebagai prop biasa yang tidak punya perilaku khusus (minus warning untuk string ref).
+
+Satu pengecualian yang perlu diingat: **class component tidak berubah**. Ref ke class component tetap menunjuk ke instance komponen, jadi gaya baru ini hanya berlaku untuk function component.
+
+## Kapan harus tetap memakai forwardRef
+
+Ada tiga situasi di mana `forwardRef` masih diperlukan:
+
+1. **Library UI publik**: kamu menjual komponen ke tim lain (atau npm). React 19 menandai `forwardRef` sebagai deprecated dengan peringatan "Use ref as a prop instead" pada `React.forwardRef`. Komponen lib yang memakai prop-ref tidak akan bisa dipakai oleh pengguna yang masih di React 18. Sampai audiensmu yakin sudah naik versi, forwardRef adalah pilihan kompatibel.
+2. **Membungkus komponen yang memakai forwardRef**: saat komponen dalam masih forwardRef-wrapper, atau kamu berinteraksi dengan kode yang belum dimigrasi, biarkan apa adanya dan teruskan ref dari luar.
+3. **Kasus branching render**: bila ref harus menunjuk ke elemen berbeda tergantung kondisi, perilaku lama yang menautkan ref di render pertama bisa lebih mudah dipahami daripada logika di dalam component body.
+
+## Perhatikan tipe di TypeScript
+
+Migrasi paling sering tersandung di bagian tipe. Saat menghapus `forwardRef`, jangan menyalin tipe kuno begitu saja:
+
+```tsx
+// ❌ Sebelum (React 18)
+const Button = forwardRef<HTMLButtonElement, ButtonProps>(...);
+
+// ❌ Salah — tipe ini tidak membuat ref tersedia dari luar
+function Button(props: ButtonProps) { ... }
+
+// ✅ Benar (React 19)
+function Button(props: ButtonProps & { ref?: React.Ref<HTMLButtonElement> }) {
+```
+
+Karena `ref` adalah prop sekarang, memasukkan `ref?: React.Ref<T>` ke deklarasi props adalah cara yang idiomatis. Untuk komponen yang memakai `ComponentProps` atau `ComponentPropsWithoutRef` bawaan React, tambahkan `ref` secara eksplisit ke tipe intersection agar jelas dan terdokumentasi:
+
+```tsx
+import type { ComponentProps } from "react";
+
+type ButtonProps = ComponentProps<"button"> & {
+  ref?: React.Ref<HTMLButtonElement>;
+  variant?: "primary" | "ghost";
+};
+
+function Button({ ref, variant = "primary", ...rest }: ButtonProps) {
+  const style = variant === "primary" ? "bg-blue-600 text-white" : "bg-transparent";
+  return <button ref={ref} className={`rounded px-4 py-2 ${style}`} {...rest} />;
+}
+```
+
+Catatan praktis: `useRef` tetap butuh `null` sebagai nilai awal (`useRef<HTMLInputElement>(null)`), supaya type-nya `RefObject<HTMLInputElement | null>`. Sementara itu, `useImperativeHandle` tetap dipakai bersama `useRef` untuk mengekspos method ke parent — tidak terpengaruh oleh perubahan ini.
+
+## Strategi migrasi bertahap
+
+Tidak perlu mengganti semuanya dalam satu malam. Urutan yang paling aman:
+
+1. **Komponen yang dipakai sendiri** (internal, tidak diekspor sebagai API publik): konversi ke prop-ref kapan saja.
+2. **Komponen dalam satu codebase** (satu repo, versi React seragam): bisa langsung dimigrasikan; hapus juga `displayName` yang biasanya ditambahkan ke hasil `forwardRef` demi devtools.
+3. **Library yang dirilis ke npm**: tunggu sampai target versi React mayoritas adalah 19, atau rilis versi mayor berikutnya. Cek pelemparan deprecation warning di development mode — dengan begitu pengguna tahu kapan harus bersiap.
+
+Untuk komponen yang masih forwardRef di library, pertahankan, karena `forwardRef` tidak akan dihapus — hanya deprecated. Artinya tidak ada urgensi untuk menghapusnya; yang perlu diubah adalah kebiasaan menulis kode baru.
+
+## Kesimpulan
+
+Ref-as-prop menghilangkan satu lapis boilerplate yang selama ini tidak punya alasan teknis kuat untuk ada. Kode jadi lebih pendek, lebih dekat ke elemen DOM asli, dan warning deprecation di devtools membantu memastikan arah migrasi. Aturannya sederhana: function component di React 19 boleh menerima `ref` sebagai prop biasa; class component dan library publik masih memakai `forwardRef`. Sisanya hanya disiplin menulis tipe.

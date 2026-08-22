@@ -704,6 +704,17 @@ select {
   color: var(--muted);
   line-height: 1.6;
 }
+.error-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+}
+.error-actions a {
+  margin-top: 0;
+}
 .not-found a {
   display: inline-flex;
   min-height: 44px;

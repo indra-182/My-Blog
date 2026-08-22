@@ -80,7 +80,7 @@ describe("shared shell", () => {
       <>
         <SiteHeader />
         <SiteFooter />
-        <MobileNavigation />
+        <MobileNavigation portfolioUrl={siteConfig.portfolioUrl} />
         <PostBrowser posts={[post]} />
         <ArticleBreadcrumbs title={post.title} />
         <SeriesNavigation previous={post} next={null} />
