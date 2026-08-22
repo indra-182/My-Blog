@@ -1,7 +1,14 @@
 "use client";
 
+import {
+  startTransition,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useMemo, useState } from "react";
 import { ChevronDown, Search } from "@/components/icons";
 import type { PostSummary } from "@/content/post-types";
 import dictionary from "@/i18n/messages/id.json";
@@ -9,15 +16,71 @@ import { filterPosts } from "@/lib/filter-posts";
 import { PostCard } from "./post-card";
 
 const pageSize = 6;
+const searchDebounceMs = 300;
+
+type FilterValues = { query: string; topic: string; series: string };
+
+function buildSearchPath(pathname: string, values: FilterValues) {
+  const params = new URLSearchParams();
+  if (values.query) params.set("q", values.query);
+  if (values.topic !== "all") params.set("topic", values.topic);
+  if (values.series !== "all") params.set("series", values.series);
+  const queryString = params.toString();
+  return queryString ? `${pathname}?${queryString}` : pathname;
+}
 
 export function PostBrowser({ posts }: { posts: PostSummary[] }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const query = searchParams.get("q") ?? "";
+  const urlQuery = searchParams.get("q") ?? "";
   const topic = searchParams.get("topic") ?? "all";
   const series = searchParams.get("series") ?? "all";
+  const currentPath = buildSearchPath(pathname, {
+    query: urlQuery,
+    topic,
+    series,
+  });
+
+  // Typing stays in local state so filtering is immediate; the URL catches up
+  // debounced. lastPushedQueryRef marks our own URL writes so their echo does
+  // not clobber newer keystrokes.
+  const [query, setQuery] = useState(urlQuery);
   const [visibleCount, setVisibleCount] = useState(pageSize);
+  const lastPushedQueryRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    const lastPushedQuery = lastPushedQueryRef.current;
+    if (lastPushedQuery !== null) {
+      lastPushedQueryRef.current = null;
+      if (urlQuery === lastPushedQuery) return;
+    }
+
+    setQuery((current) => (current === urlQuery ? current : urlQuery));
+    setVisibleCount(pageSize);
+  }, [urlQuery]);
+
+  const replaceUrl = useCallback(
+    (values: FilterValues) => {
+      const nextPath = buildSearchPath(pathname, values);
+      if (nextPath === currentPath) return;
+      startTransition(() => {
+        router.replace(nextPath, { scroll: false });
+      });
+    },
+    [currentPath, pathname, router],
+  );
+
+  useEffect(() => {
+    const trimmedQuery = query.trim();
+    if (trimmedQuery === urlQuery) return;
+    const timeout = window.setTimeout(() => {
+      lastPushedQueryRef.current = trimmedQuery;
+      replaceUrl({ query: trimmedQuery, topic, series });
+    }, searchDebounceMs);
+    return () => window.clearTimeout(timeout);
+  }, [query, urlQuery, topic, series, replaceUrl]);
+
   const topics = useMemo(
     () => Array.from(new Set(posts.flatMap((post) => post.topics))).sort(),
     [posts],
@@ -35,24 +98,23 @@ export function PostBrowser({ posts }: { posts: PostSummary[] }) {
   );
   const visiblePosts = filteredPosts.slice(0, visibleCount);
 
-  function updateState(next: {
-    query?: string;
-    topic?: string;
-    series?: string;
-  }) {
-    const values = { query, topic, series, ...next };
-    const params = new URLSearchParams();
-    if (values.query.trim()) params.set("q", values.query.trim());
-    if (values.topic !== "all") params.set("topic", values.topic);
-    if (values.series !== "all") params.set("series", values.series);
-    const nextUrl = `${pathname}${params.toString() ? `?${params.toString()}` : ""}`;
-    router.replace(nextUrl, { scroll: false });
+  function handleQueryChange(nextQuery: string) {
+    setQuery(nextQuery);
     setVisibleCount(pageSize);
   }
 
-  function resetFilters() {
+  function applyFilters(next: { topic?: string; series?: string }) {
+    const values = { query: query.trim(), topic, series, ...next };
     setVisibleCount(pageSize);
-    router.replace(pathname, { scroll: false });
+    if (values.query !== urlQuery) lastPushedQueryRef.current = values.query;
+    replaceUrl(values);
+  }
+
+  function resetFilters() {
+    setQuery("");
+    setVisibleCount(pageSize);
+    if (urlQuery !== "") lastPushedQueryRef.current = "";
+    replaceUrl({ query: "", topic: "all", series: "all" });
   }
 
   if (posts.length === 0) {
@@ -76,9 +138,7 @@ export function PostBrowser({ posts }: { posts: PostSummary[] }) {
             <input
               id="post-search"
               value={query}
-              onChange={(event) => {
-                updateState({ query: event.target.value });
-              }}
+              onChange={(event) => handleQueryChange(event.target.value)}
               placeholder={dictionary.blog.searchPlaceholder}
             />
           </div>
@@ -90,9 +150,7 @@ export function PostBrowser({ posts }: { posts: PostSummary[] }) {
             <select
               id="topic-filter"
               value={topic}
-              onChange={(event) => {
-                updateState({ topic: event.target.value });
-              }}
+              onChange={(event) => applyFilters({ topic: event.target.value })}
             >
               <option value="all">{dictionary.blog.allTopics}</option>
               {topics.map((item) => (
@@ -110,9 +168,7 @@ export function PostBrowser({ posts }: { posts: PostSummary[] }) {
             <select
               id="series-filter"
               value={series}
-              onChange={(event) => {
-                updateState({ series: event.target.value });
-              }}
+              onChange={(event) => applyFilters({ series: event.target.value })}
             >
               <option value="all">{dictionary.blog.allSeries}</option>
               {seriesOptions.map((item) => (

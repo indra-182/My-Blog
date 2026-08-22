@@ -38,12 +38,14 @@ test("theme hydration uses only light and dark icons", async ({ page }) => {
   const pageErrors: string[] = [];
   page.on("pageerror", (error) => pageErrors.push(error.message));
   await page.goto("/");
-  const toggle = page.getByRole("button", { name: /Tema: (Terang|Gelap)/i });
+  const toggle = page.getByRole("button", {
+    name: /Ganti ke tema (terang|gelap)/i,
+  });
   await expect(toggle).toBeVisible();
   await expect(toggle.locator(".lucide-monitor")).toHaveCount(0);
   await toggle.click();
   await expect(
-    page.getByRole("button", { name: /Tema: (Terang|Gelap)/i }),
+    page.getByRole("button", { name: /Ganti ke tema (terang|gelap)/i }),
   ).toBeVisible();
   expect(
     pageErrors.filter((message) => message.includes("Hydration failed")),

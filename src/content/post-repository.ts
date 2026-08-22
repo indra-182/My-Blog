@@ -1,5 +1,6 @@
 import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
+import { cache } from "react";
 import matter from "gray-matter";
 import readingTime from "reading-time";
 import { ZodError } from "zod";
@@ -12,16 +13,15 @@ type PostFileResult =
 
 function defaultRootDirectory() {
   return path.resolve(
-    /* turbopackIgnore: true */ process.env.CONTENT_ROOT ??
-      path.join(process.cwd(), "content/posts"),
+    process.env.CONTENT_ROOT ?? path.join(process.cwd(), "content/posts"),
   );
 }
 
-function isPublished(post: PostSummary, includeDrafts: boolean) {
-  return (
-    includeDrafts ||
-    (!post.draft && new Date(post.publishedAt).getTime() <= Date.now())
-  );
+export function isPublished(
+  post: Pick<PostSummary, "draft" | "publishedAt">,
+  now: number = Date.now(),
+) {
+  return !post.draft && new Date(post.publishedAt).getTime() <= now;
 }
 
 export function parsePostSource(
@@ -34,18 +34,6 @@ export function parsePostSource(
 
     if (!result.success) {
       return { success: false, filePath, error: result.error };
-    }
-    if (
-      !result.data.draft &&
-      new Date(result.data.publishedAt).getTime() > Date.now()
-    ) {
-      return {
-        success: false,
-        filePath,
-        error: new Error(
-          "publishedAt cannot be in the future unless draft is true",
-        ),
-      };
     }
 
     const frontmatter = result.data as PostFrontmatter;
@@ -70,7 +58,7 @@ export function parsePostSource(
   }
 }
 
-async function readPosts(rootDirectory: string): Promise<PostFileResult[]> {
+async function readPosts(rootDirectory: string): Promise<PostDocument[]> {
   let filenames: string[];
   try {
     filenames = (await readdir(rootDirectory)).filter((filename) =>
@@ -81,15 +69,31 @@ async function readPosts(rootDirectory: string): Promise<PostFileResult[]> {
     throw error;
   }
 
-  return Promise.all(
+  const results = await Promise.all(
     filenames.map(async (filename) => {
       const filePath = path.join(rootDirectory, filename);
       return parsePostSource(await readFile(filePath, "utf8"), filePath);
     }),
   );
+
+  const documents: PostDocument[] = [];
+  for (const result of results) {
+    if (result.success) {
+      documents.push(result.data);
+    } else {
+      console.warn(
+        `[content] Skipping unreadable post ${result.filePath}: ${result.error.message}`,
+      );
+    }
+  }
+  return documents;
 }
 
-function uniqueBySlug(posts: PostSummary[]) {
+function publishedAtDesc(a: PostSummary, b: PostSummary) {
+  return new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime();
+}
+
+function uniqueBySlug<T extends PostSummary>(posts: T[]): T[] {
   const seen = new Set<string>();
   return posts.filter((post) => {
     if (seen.has(post.slug)) return false;
@@ -98,41 +102,34 @@ function uniqueBySlug(posts: PostSummary[]) {
   });
 }
 
-export function createPostRepository(rootDirectory = defaultRootDirectory()) {
-  async function getAllPosts(options?: { includeDrafts?: boolean }) {
-    const includeDrafts = options?.includeDrafts ?? false;
-    const parsed = await readPosts(rootDirectory);
-    const posts = parsed
-      .filter(
-        (item): item is Extract<PostFileResult, { success: true }> =>
-          item.success,
-      )
-      .map((item) => item.data)
-      .filter((post) => isPublished(post, includeDrafts))
-      .sort(
-        (a, b) =>
-          new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime(),
-      );
+function toSummary(document: PostDocument): PostSummary {
+  const { source, ...summary } = document;
+  void source;
+  return summary;
+}
 
-    return uniqueBySlug(
-      posts.map(({ source, ...post }) => {
-        void source;
-        return post;
-      }),
-    ) satisfies PostSummary[];
+export function createPostRepository(rootDirectory = defaultRootDirectory()) {
+  // React cache dedupes reads and parses within a single server request.
+  const loadDocuments = cache(async (): Promise<PostDocument[]> => {
+    const documents = await readPosts(rootDirectory);
+    return documents.sort(publishedAtDesc);
+  });
+
+  async function getPublicDocuments(): Promise<PostDocument[]> {
+    const documents = await loadDocuments();
+    return uniqueBySlug(documents.filter((document) => isPublished(document)));
+  }
+
+  async function getAllPosts(options?: { includeDrafts?: boolean }) {
+    const documents = options?.includeDrafts
+      ? uniqueBySlug(await loadDocuments())
+      : await getPublicDocuments();
+    return documents.map(toSummary);
   }
 
   async function getPostBySlug(slug: string) {
-    const posts = await getAllPosts();
-    const post = posts.find((item) => item.slug === slug);
-    if (!post) return null;
-
-    const parsed = await readPosts(rootDirectory);
-    const document = parsed.find(
-      (item): item is Extract<PostFileResult, { success: true }> =>
-        item.success && item.data.slug === slug,
-    );
-    return document?.data ?? null;
+    const documents = await getPublicDocuments();
+    return documents.find((document) => document.slug === slug) ?? null;
   }
 
   async function getRelatedPosts(post: PostSummary, limit = 3) {

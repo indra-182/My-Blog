@@ -2,12 +2,10 @@ import {
   latestPostFeedSchema,
   type LatestPostFeedV1,
 } from "./latest-feed-schema";
+import { isPublished } from "./post-repository";
 import type { PostSummary } from "./post-types";
 
-export { latestPostFeedSchema };
-export type { LatestPostFeedV1 };
-
-export function clampFeedLimit(value: number) {
+function clampFeedLimit(value: number) {
   return Math.min(10, Math.max(1, Math.trunc(value)));
 }
 
@@ -20,7 +18,7 @@ export function buildLatestFeed(
     version: 1 as const,
     generatedAt,
     posts: posts
-      .filter((post) => !post.draft)
+      .filter((post) => isPublished(post))
       .slice(0, clampFeedLimit(limit))
       .map(
         ({

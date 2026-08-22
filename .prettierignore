@@ -12,3 +12,11 @@ playwright-report
 test-results
 .vercel
 .env*
+
+# Human-authored prose and content should keep its own line wrapping.
+*.md
+*.mdx
+
+# Assets and lock files are not useful Prettier targets.
+*.svg
+*.lock

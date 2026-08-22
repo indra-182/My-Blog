@@ -5,11 +5,7 @@ import { useState } from "react";
 import { Menu, X } from "@/components/icons";
 import dictionary from "@/i18n/messages/id.json";
 
-const portfolioUrl =
-  process.env.NEXT_PUBLIC_PORTFOLIO_URL ??
-  "https://portfolio-indradev.vercel.app/";
-
-export function MobileNavigation() {
+export function MobileNavigation({ portfolioUrl }: { portfolioUrl: string }) {
   const [open, setOpen] = useState(false);
   return (
     <div className="mobile-nav">

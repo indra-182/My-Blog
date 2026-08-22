@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build --webpack",
+    "build": "pnpm content:validate && next build --webpack",
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
@@ -16,7 +16,7 @@
     "test:coverage": "vitest run --coverage",
     "content:validate": "tsx scripts/validate-content.ts",
     "test:e2e": "playwright test",
-    "verify": "pnpm run format:check && pnpm run content:validate && pnpm test && pnpm run lint && pnpm run typecheck && pnpm run build && pnpm run test:e2e"
+    "verify": "pnpm run format:check && pnpm test && pnpm run lint && pnpm run typecheck && pnpm run build && pnpm run test:e2e"
   },
   "dependencies": {
     "github-slugger": "^2.0.0",

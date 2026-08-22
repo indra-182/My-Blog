@@ -21,7 +21,7 @@ export function SiteHeader() {
         </nav>
         <div className="header-actions">
           <ThemeToggle />
-          <MobileNavigation />
+          <MobileNavigation portfolioUrl={siteConfig.portfolioUrl} />
         </div>
       </div>
     </header>
