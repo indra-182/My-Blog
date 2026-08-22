@@ -1,17 +1,6 @@
-export type PostFrontmatter = {
-  title: string;
-  slug: string;
-  description: string;
-  publishedAt: string;
-  updatedAt?: string;
-  topics: string[];
-  series?: string;
-  seriesOrder?: number;
-  draft: boolean;
-  canonical?: string;
-  socialTitle?: string;
-  socialDescription?: string;
-};
+import type { PostFrontmatter } from "./post-schema";
+
+export type { PostFrontmatter };
 
 export type PostSummary = PostFrontmatter & {
   readingTimeMinutes: number;

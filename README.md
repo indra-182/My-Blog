@@ -1,6 +1,6 @@
 # INDRA.DEV Blog
 
-Indonesian technical blog for React, Next.js, TypeScript, and React Native. The application uses the App Router, TypeScript, Tailwind CSS, and file-backed MDX.
+Indonesian technical blog for React, Next.js, TypeScript, and React Native. The application uses the App Router, TypeScript, custom CSS, and file-backed MDX.
 
 ## Development
 
