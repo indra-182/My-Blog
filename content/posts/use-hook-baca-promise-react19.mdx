@@ -1,0 +1,138 @@
+---
+title: "Hook use: Baca Promise dan Context Tanpa useEffect"
+slug: "use-hook-baca-promise-react19"
+description: "Membaca promise dan context langsung di render dengan hook use di React 19, tanpa useEffect atau state loading manual."
+publishedAt: "2026-08-22T20:00:00+07:00"
+topics: ["React", "TypeScript"]
+draft: false
+---
+
+## Masalah: useEffect jadi tempat sampah
+
+Mau baca data async atau ambil nilai dari context, banyak komponen React langsung lari ke `useEffect`. Polanya selalu sama: bikin state `data`, state `loading`, state `error`, lalu isi di dalam effect. Untuk sekadar menampilkan hasil fetch, kita tulis empat state dan satu effect. Padahal di React 19 ada satu primitif yang memangkas semua itu: `use`.
+
+Hook `use` bisa dipanggil di dalam render untuk membaca promise yang sedang berjalan dan untuk membaca context. Ia menggantung (suspend) komponen sampai nilainya siap, persis seperti yang dilakukan Server Component saat membaca `await` di atas. Bedanya, ini berjalan di client component biasa.
+
+## Membaca promise langsung di render
+
+Alih-alih menyimpan promise lalu menunggunya di effect, kita lempar promise-nya ke `use`. React akan menangguhkan render komponen tersebut sampai promise resolve, lalu melanjutkan dengan nilai hasilnya. Tidak ada state loading, tidak ada `then`.
+
+```tsx
+"use client";
+
+import { use } from "react";
+
+type User = { id: string; name: string; email: string };
+
+async function fetchUser(id: string): Promise<User> {
+  const res = await fetch(`/api/users/${id}`);
+  if (!res.ok) throw new Error("Gagal memuat user");
+  return res.json();
+}
+
+export function UserProfile({ userId }: { userId: string }) {
+  const user = use(fetchUser(userId));
+  return (
+    <section>
+      <h2>{user.name}</h2>
+      <p>{user.email}</p>
+    </section>
+  );
+}
+```
+
+Kuncinya: `fetchUser` dipanggil di luar render (atau di memo) sehingga setiap re-render tidak membuat promise baru. Di sini `use` menerima promise yang sama dan menunggu hasilnya. Kalau komponen ini dibungkus `<Suspense>`, layar pengguna menampilkan fallback sampai data siap, tanpa satu baris state manual.
+
+## Jangan buat promise di dalam render
+
+Kesalahan paling umum: memanggil fungsi async langsung di dalam `use` tanpa menyimpan hasilnya.
+
+```tsx
+// ❌ promise baru tiap render → suspend forever / loop
+const user = use(fetchUser(userId));
+```
+
+```tsx
+// ✅ simpan di luar, misal module-level cache atau useMemo
+const userPromise = fetchUser(userId); // di luar komponen / di memo
+const user = use(userPromise);
+```
+
+Saat `fetchUser` di dalam render, tiap render menghasilkan promise baru, `use` menunggu yang baru, render ulang, buat promise lagi — loop tanpa henti. Simpan promise-nya di tempat yang stabil (variabel di luar komponen, cache, atau `useMemo` dengan dependency yang benar) agar `use` selalu menerima referensi yang sama.
+
+## Membaca context tanpa Consumer
+
+Selain promise, `use` juga bisa membaca context. Ini menggantikan `Context.Consumer` dan sering lebih nyaman daripada `useContext` saat kita ingin membaca beberapa context secara kondisional.
+
+```tsx
+"use client";
+
+import { use } from "react";
+import { ThemeContext, LocaleContext } from "@/lib/context";
+
+export function Greeting() {
+  const theme = use(ThemeContext);
+  const locale = use(LocaleContext);
+  return (
+    <span className={theme === "dark" ? "text-white" : "text-black"}>
+      {locale === "id" ? "Halo" : "Hello"}
+    </span>
+  );
+}
+```
+
+Keuntungannya: `use(Context)` bisa dipanggil di dalam percabangan atau loop, sementara `useContext` harus di top level. Kalau kamu punya komponen kecil yang hanya butuh satu nilai context, `use` cukup dipanggil sekali tanpa impor hook ekstra.
+
+## Menangani error dengan Error Boundary
+
+Karena `use` menyuspend dan bisa melempar error dari promise, penanganannya sama seperti Suspense biasa: bungkus dengan `<Suspense>` untuk loading dan `<ErrorBoundary>` untuk gagal.
+
+```tsx
+import { Suspense } from "react";
+import { ErrorBoundary } from "react-error-boundary";
+import { UserProfile } from "./UserProfile";
+
+export function Page({ userId }: { userId: string }) {
+  const userPromise = fetchUser(userId); // stabil di luar render
+  return (
+    <ErrorBoundary fallback={<p>Terjadi kesalahan.</p>}>
+      <Suspense fallback={<p>Memuat…</p>}>
+        <UserProfile userId={userId} promise={userPromise} />
+      </Suspense>
+    </ErrorBoundary>
+  );
+}
+```
+
+```tsx
+"use client";
+
+import { use } from "react";
+
+export function UserProfile({
+  promise,
+}: {
+  promise: Promise<{ id: string; name: string }>;
+}) {
+  const user = use(promise);
+  return <h2>{user.name}</h2>;
+}
+```
+
+Dengan memisahkan pembuatan promise ke parent, child hanya bertugas membaca. Parent yang pegang referensi stabil, child yang suspend. Pola ini rapi untuk komponen daftar di mana tiap item punya promise sendiri.
+
+## Kapan pakai, kapan hindari
+
+Pakai `use` saat:
+- Membaca context di komponen kecil tanpa perlu hook khusus.
+- Menampilkan hasil async yang sudah punya Suspense boundary di atasnya.
+- Ingin menghilangkan boilerplate state `loading`/`error` untuk fetch sederhana.
+
+Hindari `use` saat:
+- Perlu membatalkan fetch (abort) berdasarkan interaksi pengguna — `use` tidak punya mekanisme cancel, pakai effect + `AbortController`.
+- Ingin update data secara bertahap (polling) — lebih cocok library data fetching.
+- Promise dibuat di dalam render tanpa cache, karena akan memicu loop.
+
+## Kesimpulan
+
+Hook `use` di React 19 menggeser beban async dan context-reading dari `useEffect` ke render itu sendiri. Untuk komponen yang hanya perlu menampilkan hasil fetch atau membaca context, `use` menghapus state loading manual dan mengandalkan Suspense yang sudah ada. Syaratnya satu: jaga referensi promise tetap stabil di luar render. Lepas dari itu, sisanya dibereskan React — tanpa library, tanpa boilerplate.
