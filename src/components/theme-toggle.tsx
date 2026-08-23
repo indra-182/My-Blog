@@ -1,6 +1,6 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import { Moon, Sun } from "@/components/icons";
 import dictionary from "@/i18n/messages/id.json";
 
@@ -8,9 +8,9 @@ type Theme = "light" | "dark";
 
 const THEME_STORAGE_KEY = "theme";
 
-function getSystemTheme(): Theme {
+function readStoredTheme(): Theme {
   try {
-    return window.matchMedia("(prefers-color-scheme: light)").matches
+    return window.localStorage.getItem(THEME_STORAGE_KEY) === "light"
       ? "light"
       : "dark";
   } catch {
@@ -18,41 +18,29 @@ function getSystemTheme(): Theme {
   }
 }
 
-function readStoredTheme(): Theme {
-  try {
-    const stored = window.localStorage.getItem(THEME_STORAGE_KEY);
-    if (stored === "light" || stored === "dark") return stored;
-  } catch {
-    // Fall back to the system preference when storage is unavailable.
-  }
-  return getSystemTheme();
-}
-
 function applyTheme(theme: Theme) {
-  document.documentElement.classList.toggle("dark", theme === "dark");
-  document.documentElement.style.colorScheme = theme;
+  const root = document.documentElement;
+  root.classList.toggle("light", theme === "light");
+  root.classList.toggle("dark", theme === "dark");
+  root.style.colorScheme = theme;
 }
 
 function storeTheme(theme: Theme) {
   try {
     window.localStorage.setItem(THEME_STORAGE_KEY, theme);
   } catch {
-    // Theme still applies for this session when storage is unavailable.
+    // The explicit choice still applies for this session.
   }
 }
 
 function subscribeToTheme(onChange: () => void) {
-  const media = window.matchMedia("(prefers-color-scheme: light)");
   const handleChange = () => {
-    // An explicit choice always wins over the live system preference.
     applyTheme(readStoredTheme());
     onChange();
   };
-  media.addEventListener("change", handleChange);
   window.addEventListener("storage", handleChange);
   window.addEventListener("themechange", handleChange);
   return () => {
-    media.removeEventListener("change", handleChange);
     window.removeEventListener("storage", handleChange);
     window.removeEventListener("themechange", handleChange);
   };
@@ -73,8 +61,11 @@ export function ThemeToggle() {
     getServerTheme,
   );
 
+  useEffect(() => {
+    applyTheme(active);
+  }, [active]);
+
   const next = active === "dark" ? "light" : "dark";
-  const Icon = active === "dark" ? Moon : Sun;
   const label =
     next === "light"
       ? dictionary.theme.switchToLight
@@ -83,16 +74,28 @@ export function ThemeToggle() {
   return (
     <button
       type="button"
-      className="icon-button"
+      className="icon-button site-control"
       aria-label={label}
       title={label}
+      data-theme-toggle
       onClick={() => {
         storeTheme(next);
         applyTheme(next);
         window.dispatchEvent(new Event("themechange"));
       }}
     >
-      <Icon size={18} strokeWidth={1.8} aria-hidden="true" />
+      <Sun
+        size={18}
+        strokeWidth={1.8}
+        aria-hidden="true"
+        data-theme-icon="light"
+      />
+      <Moon
+        size={18}
+        strokeWidth={1.8}
+        aria-hidden="true"
+        data-theme-icon="dark"
+      />
     </button>
   );
 }

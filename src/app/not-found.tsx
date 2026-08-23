@@ -3,7 +3,7 @@ import dictionary from "@/i18n/messages/id.json";
 
 export default function NotFound() {
   return (
-    <main id="main-content" className="page-main">
+    <main id="main-content" className="page-main" tabIndex={-1}>
       <div className="shell not-found">
         <div>
           <div className="eyebrow">404</div>

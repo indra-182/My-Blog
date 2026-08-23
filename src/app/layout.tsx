@@ -4,7 +4,7 @@ import { SiteHeader } from "@/components/site-header";
 import { siteConfig } from "@/lib/site-config";
 import "./globals.css";
 
-const themeScript = `(()=>{try{const s=localStorage.getItem("theme");const t=s==="light"||s==="dark"?s:matchMedia("(prefers-color-scheme: light)").matches?"light":"dark";document.documentElement.classList.toggle("dark",t==="dark");document.documentElement.style.colorScheme=t}catch{document.documentElement.classList.add("dark");document.documentElement.style.colorScheme="dark"}})()`;
+const themeScript = `(()=>{try{const t=localStorage.getItem("theme")==="light"?"light":"dark";const r=document.documentElement;r.classList.toggle("light",t==="light");r.classList.toggle("dark",t==="dark");r.style.colorScheme=t}catch{const r=document.documentElement;r.classList.remove("light");r.classList.add("dark");r.style.colorScheme="dark"}})()`;
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.blogUrl),
@@ -22,6 +22,20 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body>
+        <script
+          id="impeccable-direction-contract"
+          type="text/plain"
+          dangerouslySetInnerHTML={{
+            __html: `<!--
+THESIS: Cue Horizon stages technical writing as a clear reading path, refusing generic developer-blog chrome and decorative sequencing.
+OWN-WORLD: Near-black cyclorama, cobalt horizon, rose transition, white-day focus, cue tape, matte stage floor, tabular cue labels, and controlled luminance.
+STORY: Engineers identify the writing focus, search or filter published notes, read an article through its headings and code, then continue through series or related links.
+FIRST VIEWPORT: Sticky stage header above a near-black field descending into cobalt; the headline leads, the rose Catatan teknis cue and description follow, and deliberate breathing room separates the hero from discovery tools.
+FORM: Cue Horizon reading stage, pinned sibling-portfolio direction, source seed 6dea048c, code-led.
+FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
+-->`,
+          }}
+        />
         <a href="#main-content" className="skip-link">
           Lewati ke konten
         </a>

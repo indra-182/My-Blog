@@ -8,14 +8,14 @@ export function SiteHeader() {
   return (
     <header className="site-header">
       <div className="shell site-header-inner">
-        <Link className="wordmark" href="/" aria-label="INDRA.DEV Blog">
+        <Link className="site-wordmark" href="/" aria-label="INDRA.DEV Blog">
           INDRA<span>.</span>DEV
         </Link>
         <nav className="desktop-nav" aria-label="Navigasi utama">
           <Link href={siteConfig.portfolioUrl}>
             {dictionary.navigation.portfolio}
           </Link>
-          <Link className="active" href="/">
+          <Link className="active" href="/" aria-current="page">
             {dictionary.navigation.blog}
           </Link>
         </nav>
