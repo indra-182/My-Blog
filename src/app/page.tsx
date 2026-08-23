@@ -15,7 +15,7 @@ function PostBrowserFallback() {
 export default async function BlogPage() {
   const posts = await postRepository.getAllPosts();
   return (
-    <main id="main-content" className="page-main">
+    <main id="main-content" className="page-main" tabIndex={-1}>
       <BlogHero />
       <Suspense fallback={<PostBrowserFallback />}>
         <PostBrowser posts={posts} />

@@ -1,11 +1,10 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import type { PostSummary } from "@/content/post-types";
 import { siteConfig } from "@/lib/site-config";
 import { ArticleBreadcrumbs } from "./article/article-breadcrumbs";
 import { SeriesNavigation } from "./article/series-navigation";
 import { PostBrowser } from "./blog/post-browser";
-import { MobileNavigation } from "./mobile-navigation";
 import { SiteFooter } from "./site-footer";
 import { SiteHeader } from "./site-header";
 
@@ -34,6 +33,8 @@ describe("shared shell", () => {
       </>,
     );
 
+    expect(document.querySelector(".site-header")).toBeInTheDocument();
+    expect(document.querySelector(".site-footer")).toBeInTheDocument();
     expect(
       screen.getAllByRole("link", { name: /INDRA\.DEV/i }).length,
     ).toBeGreaterThanOrEqual(2);
@@ -80,15 +81,10 @@ describe("shared shell", () => {
       <>
         <SiteHeader />
         <SiteFooter />
-        <MobileNavigation portfolioUrl={siteConfig.portfolioUrl} />
         <PostBrowser posts={[post]} />
         <ArticleBreadcrumbs title={post.title} />
         <SeriesNavigation previous={post} next={null} />
       </>,
-    );
-
-    fireEvent.click(
-      screen.getAllByRole("button", { name: "Buka menu" }).at(-1)!,
     );
 
     expect(
@@ -98,7 +94,10 @@ describe("shared shell", () => {
       screen.getByRole("navigation", { name: "Navigasi footer" }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("navigation", { name: "Navigasi seluler" }),
+      screen.getByRole("navigation", {
+        name: "Navigasi seluler",
+        hidden: true,
+      }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole("region", { name: "Penjelajah tulisan" }),

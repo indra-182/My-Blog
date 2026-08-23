@@ -55,7 +55,7 @@ export default async function ArticlePage({
   ]);
   const toc = extractTableOfContents(post.source);
   return (
-    <main id="main-content" className="page-main">
+    <main id="main-content" className="page-main" tabIndex={-1}>
       <div className="shell article-layout">
         <ArticleBreadcrumbs title={post.title} />
         <ArticleHeader post={post} />

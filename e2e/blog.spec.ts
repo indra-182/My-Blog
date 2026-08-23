@@ -51,3 +51,55 @@ test("theme hydration uses only light and dark icons", async ({ page }) => {
     pageErrors.filter((message) => message.includes("Hydration failed")),
   ).toEqual([]);
 });
+
+test("explicit light theme persists after reload", async ({ page }) => {
+  await page.goto("/");
+  await page.evaluate(() => localStorage.removeItem("theme"));
+  await page.reload();
+  await expect(page.locator("html")).toHaveClass(/dark/);
+  await page.getByRole("button", { name: "Ganti ke tema terang" }).click();
+  await expect(page.locator("html")).toHaveClass(/light/);
+  await page.reload();
+  await expect(page.locator("html")).toHaveClass(/light/);
+  await expect(
+    page.getByRole("button", { name: "Ganti ke tema gelap" }),
+  ).toBeVisible();
+});
+
+test("mobile navigation uses a native dialog and returns focus", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 375, height: 800 });
+  await page.goto("/");
+  const trigger = page.getByRole("button", { name: "Buka menu" });
+  const dialog = page.locator("dialog");
+
+  await trigger.click();
+  await expect(dialog).toHaveAttribute("open", "");
+  await page.keyboard.press("Escape");
+  await expect(dialog).not.toHaveAttribute("open", "");
+  await expect(trigger).toBeFocused();
+
+  await trigger.click();
+  await dialog.getByRole("link", { name: "Blog" }).click();
+  await expect(dialog).not.toHaveAttribute("open", "");
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
+});
+
+test("homepage stays within the viewport across shell breakpoints", async ({
+  page,
+}) => {
+  for (const width of [375, 768, 1024, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto("/");
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    ).toBe(true);
+  }
+});

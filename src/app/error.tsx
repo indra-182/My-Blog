@@ -15,7 +15,7 @@ export default function Error({
     console.error(error);
   }, [error]);
   return (
-    <main id="main-content" className="page-main">
+    <main id="main-content" className="page-main" tabIndex={-1}>
       <div className="shell not-found">
         <div>
           <div className="eyebrow">500</div>

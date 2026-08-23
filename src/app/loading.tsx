@@ -3,6 +3,7 @@ export default function Loading() {
     <main
       id="main-content"
       className="page-main"
+      tabIndex={-1}
       aria-busy="true"
       aria-label="Memuat tulisan"
     >
