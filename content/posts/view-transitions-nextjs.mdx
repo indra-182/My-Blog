@@ -1,0 +1,135 @@
+---
+title: "View Transitions: Animasi Pindah Halaman Tanpa Library"
+slug: "view-transitions-nextjs"
+description: "Pakai View Transitions API bawaan browser untuk transisi antar route di Next.js App Router, tanpa menambah library animasi."
+publishedAt: "2026-08-23T20:00:00+07:00"
+topics: ["React", "Next.js"]
+draft: false
+---
+
+## Masalah: pindah halaman terasa "loncat"
+
+Navigasi di SPA menyembunyikan loading spinner, tapi secara visual tetap terasa instan dan kaku — konten lama hilang, konten baru muncul begitu saja. Untuk membuatnya halus, kebanyakan tim langsung mengambil library animasi route atau Framer Motion dan menulis koordinasi mount/unmount yang rawan bug. Padahal browser sudah punya primitif bawaan: View Transitions API. Ia mengambil snapshot layar sebelum dan sesudah perubahan DOM, lalu menganimasikan keduanya secara native.
+
+## Cara kerja: snapshot lalu animasi
+
+Intinya satu fungsi: `document.startViewTransition`. Kamu berikan callback yang mengubah DOM (atau di Next.js, memicu navigasi). Browser memotret keadaan lama, menjalankan callback, memotret keadaan baru, lalu menyerahkan selisihnya ke engine compositing-nya sendiri.
+
+```tsx
+"use client";
+
+import { useRouter } from "next/navigation";
+import { useTransition, useState } from "react";
+
+export function useViewTransitionRouter() {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+  const [isTransitioning, setIsTransitioning] = useState(false);
+
+  function navigate(href: string) {
+    const hasApi = typeof document !== "undefined" && "startViewTransition" in document;
+    if (!hasApi) {
+      router.push(href);
+      return;
+    }
+
+    setIsTransitioning(true);
+    (document as Document & {
+      startViewTransition: (cb: () => void) => { finished: Promise<void> };
+    }).startViewTransition(() => {
+      startTransition(() => router.push(href));
+    }).finished.finally(() => setIsTransitioning(false));
+  }
+
+  return { navigate, isPending: isPending || isTransitioning };
+}
+```
+
+Kunci di sini: navigasi ditaruh di dalam `startTransition` yang berada di dalam callback `startViewTransition`. Urutannya penting — snapshot lama diambil sebelum transisi React dimulai, snapshot baru setelah DOM selesai diubah. Feature detection di awal memastikan fallback berupa navigasi biasa di browser yang belum mendukung API (sebagian besar Safari versi lama).
+
+## Menghubungkan ke komponen link
+
+`useViewTransitionRouter` cukup dibungkus ke komponen `<Link>` custom agar seluruh navigasi di situs ikut mendapat efek:
+
+```tsx
+"use client";
+
+import { navigate } from "@/lib/view-transition";
+
+export function TransitionLink({
+  href,
+  children,
+}: {
+  href: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <a
+      href={href}
+      onClick={(event) => {
+        event.preventDefault();
+        navigate(href);
+      }}
+    >
+      {children}
+    </a>
+  );
+}
+```
+
+Catatan praktis: `router.push` di App Router memicu render server component secara async. `startViewTransition` menunggu microtask callback selesai, tapi render jaringan butuh lebih lama. Untuk transisi yang benar-benar sinkron dengan data, tunggu `use(promise)` atau Suspense di halaman tujuan; snapshot baru akan diambil setelah konten siap. Untuk kasus umum, efek cross-fade bawaan sudah cukup membuatnya terasa halus.
+
+## Memberi nama elemen supaya ikut berpindah
+
+Tanpa konfigurasi, View Transitions hanya menganimasikan seluruh halaman (pseudo-element `::view-transition-group(root)`). Agar elemen spesifik — misal kartu artikel — berpindah dengan identitas yang sama antar route, beri `view-transition-name`:
+
+```css
+.article-card {
+  view-transition-name: article-card;
+}
+
+::view-transition-group(article-card) {
+  animation-duration: 0.4s;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+```
+
+Aturan penting: di satu halaman, `view-transition-name` harus unik. Kalau ada banyak kartu, jangan pakai nama statis yang sama untuk semuanya — gunakan indeks atau id:
+
+```css
+.article-card:nth-child(1) { view-transition-name: card-1; }
+.article-card:nth-child(2) { view-transition-name: card-2; }
+```
+
+Dengan nama unik, browser tahu elemen mana di halaman lama yang memetakan ke elemen mana di halaman baru, sehingga ia bisa menggeser dan membesarkan kartu secara mulus alih-alih sekadar cross-fade.
+
+## Mengatur durasi dan gaya
+
+Seluruh animasi dijangkau lewat pseudo-element. Yang paling sering disentuh:
+
+```css
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.3s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}
+```
+
+Blok `prefers-reduced-motion` bukan opsional — pengguna dengan pengaturan aksesibilitas itu mengharapkan gerakan dimatikan, dan View Transitions adalah gerakan. Tanpa blok tersebut kamu secara efektif memaksa animasi ke orang yang memintanya dimatikan.
+
+## Batasan yang perlu disadari
+
+API ini berjalan di level DOM, bukan React. Ia tidak tahu tentang virtual DOM, jadi elemen yang diberi `view-transition-name` harus benar-benar ada di kedua keadaan (sebelum dan sesudah) agar pemetaan berhasil; kalau elemen muncul dari nowhere, ia akan langsung cross-fade tanpa geser posisi. Selain itu, snapshot diambil dari piksel hasil render, bukan struktur — layout yang sangat berubah antar route tetap terlihat "loncat" walau halus.
+
+Untuk navigasi yang memang butuh koordinasi mount/unmount yang rumit (misal shared element dengan transform bertingkat), Framer Motion `layoutId` tetap lebih fleksibel. Tapi untuk 80% kasus — pindah halaman, ganti daftar, Expand/Collapse antar route — View Transitions API gratis, native, dan sudah ada di Chrome, Edge, dan Firefox versi terbaru.
+
+## Kapan memakainya
+
+Pasang sekali di wrapper navigasi, tambahkan `view-transition-name` hanya pada elemen yang benar-benar ingin kamu sorot, lalu lupakan. Kamu menghapus satu lapisan library animasi dan menukarnya dengan primitif browser yang dipelihara vendor. Transisi halus bukan fitur premium lagi; ia sudah di tanganmu sejak `document.startViewTransition` dipanggil.

@@ -1,0 +1,184 @@
+---
+title: "useSyncExternalStore: Baca State Eksternal Tanpa Cacat"
+slug: "usesyncexternalstore-state-eksternal"
+description: "Hook bawaan React untuk berlangganan store eksternal seperti localStorage, media query, atau WebSocket tanpa risiko tearing."
+publishedAt: "2026-08-23T20:00:00+07:00"
+topics: ["React", "TypeScript"]
+draft: false
+---
+
+## Masalah: state di luar React sering "bocor"
+
+Tidak semua state hidup di dalam React. Status koneksi internet, hasil `matchMedia`, nilai di `localStorage`, data yang datang dari WebSocket, atau store pihak ketiga seperti Zustand semuanya berada di luar pohon komponen. Pola klasiknya adalah menaruhnya ke `useState` lalu menyinkronkan lewat `useEffect`:
+
+```tsx
+"use client";
+
+import { useEffect, useState } from "react";
+
+function useIsOnlineNaive() {
+  const [online, setOnline] = useState(
+    typeof navigator !== "undefined" ? navigator.onLine : true,
+  );
+
+  useEffect(() => {
+    const handler = () => setOnline(navigator.onLine);
+    window.addEventListener("online", handler);
+    window.addEventListener("offline", handler);
+    return () => {
+      window.removeEventListener("online", handler);
+      window.removeEventListener("offline", handler);
+    };
+  }, []);
+
+  return online;
+}
+```
+
+Cara ini *nurut* selama render biasa. Masalahnya muncul saat React melakukan renderConcurrent: antara komponen A dan B membaca `navigator.onLine`, nilainya bisa berubah di tengah. Akibatnya sebagian layar menampilkan "online", sebagian lagi "offline" — kondisi yang disebut **tearing**. `useState` + `useEffect` tidak menjamin pembacaan yang konsisten antar-komponen dalam satu tick render.
+
+## useSyncExternalStore: satu sumber, banyak pembaca
+
+React menyediakan `useSyncExternalStore` persis untuk kasus ini. Ia menerima tiga argumen: fungsi `subscribe` (daftarkan listener), `getSnapshot` (baca nilai saat ini), dan opsional `getServerSnapshot` (nilai untuk SSR/SSG).
+
+```tsx
+"use client";
+
+import { useSyncExternalStore } from "react";
+
+function subscribe(callback: () => void) {
+  window.addEventListener("online", callback);
+  window.addEventListener("offline", callback);
+  return () => {
+    window.removeEventListener("online", callback);
+    window.removeEventListener("offline", callback);
+  };
+}
+
+function getSnapshot() {
+  return navigator.onLine;
+}
+
+export function useIsOnline() {
+  return useSyncExternalStore(subscribe, getSnapshot, () => true);
+}
+```
+
+Keuntungannya: React membaca `getSnapshot` berkali-kali selama render dan menjamin semua komponen yang memanggil hook ini mendapat nilai yang **sama persis** dalam satu render. Kalau nilai berubah di luar, React membatalkan render yang sedang berjalan dan memulai ulang dengan snapshot baru — tearing tertutup rapat.
+
+## Contoh nyata: hook media query
+
+`useSyncExternalStore` sangat cocok untuk membaca API browser yang "push"-based. Berikut hook responsif tanpa library:
+
+```tsx
+"use client";
+
+import { useSyncExternalStore } from "react";
+
+function subscribe(callback: () => void) {
+  window.addEventListener("resize", callback);
+  return () => window.removeEventListener("resize", callback);
+}
+
+function getSnapshot(query: string) {
+  return window.matchMedia(query).matches;
+}
+
+export function useMediaQuery(query: string) {
+  return useSyncExternalStore(
+    subscribe,
+    () => getSnapshot(query),
+    () => false,
+  );
+}
+```
+
+Penggunaannya langsung:
+
+```tsx
+const isDesktop = useMediaQuery("(min-width: 1024px)");
+```
+
+Karena `getSnapshot` mengembalikan boolean (tipe primitif, dibandingkan by value), tidak ada risiko render loop. Di server kita kembalikan `false` lewat `getServerSnapshot` agar hasil awal konsisten sebelum hidrasi di client.
+
+## Berlangganan store buatan sendiri
+
+Ini bagian yang paling sering dibutuhkan: membungkus store eksisting agar bisa dibaca komponen React. Buat store minimal dengan `subscribe` dan `getSnapshot`:
+
+```ts
+type Listener = () => void;
+
+export function createStore<T>(initial: T) {
+  let state = initial;
+  const listeners = new Set<Listener>();
+
+  return {
+    getSnapshot: () => state,
+    setState(next: T) {
+      state = next;
+      listeners.forEach((l) => l());
+    },
+    subscribe(listener: Listener) {
+      listeners.add(listener);
+      return () => {
+        listeners.delete(listener);
+      };
+    },
+  };
+}
+
+export const cartStore = createStore<{ items: number }>({ items: 0 });
+```
+
+Lalu baca dari komponen:
+
+```tsx
+"use client";
+
+import { useSyncExternalStore } from "react";
+import { cartStore } from "./cart-store";
+
+export function CartBadge() {
+  const { items } = useSyncExternalStore(
+    cartStore.subscribe,
+    cartStore.getSnapshot,
+  );
+
+  return <span>Keranjang: {items}</span>;
+}
+```
+
+Setiap `cartStore.setState` akan memanggil semua listener, dan React memperbarui setiap komponen yang berlangganan — tanpa `useState` dan tanpa `useEffect`. Pola inilah yang dipakai di balik layar oleh library state management modern.
+
+## Jebakan getSnapshot yang tidak stabil
+
+Satu aturan mutlak: `getSnapshot` harus mengembalikan **referensi yang sama** selama nilai tidak berubah. Kalau ia selalu membuat objek baru, React mengira nilainya terus berubah dan memicu render tanpa henti:
+
+```ts
+// ❌ tiap panggilan bikin objek baru -> infinite loop
+function getSnapshot() {
+  return { online: navigator.onLine };
+}
+
+// ✅ cache di luar, baru buat objek saat memang perlu
+let cached: { online: boolean } | null = null;
+function getSnapshot() {
+  const online = navigator.onLine;
+  if (!cached || cached.online !== online) {
+    cached = { online };
+  }
+  return cached;
+}
+```
+
+Untuk tipe primitif (boolean, number, string) aturan ini otomatis aman karena perbandingan by value. Untuk objek/array, simpan hasil di variabel module-level atau di dalam closure store seperti contoh `createStore` di atas.
+
+## Kapan pakai, kapan hindari
+
+Gunakan `useSyncExternalStore` saat sumber kebenaran ada di luar React dan bisa berubah kapan saja: event browser, WebSocket, store pihak ketiga, `localStorage` (lewat `storage` event), atau sinkronisasi antar-tab. Hindari untuk data yang murni hasil komputasi dari props/state React — di situ cukup `useMemo` atau `useState` biasa.
+
+Di Next.js, hook ini tetap butuh direktori client (`"use client"`) karena membaca `window`. Pastikan `getServerSnapshot` selalu mengembalikan nilai deterministik agar hidrasi tidak mismatch.
+
+## Kesimpulan
+
+`useSyncExternalStore` menutup celah tearing yang sering luput saat kita membaca state eksternal lewat `useState` + `useEffect`. Dengan memisahkan `subscribe` (kapan harus update) dan `getSnapshot` (nilai saat ini), React menjamin semua pembaca komponen melihat data yang konsisten dalam satu render. Untuk kasus push-based—media query, status koneksi, store buatan sendiri—hook ini adalah primitif yang sebaiknya jadi pilihan pertama, bukan library eksternal.
