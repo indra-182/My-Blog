@@ -14,7 +14,6 @@ const { replaceMock } = vi.hoisted(() => ({ replaceMock: vi.fn() }));
 vi.mock("next/navigation", () => ({
   usePathname: () => "/",
   useRouter: () => ({ replace: replaceMock }),
-  useSearchParams: () => new URLSearchParams(window.location.search),
 }));
 
 function summary(index: number, overrides?: Partial<PostSummary>): PostSummary {
@@ -41,6 +40,8 @@ const posts: PostSummary[] = [
   summary(8, { topics: ["TypeScript"] }),
 ];
 
+const initialFilters = { query: "", topic: "all", series: "all" };
+
 beforeEach(() => {
   replaceMock.mockClear();
   vi.useFakeTimers();
@@ -54,7 +55,7 @@ afterEach(() => {
 
 describe("PostBrowser", () => {
   it("filters immediately while typing without touching the URL", () => {
-    render(<PostBrowser posts={posts} />);
+    render(<PostBrowser posts={posts} initialFilters={initialFilters} />);
     const input = screen.getByLabelText("Cari tulisan");
 
     fireEvent.change(input, { target: { value: "tulisan 7" } });
@@ -70,7 +71,7 @@ describe("PostBrowser", () => {
   });
 
   it("synchronizes the trimmed query to the URL after a debounce", () => {
-    render(<PostBrowser posts={posts} />);
+    render(<PostBrowser posts={posts} initialFilters={initialFilters} />);
     const input = screen.getByLabelText("Cari tulisan");
 
     fireEvent.change(input, { target: { value: "  react  " } });
@@ -84,14 +85,18 @@ describe("PostBrowser", () => {
   });
 
   it("restores local state when the URL changes externally", () => {
-    const view = render(<PostBrowser posts={posts} />);
+    const view = render(
+      <PostBrowser posts={posts} initialFilters={initialFilters} />,
+    );
     const input = screen.getByLabelText("Cari tulisan");
 
     fireEvent.change(input, { target: { value: "pending text" } });
-    act(() => {
-      window.history.replaceState(null, "", "/?q=TypeScript");
-    });
-    view.rerender(<PostBrowser posts={posts} />);
+    view.rerender(
+      <PostBrowser
+        posts={posts}
+        initialFilters={{ query: "TypeScript", topic: "all", series: "all" }}
+      />,
+    );
 
     expect(input).toHaveValue("TypeScript");
     expect(screen.getByText("2 tulisan ditemukan")).toBeInTheDocument();
@@ -104,7 +109,9 @@ describe("PostBrowser", () => {
   });
 
   it("applies select filters immediately and keeps them in the URL", () => {
-    const view = render(<PostBrowser posts={posts} />);
+    const view = render(
+      <PostBrowser posts={posts} initialFilters={initialFilters} />,
+    );
 
     fireEvent.change(screen.getByLabelText("Topik"), {
       target: { value: "TypeScript" },
@@ -115,17 +122,19 @@ describe("PostBrowser", () => {
       scroll: false,
     });
 
-    act(() => {
-      window.history.replaceState(null, "", "/?topic=TypeScript");
-    });
-    view.rerender(<PostBrowser posts={posts} />);
+    view.rerender(
+      <PostBrowser
+        posts={posts}
+        initialFilters={{ query: "", topic: "TypeScript", series: "all" }}
+      />,
+    );
 
     expect(screen.getByLabelText("Topik")).toHaveValue("TypeScript");
     expect(screen.getByText("2 tulisan ditemukan")).toBeInTheDocument();
   });
 
   it("resets filters from the empty state and restores the list", () => {
-    render(<PostBrowser posts={posts} />);
+    render(<PostBrowser posts={posts} initialFilters={initialFilters} />);
     const input = screen.getByLabelText("Cari tulisan");
 
     fireEvent.change(input, { target: { value: "nothing-matches" } });
@@ -139,7 +148,7 @@ describe("PostBrowser", () => {
   });
 
   it("resets the visible count when filters change", () => {
-    render(<PostBrowser posts={posts} />);
+    render(<PostBrowser posts={posts} initialFilters={initialFilters} />);
     expect(screen.getAllByRole("link", { name: /^Tulisan \d$/ })).toHaveLength(
       6,
     );

@@ -1,25 +1,33 @@
-import { Suspense } from "react";
 import { BlogHero } from "@/components/blog/blog-hero";
 import { PostBrowser } from "@/components/blog/post-browser";
 import { postRepository } from "@/content/post-repository";
 
-function PostBrowserFallback() {
-  return (
-    <div className="shell browser" aria-hidden="true">
-      <div className="loading-block" />
-      <div className="loading-block" style={{ marginTop: 24 }} />
-    </div>
-  );
+function firstSearchParam(
+  value: string | string[] | undefined,
+  fallback: string,
+) {
+  return Array.isArray(value) ? (value[0] ?? fallback) : (value ?? fallback);
 }
 
-export default async function BlogPage() {
-  const posts = await postRepository.getAllPosts();
+export default async function BlogPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const [params, posts] = await Promise.all([
+    searchParams,
+    postRepository.getAllPosts(),
+  ]);
+  const initialFilters = {
+    query: firstSearchParam(params.q, ""),
+    topic: firstSearchParam(params.topic, "all"),
+    series: firstSearchParam(params.series, "all"),
+  };
+
   return (
     <main id="main-content" className="page-main" tabIndex={-1}>
       <BlogHero />
-      <Suspense fallback={<PostBrowserFallback />}>
-        <PostBrowser posts={posts} />
-      </Suspense>
+      <PostBrowser posts={posts} initialFilters={initialFilters} />
     </main>
   );
 }

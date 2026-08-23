@@ -87,6 +87,9 @@ button:disabled {
 .page-main {
   min-height: 70vh;
 }
+.loading-page {
+  min-height: 100vh;
+}
 
 .skip-link {
   position: fixed;

@@ -10,6 +10,9 @@ test("search preserves the editorial discovery flow", async ({ page }) => {
   ).toBeVisible();
   await page.getByLabel("Cari tulisan").fill("URL");
   await expect(page).toHaveURL(/q=URL/i);
+  await page.reload();
+  await expect(page.getByLabel("Cari tulisan")).toHaveValue("URL");
+  await expect(page).toHaveURL(/q=URL/i);
   await expect(
     page.getByRole("link", { name: /Memisahkan Server State/i }),
   ).toBeVisible();
