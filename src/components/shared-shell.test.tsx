@@ -11,7 +11,6 @@ import { SiteHeader } from "./site-header";
 vi.mock("next/navigation", () => ({
   usePathname: () => "/",
   useRouter: () => ({ replace: vi.fn() }),
-  useSearchParams: () => new URLSearchParams(window.location.search),
 }));
 
 const post: PostSummary = {
@@ -81,7 +80,10 @@ describe("shared shell", () => {
       <>
         <SiteHeader />
         <SiteFooter />
-        <PostBrowser posts={[post]} />
+        <PostBrowser
+          posts={[post]}
+          initialFilters={{ query: "", topic: "all", series: "all" }}
+        />
         <ArticleBreadcrumbs title={post.title} />
         <SeriesNavigation previous={post} next={null} />
       </>,
@@ -119,20 +121,19 @@ describe("shared shell", () => {
     };
 
     cleanup();
-    window.history.replaceState(null, "", "/?q=React");
-    try {
-      render(<PostBrowser posts={[post, otherPost]} />);
+    render(
+      <PostBrowser
+        posts={[post, otherPost]}
+        initialFilters={{ query: "React", topic: "all", series: "all" }}
+      />,
+    );
 
-      expect(screen.getByLabelText("Cari tulisan")).toHaveValue("React");
-      expect(
-        screen.getByRole("link", { name: "Tulisan contoh" }),
-      ).toBeInTheDocument();
-      expect(
-        screen.queryByRole("link", { name: "Tulisan lain" }),
-      ).not.toBeInTheDocument();
-    } finally {
-      cleanup();
-      window.history.replaceState(null, "", "/");
-    }
+    expect(screen.getByLabelText("Cari tulisan")).toHaveValue("React");
+    expect(
+      screen.getByRole("link", { name: "Tulisan contoh" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "Tulisan lain" }),
+    ).not.toBeInTheDocument();
   });
 });

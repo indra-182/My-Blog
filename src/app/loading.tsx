@@ -2,7 +2,7 @@ export default function Loading() {
   return (
     <main
       id="main-content"
-      className="page-main"
+      className="page-main loading-page"
       tabIndex={-1}
       aria-busy="true"
       aria-label="Memuat tulisan"

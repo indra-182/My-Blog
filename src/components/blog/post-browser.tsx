@@ -7,7 +7,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { ChevronDown, Search } from "@/components/icons";
 import type { PostSummary } from "@/content/post-types";
 import dictionary from "@/i18n/messages/id.json";
@@ -28,19 +28,21 @@ function buildSearchPath(pathname: string, values: FilterValues) {
   return queryString ? `${pathname}?${queryString}` : pathname;
 }
 
-export function PostBrowser({ posts }: { posts: PostSummary[] }) {
+export function PostBrowser({
+  posts,
+  initialFilters,
+}: {
+  posts: PostSummary[];
+  initialFilters: FilterValues;
+}) {
   const router = useRouter();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const urlQuery = searchParams.get("q") ?? "";
-  const topic = searchParams.get("topic") ?? "all";
-  const series = searchParams.get("series") ?? "all";
+  const { query: urlQuery, topic, series } = initialFilters;
   const currentPath = buildSearchPath(pathname, {
     query: urlQuery,
     topic,
     series,
   });
-
   // Typing stays in local state so filtering is immediate; the URL catches up
   // debounced. lastPushedQueryRef marks our own URL writes so their echo does
   // not clobber newer keystrokes.
