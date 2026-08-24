@@ -115,11 +115,7 @@ export function createPostRepository(rootDirectory = defaultRootDirectory()) {
 
   async function getAllPosts() {
     const documents = await getPublicDocuments();
-    return documents.map((document) => {
-      const { source, ...summary } = document;
-      void source;
-      return summary;
-    });
+    return documents.map(({ source: _, ...summary }) => summary);
   }
 
   async function getPostBySlug(slug: string) {

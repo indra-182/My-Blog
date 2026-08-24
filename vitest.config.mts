@@ -8,7 +8,6 @@ export default defineConfig({
     environment: "jsdom",
     setupFiles: ["./src/test/setup.ts"],
     include: ["src/**/*.test.{ts,tsx}"],
-    exclude: ["node_modules", ".next", "e2e"],
     coverage: { reporter: ["text", "html"] },
   },
   resolve: { alias: { "@": path.resolve(process.cwd(), "./src") } },
