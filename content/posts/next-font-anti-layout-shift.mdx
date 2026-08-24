@@ -1,0 +1,103 @@
+---
+title: "next/font: Menghilangkan Layout Shift dan Menghemat Request Font"
+slug: "next-font-anti-layout-shift"
+description: "Gunakan next/font untuk memuat font web tanpa layout shift (CLS) dan tanpa request ekstra ke Google Fonts."
+publishedAt: "2026-08-25T01:00:00+07:00"
+topics: ["Next.js", "Web Performance"]
+draft: false
+---
+
+## Masalah: font memicu layout shift
+
+Ketika kamu memuat font lewat `<link>` ke Google Fonts atau `@font-face` konvensional, browser baru mengetahui ukuran glyph setelah file selesai di-download. Selama menunggu, teks ditampilkan dengan font fallback yang ukurannya berbeda, lalu "loncat" saat font asli tiba. Itulah Cumulative Layout Shift (CLS) — salah satu Core Web Vitals yang ikut menentukan skor SEO dan UX. Selain itu, setiap request ke `fonts.googleapis.com` menambah latensi DNS, TLS, dan round-trip jaringan yang memperlambat First Contentful Paint (FCP).
+
+## Cara kerja: font menjadi aset build
+
+`next/font` menyelesaikan keduanya di waktu build. Alih-alih request runtime ke CDN, ia mendownload font sekali saat proses build, lalu menyimpannya sebagai aset lokal yang di-serve dari domainmu sendiri. Ia juga menghitung metrik font (ascent, descent, line gap) dan menyisipkan `size-adjust` ke font fallback, sehingga fallback dan font asli punya lebar yang hampir identik — teks tidak bergeser saat swap terjadi.
+
+```tsx
+// app/layout.tsx
+import { Inter } from "next/font/google";
+
+const inter = Inter({
+  subsets: ["latin"],
+  display: "swap",
+});
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <html lang="id" className={inter.className}>
+      <body>{children}</body>
+    </html>
+  );
+}
+```
+
+Cukup satu import, font otomatis di-preload, namanya di-hash (misal `__Inter_...`), dan tidak memblokir render. Kamu tidak perlu lagi menulis `<link rel="preconnect">` atau `<link rel="preload">` manual.
+
+## Memilih font lokal tanpa CDN sama sekali
+
+Kalau kamu sudah punya file font (misal dari desainer), `next/font/local` memotong request eksternal sepenuhnya — font langsung dibundel ke dalam aplikasi:
+
+```tsx
+import localFont from "next/font/local";
+
+const geist = localFont({
+  src: "./fonts/GeistVF.woff2",
+  variable: "--font-geist",
+});
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <html lang="id" className={`${geist.variable}`}>
+      <body>{children}</body>
+    </html>
+  );
+}
+```
+
+Dengan opsi `variable`, font diekspos sebagai CSS custom property (`--font-geist`) yang bisa dipakai di Tailwind atau CSS biasa: `font-family: var(--font-geist)`. Ini praktis saat kamu punya beberapa font dan ingin menggantinya lewat class, bukan hardcode nama font di banyak tempat.
+
+## Membatasi subset dan weight
+
+Font non-variable membawa satu weight per file, jadi muat hanya weight yang benar-benar dipakai agar ukuran turun:
+
+```tsx
+const inter = Inter({
+  subsets: ["latin"],
+  weight: ["400", "600", "700"], // hanya yang dibutuhkan
+  display: "swap",
+});
+```
+
+Untuk font variable, sebaliknya — ia sudah efisien karena semua weight berada dalam satu file. Jangan mencampur opsi `weight` dengan font variable; cukup biarkan default-nya. Subset `latin` sudah cukup untuk bahasa Indonesia karena karakter Latinnya identik; hindari memuat `latin-ext` atau `cyrillic` kalau tidak diperlukan — setiap subset menambah bytes yang tidak terpakai.
+
+## Menghindari FOUT berlebih dengan display
+
+Opsi `display` menentukan perilaku saat font belum siap:
+
+- `swap` (default): tampilkan fallback dulu, ganti saat font siap — aman untuk CLS karena `next/font` sudah menyesuaikan ukuran fallback.
+- `optional`: browser boleh membatalkan swap kalau font terlambat — paling cepat, tapi font bisa tidak muncul di first load.
+- `block`: sembunyikan teks sementara (FOIT) — berisiko teks kosong terlalu lama.
+
+Untuk sebagian besar kasus, `swap` adalah pilihan seimbang karena `next/font` sudah meminimalkan loncatan lewat `size-adjust`.
+
+## Mengukur dampaknya
+
+Buka Chrome DevTools → panel Performance, atau jalankan Lighthouse. Perhatikan metrik CLS: dengan `next/font`, angkanya harus mendekati 0 karena fallback dan font asli punya dimensi yang disesuaikan. Di tab Network, kamu juga tidak lagi melihat request ke `fonts.gstatic.com` — font kini dilayani dari `/_next/static/media/...` milikmu, sehingga cookies pihak ketiga dan round-trip ekstra ikut hilang.
+
+## Batasan yang perlu disadari
+
+`next/font/google` butuh akses internet saat build untuk mendownload font; di CI tertutup tanpa jaringan, build akan gagal. Solusinya pakai `next/font/local` dengan file font yang di-commit ke repo, atau mirror font secara internal. Selain itu, `next/font` hanya menggantikan *cara* pemuatan font — ia tidak mengoptimalkan jumlah font yang kamu *pakai*. Tetap batasi variasi font dan weight agar bundle tidak membengkak.
+
+## Kapan memakainya
+
+Pakai `next/font` untuk setiap font di proyek Next.js — tidak ada alasan lagi memakai `<link>` ke Google Fonts. Ia menghapus request eksternal, menjaga CLS mendekati nol, dan mengeliminasi boilerplate preconnect/preload. Satu baris import menggantikan beberapa tag `<link>` dan sepotong CSS `size-adjust` yang rawan salah tulis. Performa pemuatan font bukan lagi tugas manual; ia sudah diurus sejak build selesai.

@@ -1,0 +1,100 @@
+---
+title: "Operator satisfies di TypeScript: Validasi Tipe Tanpa Kehilangan Inferensi"
+slug: "typescript-satisfies-operator"
+description: "Gunakan operator satisfies untuk mengecek tipe sebuah nilai tanpa membunuh inferensi literal — beda dengan anotasi eksplisit dan as."
+publishedAt: "2026-08-25T02:00:00+07:00"
+topics: ["TypeScript", "Next.js"]
+draft: false
+---
+
+## Masalah: anotasi tipe mematikan inferensi literal
+
+Saat kamu memberi anotasi tipe eksplisit pada sebuah objek, TypeScript akan "memaksa" nilai tersebut mengikuti bentuk tipe itu — dan dalam prosesnya, inferensi literal yang sempit hilang. Perhatikan kasus umum saat mendefinisikan konfigurasi:
+
+```ts
+type Status = "idle" | "loading" | "success" | "error";
+
+const config: { status: Status; retries: number } = {
+  status: "loading",
+  retries: 3,
+};
+
+// TS tidak tahu ini literal "loading", hanya Status
+const next = config.status === "idle" ? "mulai" : "lanjut";
+```
+
+Itu sendiri aman. Masalahnya muncul saat kamu butuh nilai literalnya tetap presisi — misal untuk argumen fungsi yang menerima union literal, atau untuk `as const` agar objek bisa dipakai sebagai map kunci-tipe.
+
+## `satisfies`: validasi tanpa kehilangan inferensi
+
+Operator `satisfies` (hadir sejak TypeScript 4.9) memeriksa bahwa sebuah nilai **memenuhi** suatu tipe, tetapi **tidak mengubah** tipe hasil inferensinya. Nilai tetap diinferensikan secara presisi, sambil tetap divalidasi.
+
+```ts
+type Status = "idle" | "loading" | "success" | "error";
+
+const config = {
+  status: "loading",
+  retries: 3,
+} satisfies { status: Status; retries: number };
+
+// Tipe config.status adalah "loading" (literal!), bukan sekadar Status
+type S = typeof config.status; // "loading"
+```
+
+Perbedaan kuncinya: dengan anotasi eksplisit, tipe `status` melebar menjadi `Status`. Dengan `satisfies`, tipe tetap `"loading"` — namun TypeScript tetap menolak kalau kamu menulis `status: "pending"` yang tidak ada di `Status`.
+
+## Kasus nyata: objek konfigurasi sebagai peta
+
+Ini paling berguna saat membangun objek yang dipakai sebagai lookup table dengan tipe nilai yang seragam:
+
+```ts
+const routes = {
+  home: "/",
+  dashboard: "/dashboard",
+  settings: "/settings",
+} satisfies Record<string, string>;
+
+// routes.home bertipe "/", bukan string lebar
+function go(path: "/dashboard" | "/settings") {
+  // ...
+}
+go(routes.dashboard); // aman: tipe pas
+go(routes.home);      // error: "/" tidak termasuk argumen
+```
+
+Coba dengan anotasi eksplisit `: Record<string, string>` dan `go(routes.dashboard)` akan lolos secara tipe (karena semua nilai dianggap `string`), menyembunyikan kesalahan yang seharusnya ketahuan di compile time.
+
+## Bedanya dengan `as` dan anotasi eksplisit
+
+Tiga pendekatan ini sering tertukar:
+
+- **Anotasi eksplisit** `const x: T = {...}` — memaksa tipe jadi `T`, melebar, dan tidak menangkap ketidakcocokan bentuk secara ketat jika `T` longgar.
+- **`as`** `const x = {...} as T` — *assertion*: kamu bilang ke TS "percaya saja ini T". Tidak ada pengecekan nyata; bisa menyembunyikan bug.
+- **`satisfies`** `const x = {...} satisfies T` — pengecekan sungguhan, tapi tipe hasilnya tetap inferensi asli.
+
+Aturan praktis: pakai `satisfies` kalau kamu ingin **divalidasi tapi tidak diubah**. Pakai `as` hanya untuk kasus langka (misal narrow dari `unknown` setelah runtime check). Jangan pakai `as` untuk menutupi error tipe.
+
+## Kombinasi dengan literal union: discriminated object
+
+`satisfies` juga memudahkan saat mendefinisikan banyak varian dengan tipe field yang berbeda, tanpa kehilangan kepresisian masing-masing:
+
+```ts
+type Field =
+  | { kind: "text"; placeholder: string }
+  | { kind: "number"; min: number; max: number };
+
+const form = {
+  name: { kind: "text", placeholder: "Nama" },
+  age: { kind: "number", min: 0, max: 120 },
+} satisfies Record<string, Field>;
+
+// form.name.kind bertipe "text", form.age.kind bertipe "number"
+```
+
+Tanpa `satisfies`, menulis anotasi `Record<string, Field>` akan membuat `form.name` dianggap tipe union lebar `Field`, sehingga akses ke `placeholder` memerlukan narrowing manual. Dengan `satisfies`, literal `"text"` dan `"number"` tetap utuh.
+
+## Batasan yang perlu disadari
+
+`satisfies` mengecek tipe pada saat deklarasi. Ia **tidak** mengubah tipe variabel, jadi kalau kamu mengekspos nilai itu lewat fungsi yang mengembalikan `T` eksplisit, inferensi presisi tadi bisa "bocor" kembali menjadi tipe lebar di titik lain. Selain itu, `satisfies` tidak bisa dipakai untuk menegaskan tipe pada ekspresi di dalam fungsi seperti guard runtime — untuk itu tetap pakai *type predicate* (`arg is T`).
+
+Operator ini bukan pengganti anotasi, melainkan pelengkap: ia memberimu jaminan keamanan tipe saat menulis objek, sambil menyimpan inferensi literal yang sering dibutuhkan untuk API yang ketat. Di proyek Next.js yang banyak memakai objek konfigurasi, peta rute, atau definisi field form, `satisfies` sering menghilangkan satu lapis `as` berbahaya yang selama ini kamu tulis tanpa sadar.
