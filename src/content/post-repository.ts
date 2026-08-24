@@ -10,10 +10,10 @@ type PostFileResult =
   | { success: true; data: PostDocument; filePath: string }
   | { success: false; filePath: string; error: Error };
 
+const defaultContentDirectory = path.join(process.cwd(), "content/posts");
+
 export function defaultRootDirectory() {
-  return path.resolve(
-    process.env.CONTENT_ROOT ?? path.join(process.cwd(), "content/posts"),
-  );
+  return process.env.CONTENT_ROOT ?? defaultContentDirectory;
 }
 
 export function isPublished(
