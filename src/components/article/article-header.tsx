@@ -4,7 +4,7 @@ import { formatDate } from "@/lib/format-date";
 
 export function ArticleHeader({ post }: { post: PostSummary }) {
   return (
-    <header className="article-header">
+    <header id="article-header" className="article-header">
       <div className="topic-list">
         {post.topics.map((topic) => (
           <span className="topic" key={topic}>
@@ -12,7 +12,9 @@ export function ArticleHeader({ post }: { post: PostSummary }) {
           </span>
         ))}
       </div>
-      <h1>{post.title}</h1>
+      <h1 id="article-title" tabIndex={-1}>
+        {post.title}
+      </h1>
       <p className="article-description">{post.description}</p>
       <div className="article-metadata">
         <span>

@@ -36,6 +36,14 @@ export function ArrowUpRight(props: IconProps) {
     </Icon>
   );
 }
+export function ArrowUp(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="m5 12 7-7 7 7" />
+      <path d="M12 19V5" />
+    </Icon>
+  );
+}
 
 export function Briefcase(props: IconProps) {
   return (
