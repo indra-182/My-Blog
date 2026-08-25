@@ -42,7 +42,8 @@
     "copied": "Tersalin",
     "copyFailed": "Tidak dapat menyalin. Pilih kode secara manual.",
     "backToBlog": "Kembali ke Blog",
-    "partOf": "Bagian dari seri"
+    "partOf": "Bagian dari seri",
+    "backToTop": "Kembali ke atas"
   },
   "footer": {
     "portfolio": "Portfolio",

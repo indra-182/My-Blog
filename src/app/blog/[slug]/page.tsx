@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { BackToTop } from "@/components/article/back-to-top";
 import { ArticleBreadcrumbs } from "@/components/article/article-breadcrumbs";
 import { ArticleHeader } from "@/components/article/article-header";
 import { ArticleProse } from "@/components/article/article-prose";
@@ -59,6 +60,7 @@ export default async function ArticlePage({
       <div className="shell article-layout">
         <ArticleBreadcrumbs title={post.title} />
         <ArticleHeader post={post} />
+        <BackToTop />
         <div className="article-body-grid">
           <ArticleProse post={post} />
           <TableOfContents items={toc} />
