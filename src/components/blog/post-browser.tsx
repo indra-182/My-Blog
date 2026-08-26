@@ -11,20 +11,19 @@ import { usePathname, useRouter } from "next/navigation";
 import { ChevronDown, Search } from "@/components/icons";
 import type { PostSummary } from "@/content/post-types";
 import dictionary from "@/i18n/messages/id.json";
-import { filterPosts } from "@/lib/filter-posts";
+import {
+  defaultPostFilters,
+  filterPosts,
+  serializePostFilters,
+  type PostFilters,
+} from "@/lib/post-discovery";
 import { PostCard } from "./post-card";
 
 const pageSize = 6;
 const searchDebounceMs = 300;
 
-type FilterValues = { query: string; topic: string; series: string };
-
-function buildSearchPath(pathname: string, values: FilterValues) {
-  const params = new URLSearchParams();
-  if (values.query) params.set("q", values.query);
-  if (values.topic !== "all") params.set("topic", values.topic);
-  if (values.series !== "all") params.set("series", values.series);
-  const queryString = params.toString();
+function buildSearchPath(pathname: string, filters: PostFilters) {
+  const queryString = serializePostFilters(filters);
   return queryString ? `${pathname}?${queryString}` : pathname;
 }
 
@@ -33,16 +32,12 @@ export function PostBrowser({
   initialFilters,
 }: {
   posts: PostSummary[];
-  initialFilters: FilterValues;
+  initialFilters: PostFilters;
 }) {
   const router = useRouter();
   const pathname = usePathname();
   const { query: urlQuery, topic, series } = initialFilters;
-  const currentPath = buildSearchPath(pathname, {
-    query: urlQuery,
-    topic,
-    series,
-  });
+  const currentPath = buildSearchPath(pathname, initialFilters);
   // Typing stays in local state so filtering is immediate; the URL catches up
   // debounced. lastPushedQueryRef marks our own URL writes so their echo does
   // not clobber newer keystrokes.
@@ -62,7 +57,7 @@ export function PostBrowser({
   }, [urlQuery]);
 
   const replaceUrl = useCallback(
-    (values: FilterValues) => {
+    (values: PostFilters) => {
       const nextPath = buildSearchPath(pathname, values);
       if (nextPath === currentPath) return;
       startTransition(() => {
@@ -88,7 +83,7 @@ export function PostBrowser({
   const seriesOptions = Array.from(
     new Set(posts.map((post) => post.series).filter(Boolean)),
   ).sort() as string[];
-  const filteredPosts = filterPosts(posts, query, topic, series);
+  const filteredPosts = filterPosts(posts, { query, topic, series });
   const visiblePosts = filteredPosts.slice(0, visibleCount);
 
   function handleQueryChange(nextQuery: string) {
@@ -97,7 +92,12 @@ export function PostBrowser({
   }
 
   function applyFilters(next: { topic?: string; series?: string }) {
-    const values = { query: query.trim(), topic, series, ...next };
+    const values: PostFilters = {
+      query: query.trim(),
+      topic,
+      series,
+      ...next,
+    };
     setVisibleCount(pageSize);
     if (values.query !== urlQuery) lastPushedQueryRef.current = values.query;
     replaceUrl(values);
@@ -107,7 +107,7 @@ export function PostBrowser({
     setQuery("");
     setVisibleCount(pageSize);
     if (urlQuery !== "") lastPushedQueryRef.current = "";
-    replaceUrl({ query: "", topic: "all", series: "all" });
+    replaceUrl(defaultPostFilters);
   }
 
   if (posts.length === 0) {

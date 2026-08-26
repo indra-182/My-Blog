@@ -10,6 +10,11 @@ type PostFileResult =
   | { success: true; data: PostDocument; filePath: string }
   | { success: false; filePath: string; error: Error };
 
+export interface ContentIssue {
+  filePath: string;
+  message: string;
+}
+
 const defaultContentDirectory = path.join(process.cwd(), "content/posts");
 
 export function defaultRootDirectory() {
@@ -57,60 +62,98 @@ export function parsePostSource(
   }
 }
 
-async function readPosts(rootDirectory: string): Promise<PostDocument[]> {
+export async function loadPostCollection(
+  rootDirectory: string,
+  now: number = Date.now(),
+  allowMissing = false,
+): Promise<{ documents: PostDocument[]; issues: ContentIssue[] }> {
   let filenames: string[];
   try {
-    filenames = (await readdir(rootDirectory)).filter((filename) =>
-      filename.endsWith(".mdx"),
-    );
+    filenames = (await readdir(rootDirectory))
+      .filter((filename) => filename.endsWith(".mdx"))
+      .sort();
   } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === "ENOENT") return [];
-    throw error;
+    if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+    return {
+      documents: [],
+      issues: allowMissing
+        ? []
+        : [
+            {
+              filePath: rootDirectory,
+              message: "content directory does not exist",
+            },
+          ],
+    };
   }
-
-  const results = await Promise.all(
-    filenames.map(async (filename) => {
-      const filePath = path.join(rootDirectory, filename);
-      return parsePostSource(await readFile(filePath, "utf8"), filePath);
-    }),
-  );
 
   const documents: PostDocument[] = [];
-  for (const result of results) {
-    if (result.success) {
-      documents.push(result.data);
+  const issues: ContentIssue[] = [];
+  const slugs = new Map<string, string>();
+
+  for (const filename of filenames) {
+    const filePath = path.join(rootDirectory, filename);
+    const result = parsePostSource(await readFile(filePath, "utf8"), filePath);
+    if (!result.success) {
+      issues.push({ filePath, message: result.error.message });
+      continue;
+    }
+
+    const document = result.data;
+    documents.push(document);
+    if (!document.draft && !isPublished(document, now)) {
+      issues.push({
+        filePath,
+        message: "publishedAt cannot be in the future unless draft is true",
+      });
+    }
+
+    const existingFilePath = slugs.get(document.slug);
+    if (existingFilePath) {
+      issues.push({
+        filePath,
+        message: `duplicate slug "${document.slug}" also used by ${existingFilePath}`,
+      });
     } else {
-      console.warn(
-        `[content] Skipping unreadable post ${result.filePath}: ${result.error.message}`,
-      );
+      slugs.set(document.slug, filePath);
     }
   }
-  return documents;
+
+  return { documents, issues };
 }
 
 function publishedAtDesc(a: PostSummary, b: PostSummary) {
   return new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime();
 }
 
-function uniqueBySlug<T extends PostSummary>(posts: T[]): T[] {
-  const seen = new Set<string>();
-  return posts.filter((post) => {
-    if (seen.has(post.slug)) return false;
-    seen.add(post.slug);
-    return true;
-  });
-}
+export function createPostRepository(rootDirectory?: string) {
+  const resolvedRootDirectory = rootDirectory ?? defaultRootDirectory();
+  const allowMissing =
+    rootDirectory === undefined && process.env.CONTENT_ROOT === undefined;
 
-export function createPostRepository(rootDirectory = defaultRootDirectory()) {
   // React cache dedupes reads and parses within a single server request.
   const loadDocuments = cache(async (): Promise<PostDocument[]> => {
-    const documents = await readPosts(rootDirectory);
+    const { documents, issues } = await loadPostCollection(
+      resolvedRootDirectory,
+      Date.now(),
+      allowMissing,
+    );
+    if (issues.length > 0) {
+      throw new AggregateError(
+        issues.map(
+          ({ filePath, message }) => new Error(`${filePath}: ${message}`),
+        ),
+        issues
+          .map(({ filePath, message }) => `${filePath}: ${message}`)
+          .join("\n"),
+      );
+    }
     return documents.sort(publishedAtDesc);
   });
 
   async function getPublicDocuments(): Promise<PostDocument[]> {
     const documents = await loadDocuments();
-    return uniqueBySlug(documents.filter((document) => isPublished(document)));
+    return documents.filter((document) => isPublished(document));
   }
 
   async function getAllPosts() {

@@ -32,7 +32,7 @@ Validate content with:
 pnpm content:validate
 ```
 
-The production content directory intentionally has no sample articles. Tests use private fixtures under `src/test/fixtures/posts` and Playwright injects that root through `CONTENT_ROOT`.
+The production content directory intentionally has no sample articles. A missing default `content/posts` directory is treated as an empty blog. Tests use private fixtures under `src/test/fixtures/posts` and Playwright injects that root through `CONTENT_ROOT`; when `CONTENT_ROOT` is set, the directory must exist. Malformed frontmatter, duplicate slugs, and future-dated non-drafts fail validation and runtime loading instead of producing a partial site.
 
 ## Public contracts
 
