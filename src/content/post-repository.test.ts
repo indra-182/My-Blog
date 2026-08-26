@@ -1,18 +1,15 @@
 import { mkdtemp, mkdir, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
   createPostRepository,
   isPublished,
+  loadPostCollection,
   parsePostSource,
 } from "./post-repository";
 
 const fixtureRoot = path.join(process.cwd(), "src/test/fixtures/posts");
-
-afterEach(() => {
-  vi.restoreAllMocks();
-});
 
 describe("post repository", () => {
   it("returns published posts newest first and excludes drafts", async () => {
@@ -47,7 +44,7 @@ describe("post repository", () => {
     expect(previousNeighbors.next).toBeNull();
   });
 
-  it("does not expose malformed or duplicate slugs as public posts", async () => {
+  it("rejects duplicate slugs instead of choosing a document", async () => {
     const root = await mkdtemp(path.join(os.tmpdir(), "blog-content-"));
     await mkdir(root, { recursive: true });
     const frontmatter = `---
@@ -63,8 +60,9 @@ Content`;
     await writeFile(path.join(root, "one.mdx"), frontmatter);
     await writeFile(path.join(root, "two.mdx"), frontmatter);
 
-    const posts = await createPostRepository(root).getAllPosts();
-    expect(posts).toHaveLength(1);
+    await expect(createPostRepository(root).getAllPosts()).rejects.toThrow(
+      "duplicate slug",
+    );
   });
 });
 
@@ -115,7 +113,7 @@ Body`;
 });
 
 describe("content edge cases", () => {
-  it("skips malformed files with a clear warning instead of failing silently", async () => {
+  it("rejects malformed files instead of serving a partial collection", async () => {
     const root = await mkdtemp(path.join(os.tmpdir(), "blog-content-"));
     await mkdir(root, { recursive: true });
     await writeFile(
@@ -136,53 +134,19 @@ draft: false
 Body`,
     );
 
-    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
-    const repository = createPostRepository(root);
-    const posts = await repository.getAllPosts();
-
-    expect(posts.map((post) => post.slug)).toEqual(["valid-post"]);
-    expect(warn).toHaveBeenCalledTimes(1);
-    expect(String(warn.mock.calls[0]?.[0])).toContain("broken.mdx");
+    await expect(createPostRepository(root).getAllPosts()).rejects.toThrow(
+      "broken.mdx",
+    );
   });
 
-  it("returns metadata and source from the same document when slugs collide", async () => {
-    const root = await mkdtemp(path.join(os.tmpdir(), "blog-content-"));
-    await mkdir(root, { recursive: true });
-    await writeFile(
-      path.join(root, "older.mdx"),
-      `---
-title: "Older duplicate"
-slug: "clash"
-description: "Older"
-publishedAt: "2020-01-01T20:00:00+07:00"
-topics: ["React"]
-draft: false
----
+  it("allows a missing content directory only when configured as optional", async () => {
+    const missing = path.join(os.tmpdir(), "blog-content-missing");
 
-Older source`,
+    await expect(createPostRepository(missing).getAllPosts()).rejects.toThrow(
+      "content directory does not exist",
     );
-    await writeFile(
-      path.join(root, "newer.mdx"),
-      `---
-title: "Newer duplicate"
-slug: "clash"
-description: "Newer"
-publishedAt: "2021-01-01T20:00:00+07:00"
-topics: ["React"]
-draft: false
----
-
-Newer source`,
-    );
-
-    const repository = createPostRepository(root);
-    const summary = (await repository.getAllPosts()).at(-1)!;
-    const document = await repository.getPostBySlug("clash");
-
-    expect(summary.title).toBe("Newer duplicate");
-    expect(document).not.toBeNull();
-    expect(document!.title).toBe(summary.title);
-    expect(document!.description).toBe(summary.description);
-    expect(document!.source).toContain("Newer source");
+    await expect(
+      loadPostCollection(missing, Date.now(), true),
+    ).resolves.toEqual({ documents: [], issues: [] });
   });
 });

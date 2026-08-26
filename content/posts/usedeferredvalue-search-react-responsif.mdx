@@ -1,0 +1,107 @@
+---
+title: "useDeferredValue untuk Search React yang Tetap Responsif"
+slug: "usedeferredvalue-search-react-responsif"
+description: "Menjaga input pencarian tetap responsif dengan useDeferredValue di React 19 tanpa debounce manual."
+publishedAt: "2026-08-26T01:00:00+07:00"
+topics: ["React", "TypeScript", "Web Performance"]
+draft: false
+---
+
+## Masalah: filter berat membuat input ikut tersendat
+
+Fitur search sering dimulai dari kode yang sederhana: simpan isi input di state, lalu filter daftar berdasarkan nilai tersebut. Pola ini baik untuk daftar kecil. Namun, ketika daftar berisi ribuan item atau setiap baris melakukan render yang mahal, setiap keystroke dapat memicu pekerjaan besar di main thread.
+
+Dampaknya terasa langsung. Huruf yang diketik terlambat muncul, kursor terasa berat, dan halaman seperti membeku selama React menghitung hasil filter. Debounce memang bisa mengurangi frekuensi pekerjaan, tetapi ia juga sengaja menunggu pengguna berhenti mengetik. React menyediakan pilihan lain untuk memprioritaskan pekerjaan tanpa menunda input secara manual: `useDeferredValue`.
+
+## Cara kerja useDeferredValue
+
+`useDeferredValue` menerima sebuah nilai dan mengembalikan versi nilai yang pembaruannya boleh ditunda oleh React. Nilai asli tetap dipakai untuk pekerjaan yang mendesak, seperti memperbarui isi `<input>`. Versi deferred dipakai untuk pekerjaan yang lebih rendah prioritasnya, seperti menghitung dan merender hasil pencarian.
+
+```tsx
+const [query, setQuery] = useState("");
+const deferredQuery = useDeferredValue(query);
+```
+
+Saat `query` berubah, React dapat segera merender input dengan nilai baru. React kemudian mencoba merender subtree yang menggunakan `deferredQuery` di background. Jika pengguna mengetik lagi sebelum render selesai, render lama bisa ditinggalkan dan diganti dengan render terbaru. Tidak ada timer yang perlu dikelola dan tidak ada callback debounce yang harus dibersihkan.
+
+## Contoh dengan TypeScript
+
+Contoh berikut memakai daftar produk lokal. Komponen `ProductList` menerima query yang sudah ditunda sehingga input tidak perlu menunggu proses filter selesai.
+
+```tsx
+import { memo, useDeferredValue, useMemo, useState } from "react";
+
+type Product = {
+  id: number;
+  name: string;
+  category: string;
+};
+
+const products: Product[] = loadProducts();
+
+const ProductList = memo(function ProductList({ query }: { query: string }) {
+  const filteredProducts = useMemo(() => {
+    const normalized = query.trim().toLowerCase();
+
+    if (!normalized) return products;
+
+    return products.filter((product) =>
+      `${product.name} ${product.category}`
+        .toLowerCase()
+        .includes(normalized),
+    );
+  }, [query]);
+
+  return (
+    <ul>
+      {filteredProducts.map((product) => (
+        <li key={product.id}>
+          {product.name} — {product.category}
+        </li>
+      ))}
+    </ul>
+  );
+});
+
+export function ProductSearch() {
+  const [query, setQuery] = useState("");
+  const deferredQuery = useDeferredValue(query);
+  const isFiltering = deferredQuery !== query;
+
+  return (
+    <section>
+      <label htmlFor="product-search">Cari produk</label>
+      <input
+        id="product-search"
+        value={query}
+        onChange={(event) => setQuery(event.target.value)}
+        placeholder="Contoh: keyboard"
+      />
+
+      <p aria-live="polite" style={{ opacity: isFiltering ? 0.6 : 1 }}>
+        {isFiltering ? "Memperbarui hasil…" : "Hasil terbaru"}
+      </p>
+
+      <ProductList query={deferredQuery} />
+    </section>
+  );
+}
+```
+
+`memo` di sini bukan syarat untuk memakai `useDeferredValue`, tetapi membantu memastikan `ProductList` tidak ikut dirender ulang karena perubahan state lain di komponen induk. `useMemo` menyimpan hasil perhitungan selama `query` yang diterima belum berubah. Keduanya tetap harus dipakai berdasarkan pengukuran; jangan menambah memoization pada semua komponen secara otomatis.
+
+Perbandingan `deferredQuery !== query` juga memberi indikator sederhana. Selama nilainya berbeda, React masih mengejar render hasil pencarian. Indikator ini bukan pengganti progress bar untuk request jaringan, tetapi cukup untuk menjelaskan mengapa daftar masih menampilkan hasil sebelumnya ketika pengguna terus mengetik.
+
+## Bedanya dengan debounce dan startTransition
+
+Debounce menunggu jeda tertentu setelah input terakhir, misalnya 300 milidetik, sebelum menjalankan filter atau request. Teknik itu cocok untuk mengurangi jumlah panggilan API. Namun, debounce tidak secara otomatis mengatur prioritas render React dan hasilnya memang baru mulai dihitung setelah timer berakhir.
+
+`startTransition` menandai pembaruan state tertentu sebagai non-urgent. Gunakan ini ketika kode kita mengendalikan setter yang ingin diturunkan prioritasnya. `useDeferredValue` lebih praktis ketika nilai sudah tersedia dan kita ingin memberikan versi tertunda kepada komponen turunan. Keduanya memakai model concurrent rendering React, tetapi titik penggunaannya berbeda.
+
+Untuk pencarian ke server, `useDeferredValue` tidak membatalkan request lama dan tidak mengurangi jumlah request dengan sendirinya. Gabungkan dengan strategi cache, pembatalan request, atau debounce bila endpoint perlu dilindungi dari terlalu banyak panggilan.
+
+## Batasan dan kapan memakainya
+
+Hook ini tidak membuat algoritme filter menjadi lebih cepat. Ia hanya memastikan pekerjaan mahal tidak memblokir pembaruan yang mendesak. Jika satu render tetap memakan ratusan milidetik, gunakan virtualisasi daftar, indeks pencarian, pagination, atau pindahkan pencarian ke server.
+
+Mulailah dengan mengukur menggunakan React DevTools Profiler dan Performance panel browser. `useDeferredValue` cocok untuk filter lokal, tabel, preview Markdown, atau hasil visual yang boleh sedikit tertinggal dari input. Hindari menggunakannya untuk validasi yang harus langsung akurat atau UI yang nilainya wajib selalu konsisten dengan input pada render yang sama.

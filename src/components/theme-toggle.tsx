@@ -74,7 +74,7 @@ export function ThemeToggle() {
   return (
     <button
       type="button"
-      className="icon-button site-control"
+      className="icon-button"
       aria-label={label}
       title={label}
       data-theme-toggle

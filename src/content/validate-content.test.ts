@@ -108,8 +108,13 @@ describe("validateContentDirectory", () => {
     );
   });
 
-  it("returns no issues for a missing directory", async () => {
+  it("reports a missing explicit content directory", async () => {
     const missing = path.join(os.tmpdir(), "blog-validate-missing");
-    expect(await validateContentDirectory(missing)).toEqual([]);
+    await expect(validateContentDirectory(missing)).resolves.toEqual([
+      {
+        filePath: missing,
+        message: "content directory does not exist",
+      },
+    ]);
   });
 });
