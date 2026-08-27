@@ -1,0 +1,114 @@
+---
+title: "useEffectEvent di React 19.2: Pisahkan Event dari Effect"
+slug: "useeffectevent-react-19-2"
+description: "Memakai useEffectEvent untuk membaca nilai terbaru di dalam Effect tanpa memicu subscribe ulang yang tidak perlu."
+publishedAt: "2026-08-28T01:00:00+07:00"
+topics: ["React", "TypeScript"]
+draft: false
+---
+
+## Masalah stale closure di dalam Effect
+
+Sebuah Effect biasanya melakukan dua pekerjaan sekaligus. Ia memasang koneksi atau listener, lalu menjalankan logika ketika event terjadi. Masalah muncul ketika logika event perlu membaca props atau state terbaru.
+
+Misalnya, komponen ruang chat membuka koneksi berdasarkan `roomId`. Saat server mengirim pesan, kita ingin mencatat notifikasi memakai `theme` terbaru. Jika `theme` dimasukkan ke dependency array, Effect akan berjalan ulang setiap kali tema berubah. Koneksi chat ikut ditutup dan dibuka kembali, padahal `roomId` tidak berubah.
+
+```tsx
+useEffect(() => {
+  const connection = createConnection(roomId);
+
+  connection.on("connected", () => {
+    showNotification("Terhubung", theme);
+  });
+
+  connection.connect();
+  return () => connection.disconnect();
+}, [roomId, theme]);
+```
+
+Jika `theme` dihapus dari dependency array, callback dapat membaca nilai lama karena JavaScript membuat closure ketika Effect dijalankan. Linter juga akan memperingatkan dependency yang hilang. `useEffectEvent` dirancang untuk bagian seperti ini: callback-nya selalu melihat nilai terbaru, tetapi identitas callback tidak membuat Effect harus subscribe ulang.
+
+## Apa yang dilakukan useEffectEvent
+
+`useEffectEvent` membuat fungsi yang boleh dipanggil dari dalam Effect atau callback yang didaftarkan oleh Effect. Fungsi tersebut tidak dimaksudkan untuk dipanggil langsung dari event handler JSX seperti `onClick`.
+
+```tsx
+import { useEffect, useEffectEvent } from "react";
+
+function ChatRoom({ roomId, theme }: { roomId: string; theme: string }) {
+  const onConnected = useEffectEvent(() => {
+    showNotification("Terhubung", theme);
+  });
+
+  useEffect(() => {
+    const connection = createConnection(roomId);
+
+    connection.on("connected", onConnected);
+    connection.connect();
+
+    return () => connection.disconnect();
+  }, [roomId]);
+
+  return <p>Ruang: {roomId}</p>;
+}
+```
+
+`roomId` tetap menjadi dependency karena ia menentukan koneksi mana yang harus dipakai. `theme` tidak menentukan siklus hidup koneksi. Ketika tema berubah, `onConnected` akan memakai tema terbaru saat event `connected` benar-benar terjadi.
+
+Pemisahan ini membuat dependency array lebih sesuai dengan alasan Effect tersebut ada. Effect mengelola koneksi. Effect Event membaca konfigurasi tampilan yang hanya diperlukan ketika koneksi mengirim event.
+
+## Kapan pola ini berguna
+
+Gunakan `useEffectEvent` ketika sebuah callback di dalam Effect mempunyai dua jenis data:
+
+- data yang menentukan kapan resource harus dipasang ulang,
+- data yang hanya perlu dibaca saat callback dijalankan.
+
+Contoh lain adalah listener `visibilitychange` yang mengirim metrik. URL halaman mungkin berubah dan perlu memicu konfigurasi ulang, sementara fungsi pengirim metrik atau flag debug harus selalu memakai nilai terbaru.
+
+```tsx
+function PageMetrics({ endpoint, debug }: { endpoint: string; debug: boolean }) {
+  const sendMetric = useEffectEvent((eventName: string) => {
+    if (debug) console.info("metric:", eventName);
+
+    void fetch(endpoint, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ eventName }),
+    });
+  });
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        sendMetric("page-hidden");
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, []);
+
+  return null;
+}
+```
+
+Pada contoh tersebut, listener dipasang sekali. Saat `debug` atau `endpoint` berubah, callback tetap mendapatkan nilai baru tanpa perlu melepas dan memasang listener dokumen lagi.
+
+## Bedanya dengan useCallback dan useRef
+
+`useCallback` menjaga identitas fungsi berdasarkan dependency. Jika dependency berubah, fungsi baru dibuat. Karena itu, `useCallback` tidak menyelesaikan masalah ketika kita sengaja ingin callback memiliki identitas stabil tetapi membaca nilai terbaru.
+
+`useRef` sering dipakai sebagai workaround dengan menulis nilai terbaru ke `ref.current` pada setiap render. Pola itu lebih sulit dibaca, tidak terlihat jelas di dependency linting, dan mudah lupa diperbarui. `useEffectEvent` menyatakan niat tersebut secara langsung.
+
+Bukan berarti semua callback dalam Effect perlu diubah menjadi Effect Event. Jika sebuah nilai memang menentukan resource yang dipasang, masukkan nilai itu ke dependency array. Jangan memakai hook ini untuk menyembunyikan dependency yang seharusnya membuat Effect berjalan ulang.
+
+## Batasan yang perlu diingat
+
+Effect Event hanya boleh dipanggil dari Effect atau callback yang dibuat untuk Effect. Jangan menggunakannya sebagai pengganti `useCallback` untuk prop komponen anak, dan jangan memanggilnya langsung dari render.
+
+Hook ini juga tidak membatalkan pekerjaan asynchronous yang sudah berjalan. Jika callback melakukan `fetch`, tetap pertimbangkan `AbortController` ketika komponen atau parameter request berubah. `useEffectEvent` mengatur cara callback membaca nilai terbaru, bukan siklus hidup promise.
+
+Saat refactor, mulai dari pertanyaan sederhana: apakah perubahan nilai ini memang harus membuat subscription diulang? Jika jawabannya tidak, tetapi callback tetap harus membaca nilai terbaru, `useEffectEvent` bisa memisahkan kedua kebutuhan tersebut tanpa workaround ref.
