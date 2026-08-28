@@ -56,7 +56,7 @@ afterEach(() => {
 describe("PostBrowser", () => {
   it("filters immediately while typing without touching the URL", () => {
     render(<PostBrowser posts={posts} initialFilters={initialFilters} />);
-    const input = screen.getByLabelText("Cari tulisan");
+    const input = screen.getByLabelText("Temukan tulisan");
 
     fireEvent.change(input, { target: { value: "tulisan 7" } });
 
@@ -72,7 +72,7 @@ describe("PostBrowser", () => {
 
   it("synchronizes the trimmed query to the URL after a debounce", () => {
     render(<PostBrowser posts={posts} initialFilters={initialFilters} />);
-    const input = screen.getByLabelText("Cari tulisan");
+    const input = screen.getByLabelText("Temukan tulisan");
 
     fireEvent.change(input, { target: { value: "  react  " } });
     expect(replaceMock).not.toHaveBeenCalled();
@@ -88,7 +88,7 @@ describe("PostBrowser", () => {
     const view = render(
       <PostBrowser posts={posts} initialFilters={initialFilters} />,
     );
-    const input = screen.getByLabelText("Cari tulisan");
+    const input = screen.getByLabelText("Temukan tulisan");
 
     fireEvent.change(input, { target: { value: "pending text" } });
     view.rerender(
@@ -99,7 +99,7 @@ describe("PostBrowser", () => {
     );
 
     expect(input).toHaveValue("TypeScript");
-    expect(screen.getByText("2 tulisan ditemukan")).toBeInTheDocument();
+    expect(screen.getByText("2 tulisan tersedia")).toBeInTheDocument();
 
     act(() => {
       vi.advanceTimersByTime(400);
@@ -113,7 +113,7 @@ describe("PostBrowser", () => {
       <PostBrowser posts={posts} initialFilters={initialFilters} />,
     );
 
-    fireEvent.change(screen.getByLabelText("Topik"), {
+    fireEvent.change(screen.getByLabelText("Bahasan"), {
       target: { value: "TypeScript" },
     });
 
@@ -129,21 +129,21 @@ describe("PostBrowser", () => {
       />,
     );
 
-    expect(screen.getByLabelText("Topik")).toHaveValue("TypeScript");
-    expect(screen.getByText("2 tulisan ditemukan")).toBeInTheDocument();
+    expect(screen.getByLabelText("Bahasan")).toHaveValue("TypeScript");
+    expect(screen.getByText("2 tulisan tersedia")).toBeInTheDocument();
   });
 
   it("resets filters from the empty state and restores the list", () => {
     render(<PostBrowser posts={posts} initialFilters={initialFilters} />);
-    const input = screen.getByLabelText("Cari tulisan");
+    const input = screen.getByLabelText("Temukan tulisan");
 
     fireEvent.change(input, { target: { value: "nothing-matches" } });
-    expect(screen.getByText("0 tulisan ditemukan")).toBeInTheDocument();
+    expect(screen.getByText("0 tulisan tersedia")).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: "Reset filter" }));
+    fireEvent.click(screen.getByRole("button", { name: "Bersihkan filter" }));
 
     expect(input).toHaveValue("");
-    expect(screen.getByText("8 tulisan ditemukan")).toBeInTheDocument();
+    expect(screen.getByText("8 tulisan tersedia")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Tulisan 1" })).toBeInTheDocument();
   });
 
@@ -153,19 +153,21 @@ describe("PostBrowser", () => {
       6,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Muat lebih banyak" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Tampilkan lebih banyak" }),
+    );
     expect(screen.getAllByRole("link", { name: /^Tulisan \d$/ })).toHaveLength(
       8,
     );
 
-    fireEvent.change(screen.getByLabelText("Cari tulisan"), {
+    fireEvent.change(screen.getByLabelText("Temukan tulisan"), {
       target: { value: "deskripsi" },
     });
     expect(screen.getAllByRole("link", { name: /^Tulisan \d$/ })).toHaveLength(
       6,
     );
     expect(
-      screen.getByRole("button", { name: "Muat lebih banyak" }),
+      screen.getByRole("button", { name: "Tampilkan lebih banyak" }),
     ).toBeInTheDocument();
   });
 });

@@ -25,7 +25,7 @@ describe("ThemeToggle", () => {
     render(<ThemeToggle />);
 
     expect(
-      screen.getByRole("button", { name: "Ganti ke tema terang" }),
+      screen.getByRole("button", { name: "Gunakan tema terang" }),
     ).toBeInTheDocument();
     expect(document.documentElement).toHaveClass("dark");
     expect(document.documentElement).not.toHaveClass("light");
@@ -37,7 +37,7 @@ describe("ThemeToggle", () => {
     render(<ThemeToggle />);
 
     expect(
-      screen.getByRole("button", { name: "Ganti ke tema gelap" }),
+      screen.getByRole("button", { name: "Gunakan tema gelap" }),
     ).toBeInTheDocument();
     expect(document.documentElement).toHaveClass("light");
     expect(document.documentElement).not.toHaveClass("dark");
@@ -48,15 +48,13 @@ describe("ThemeToggle", () => {
     render(<ThemeToggle />);
 
     fireEvent.click(
-      screen.getByRole("button", { name: "Ganti ke tema terang" }),
+      screen.getByRole("button", { name: "Gunakan tema terang" }),
     );
     expect(window.localStorage.getItem("theme")).toBe("light");
     expect(document.documentElement).toHaveClass("light");
     expect(document.documentElement).not.toHaveClass("dark");
 
-    fireEvent.click(
-      screen.getByRole("button", { name: "Ganti ke tema gelap" }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: "Gunakan tema gelap" }));
     expect(window.localStorage.getItem("theme")).toBe("dark");
     expect(document.documentElement).toHaveClass("dark");
     expect(document.documentElement).not.toHaveClass("light");
@@ -71,7 +69,7 @@ describe("ThemeToggle", () => {
     });
 
     expect(
-      screen.getByRole("button", { name: "Ganti ke tema gelap" }),
+      screen.getByRole("button", { name: "Gunakan tema gelap" }),
     ).toBeInTheDocument();
     expect(document.documentElement).toHaveClass("light");
   });
@@ -88,7 +86,7 @@ describe("ThemeToggle", () => {
     render(<ThemeToggle />);
 
     expect(
-      screen.getByRole("button", { name: "Ganti ke tema terang" }),
+      screen.getByRole("button", { name: "Gunakan tema terang" }),
     ).toBeInTheDocument();
     expect(document.documentElement).toHaveClass("dark");
     expect(document.documentElement).not.toHaveClass("light");

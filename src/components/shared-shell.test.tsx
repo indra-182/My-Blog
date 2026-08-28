@@ -32,8 +32,8 @@ describe("shared shell", () => {
       </>,
     );
 
-    expect(document.querySelector(".site-header")).toBeInTheDocument();
-    expect(document.querySelector(".site-footer")).toBeInTheDocument();
+    expect(screen.getByRole("banner")).toBeInTheDocument();
+    expect(screen.getByRole("contentinfo")).toBeInTheDocument();
     expect(
       screen.getAllByRole("link", { name: /INDRA\.DEV/i }).length,
     ).toBeGreaterThanOrEqual(2);
@@ -64,6 +64,7 @@ describe("shared shell", () => {
         "Catatan engineering untuk perangkat lunak yang bertahan lama.",
       ),
     ).toBeInTheDocument();
+    expect(screen.getByText(/Hak cipta dilindungi\./)).toBeInTheDocument();
     expect(
       screen.queryAllByRole("link", { name: /switch language|bahasa/i }),
     ).toHaveLength(0);
@@ -90,25 +91,27 @@ describe("shared shell", () => {
     );
 
     expect(
-      screen.getByRole("navigation", { name: "Navigasi utama" }),
+      screen.getByRole("navigation", { name: "Navigasi situs" }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("navigation", { name: "Navigasi footer" }),
+      screen.getByRole("navigation", { name: "Navigasi bagian bawah" }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole("navigation", {
-        name: "Navigasi seluler",
+        name: "Menu seluler",
         hidden: true,
       }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("region", { name: "Penjelajah tulisan" }),
+      screen.getByRole("region", { name: "Daftar tulisan" }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("navigation", { name: "Jejak navigasi" }),
+      screen.getByRole("navigation", { name: "Navigasi halaman" }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("navigation", { name: "Navigasi seri" }),
+      screen.getByRole("navigation", {
+        name: "Pindah antar tulisan dalam seri",
+      }),
     ).toBeInTheDocument();
   });
 
@@ -128,7 +131,7 @@ describe("shared shell", () => {
       />,
     );
 
-    expect(screen.getByLabelText("Cari tulisan")).toHaveValue("React");
+    expect(screen.getByLabelText("Temukan tulisan")).toHaveValue("React");
     expect(
       screen.getByRole("link", { name: "Tulisan contoh" }),
     ).toBeInTheDocument();

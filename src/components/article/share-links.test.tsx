@@ -29,12 +29,14 @@ describe("ShareLinks", () => {
     render(<ShareLinks title="Tulisan" />);
 
     await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: /Bagikan$/ }));
+      fireEvent.click(
+        screen.getByRole("button", { name: /Bagikan sekarang$/ }),
+      );
     });
 
     expect(writeText).toHaveBeenCalledWith(window.location.href);
     expect(
-      screen.getByRole("button", { name: /Tersalin/ }),
+      screen.getByRole("button", { name: /Berhasil disalin/ }),
     ).toBeInTheDocument();
   });
 
@@ -48,7 +50,9 @@ describe("ShareLinks", () => {
     render(<ShareLinks title="Tulisan" />);
 
     await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: /Bagikan$/ }));
+      fireEvent.click(
+        screen.getByRole("button", { name: /Bagikan sekarang$/ }),
+      );
     });
 
     expect(share).toHaveBeenCalledTimes(1);
@@ -65,12 +69,14 @@ describe("ShareLinks", () => {
     render(<ShareLinks title="Tulisan" />);
 
     await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: /Bagikan$/ }));
+      fireEvent.click(
+        screen.getByRole("button", { name: /Bagikan sekarang$/ }),
+      );
     });
 
     expect(writeText).toHaveBeenCalledTimes(1);
     expect(
-      screen.getByRole("button", { name: /Tersalin/ }),
+      screen.getByRole("button", { name: /Berhasil disalin/ }),
     ).toBeInTheDocument();
   });
 
@@ -84,7 +90,7 @@ describe("ShareLinks", () => {
       fireEvent.click(screen.getByRole("button", { name: /Salin tautan/ }));
     });
     expect(
-      screen.getByRole("button", { name: /Tersalin/ }),
+      screen.getByRole("button", { name: /Berhasil disalin/ }),
     ).toBeInTheDocument();
 
     cleanup();

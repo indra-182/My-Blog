@@ -6,6 +6,7 @@ import { Briefcase, Mail } from "@/components/icons";
 function GithubIcon() {
   return (
     <svg
+      className="size-4 flex-none text-cue-rose"
       viewBox="0 0 16 16"
       width="18"
       height="18"
@@ -20,6 +21,7 @@ function GithubIcon() {
 function LinkedinIcon() {
   return (
     <svg
+      className="size-4 flex-none text-cue-rose"
       viewBox="0 0 24 24"
       width="18"
       height="18"
@@ -33,26 +35,36 @@ function LinkedinIcon() {
 
 export function SiteFooter() {
   return (
-    <footer className="site-footer">
-      <div className="shell footer-grid">
+    <footer className="mt-[clamp(5rem,10vw,9rem)] border-t border-border bg-surface pt-14 pb-5">
+      <div className="shell flex flex-col gap-8 border-b border-border pb-8 md:flex-row md:items-start md:justify-between">
         <div>
           <Link className="site-wordmark" href="/">
             INDRA<span>.</span>DEV
           </Link>
-          <p className="footer-note">
-            Catatan engineering untuk perangkat lunak yang bertahan lama.
+          <p className="mt-4 mb-0 max-w-[28rem] text-[0.9rem] leading-[1.6] text-muted-foreground">
+            {dictionary.footer.description}
           </p>
         </div>
-        <nav className="footer-links" aria-label="Navigasi footer">
+        <nav
+          className="grid grid-cols-[repeat(2,minmax(0,max-content))] gap-x-4 gap-y-[0.65rem] md:flex md:items-center"
+          aria-label={dictionary.footer.navigationLabel}
+        >
           <Link
+            className="inline-flex min-h-11 items-center gap-2 font-mono text-[0.65rem] tracking-[0.06em] text-muted-foreground uppercase transition-colors duration-[var(--motion-fast)] ease hover:text-foreground focus-visible:text-foreground"
             href={siteConfig.portfolioUrl}
             aria-label={dictionary.footer.portfolio}
             title={dictionary.footer.portfolio}
           >
-            <Briefcase size={18} strokeWidth={1.8} aria-hidden="true" />
+            <Briefcase
+              className="size-4 flex-none text-cue-rose"
+              size={18}
+              strokeWidth={1.8}
+              aria-hidden="true"
+            />
             <span>{dictionary.footer.portfolio}</span>
           </Link>
           <Link
+            className="inline-flex min-h-11 items-center gap-2 font-mono text-[0.65rem] tracking-[0.06em] text-muted-foreground uppercase transition-colors duration-[var(--motion-fast)] ease hover:text-foreground focus-visible:text-foreground"
             href={siteConfig.githubUrl}
             target="_blank"
             rel="noreferrer"
@@ -63,6 +75,7 @@ export function SiteFooter() {
             <span>{dictionary.footer.github}</span>
           </Link>
           <Link
+            className="inline-flex min-h-11 items-center gap-2 font-mono text-[0.65rem] tracking-[0.06em] text-muted-foreground uppercase transition-colors duration-[var(--motion-fast)] ease hover:text-foreground focus-visible:text-foreground"
             href={siteConfig.linkedinUrl}
             target="_blank"
             rel="noreferrer"
@@ -73,18 +86,27 @@ export function SiteFooter() {
             <span>{dictionary.footer.linkedin}</span>
           </Link>
           <Link
+            className="inline-flex min-h-11 items-center gap-2 font-mono text-[0.65rem] tracking-[0.06em] text-muted-foreground uppercase transition-colors duration-[var(--motion-fast)] ease hover:text-foreground focus-visible:text-foreground"
             href={`mailto:${siteConfig.contactEmail}`}
             aria-label={dictionary.footer.email}
             title={dictionary.footer.email}
           >
-            <Mail size={18} strokeWidth={1.8} aria-hidden="true" />
+            <Mail
+              className="size-4 flex-none text-cue-rose"
+              size={18}
+              strokeWidth={1.8}
+              aria-hidden="true"
+            />
             <span>{dictionary.footer.email}</span>
           </Link>
         </nav>
       </div>
-      <div className="shell footer-bottom">
-        <span>© {new Date().getFullYear()} Mahadi Indra Manurung</span>
-        <span>Bogor/Indonesia</span>
+      <div className="shell flex flex-col gap-2 pt-4 font-mono text-[0.62rem] tracking-[0.04em] text-muted-foreground md:flex-row md:items-center md:justify-between">
+        <p className="m-0">
+          © {new Date().getFullYear()} Mahadi Indra Manurung.{" "}
+          {dictionary.footer.rights}
+        </p>
+        <span className="text-cue-rose">Bogor/Indonesia</span>
       </div>
     </footer>
   );

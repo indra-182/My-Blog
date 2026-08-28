@@ -57,15 +57,15 @@ export default async function ArticlePage({
   const toc = extractTableOfContents(post.source);
   return (
     <main id="main-content" className="page-main" tabIndex={-1}>
-      <div className="shell article-layout">
+      <div className="shell pt-8">
         <ArticleBreadcrumbs title={post.title} />
         <ArticleHeader post={post} />
         <BackToTop />
-        <div className="article-body-grid">
+        <div className="grid grid-cols-[minmax(0,var(--prose-max))_minmax(12rem,15rem)] items-start gap-[clamp(2rem,6vw,5rem)] max-[767px]:grid-cols-1">
           <ArticleProse post={post} />
           <TableOfContents items={toc} />
         </div>
-        <footer className="article-footer">
+        <footer className="mt-[clamp(4rem,8vw,7rem)] border-t border-border pt-8">
           <SeriesNavigation
             previous={neighbors.previous}
             next={neighbors.next}
