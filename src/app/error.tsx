@@ -16,13 +16,17 @@ export default function Error({
   }, [error]);
   return (
     <main id="main-content" className="page-main" tabIndex={-1}>
-      <div className="shell not-found">
+      <div className="shell route-state">
         <div>
-          <div className="eyebrow">500</div>
+          <div className="cue-label">500</div>
           <h1>{dictionary.errors.errorTitle}</h1>
           <p>{dictionary.errors.errorDescription}</p>
-          <div className="error-actions">
-            <button className="load-more" type="button" onClick={() => reset()}>
+          <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
+            <button
+              className="outline-button"
+              type="button"
+              onClick={() => reset()}
+            >
               {dictionary.errors.tryAgain}
             </button>
             <Link href="/">{dictionary.errors.home}</Link>

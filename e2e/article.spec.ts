@@ -8,13 +8,13 @@ test("article exposes reading primitives and copy code", async ({ page }) => {
     }),
   ).toBeVisible();
   await expect(
-    page.getByRole("navigation", { name: "Jejak navigasi" }),
+    page.getByRole("navigation", { name: "Navigasi halaman" }),
   ).toBeVisible();
   await expect(
     page.getByRole("link", { name: /Jaga URL tetap dapat dibagikan/i }),
   ).toBeVisible();
   await expect(
-    page.getByRole("button", { name: "Salin", exact: true }),
+    page.getByRole("button", { name: "Salin kode", exact: true }),
   ).toBeVisible();
   await expect(page.getByText("React Architecture")).toBeVisible();
 });
@@ -32,7 +32,7 @@ test("article shows Kembali ke atas after its header leaves the viewport", async
       name: "Memisahkan Server State dari UI State",
     });
     const control = page.getByRole("button", {
-      name: "Kembali ke atas",
+      name: "Ke awal tulisan",
       exact: true,
       includeHidden: true,
     });
@@ -87,7 +87,7 @@ test("article back-to-top activation focuses its heading without changing the UR
     name: "Memisahkan Server State dari UI State",
   });
   const control = page.getByRole("button", {
-    name: "Kembali ke atas",
+    name: "Ke awal tulisan",
     exact: true,
   });
   const url = page.url();
@@ -142,7 +142,7 @@ test("article back-to-top honors reduced motion", async ({ page }) => {
     name: "Memisahkan Server State dari UI State",
   });
   const control = page.getByRole("button", {
-    name: "Kembali ke atas",
+    name: "Ke awal tulisan",
     exact: true,
   });
 
@@ -178,7 +178,7 @@ test("article back-to-top remains usable without viewport observation", async ({
     name: "Memisahkan Server State dari UI State",
   });
   const control = page.getByRole("button", {
-    name: "Kembali ke atas",
+    name: "Ke awal tulisan",
     exact: true,
   });
 
@@ -207,14 +207,12 @@ test("article moves the table of contents before prose on mobile", async ({
 }) => {
   await page.setViewportSize({ width: 375, height: 800 });
   await page.goto("/blog/react-state");
-  const toc = page.getByRole("navigation", { name: "Di halaman ini" });
+  const toc = page.getByRole("navigation", { name: "Dalam tulisan ini" });
   await expect(toc).toBeVisible();
   expect(
-    await page.evaluate(() => {
-      const tocNode = document.querySelector(".toc");
+    await toc.evaluate((tocNode) => {
       const proseNode = document.querySelector(".prose");
       return Boolean(
-        tocNode &&
         proseNode &&
         tocNode.getBoundingClientRect().top <
           proseNode.getBoundingClientRect().top,

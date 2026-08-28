@@ -61,6 +61,44 @@
   --cue-day: #f4f1e9;
 }
 
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-surface-strong: var(--surface-strong);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-focus-ring: var(--focus-ring);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-cue-night: var(--cue-night);
+  --color-cue-cobalt: var(--cue-cobalt);
+  --color-cue-rose: var(--cue-rose);
+  --color-cue-day: var(--cue-day);
+  --font-sans:
+    ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --font-weight-strong: 750;
+  --radius-control: var(--radius-sm);
+  --radius-panel: var(--radius-md);
+  --radius-badge: var(--radius-pill);
+  --container-content: var(--content-max);
+  --container-prose: var(--prose-max);
+  --breakpoint-hero: 56.25rem;
+}
 @media (prefers-reduced-motion: reduce) {
   :root {
     --motion-fast: 0ms;

@@ -13,17 +13,19 @@ describe("CodeBlock", () => {
     render(<CodeBlock code="const value = 1" language="ts" />);
 
     await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: "Salin" }));
+      fireEvent.click(screen.getByRole("button", { name: "Salin kode" }));
     });
     expect(writeText).toHaveBeenCalledWith("const value = 1");
     expect(
-      screen.getByRole("button", { name: "Tersalin" }),
+      screen.getByRole("button", { name: "Berhasil disalin" }),
     ).toBeInTheDocument();
 
     act(() => {
       vi.advanceTimersByTime(2200);
     });
-    expect(screen.getByRole("button", { name: "Salin" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Salin kode" }),
+    ).toBeInTheDocument();
     vi.useRealTimers();
   });
 
@@ -48,7 +50,7 @@ describe("CodeBlock", () => {
       codeBlock.getByText("const value = 1", { selector: "span" }),
     ).toHaveStyle({ color: "rgb(255, 121, 198)" });
     await act(async () => {
-      fireEvent.click(codeBlock.getByRole("button", { name: "Salin" }));
+      fireEvent.click(codeBlock.getByRole("button", { name: "Salin kode" }));
     });
     expect(writeText).toHaveBeenCalledWith("const value = 1");
   });

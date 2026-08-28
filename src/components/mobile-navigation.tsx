@@ -24,7 +24,7 @@ export function MobileNavigation({ portfolioUrl }: { portfolioUrl: string }) {
   }
 
   return (
-    <div className="mobile-navigation">
+    <div className="md:hidden">
       <button
         ref={triggerRef}
         type="button"
@@ -43,26 +43,37 @@ export function MobileNavigation({ portfolioUrl }: { portfolioUrl: string }) {
         aria-labelledby="mobile-navigation-title"
         onClose={restoreFocus}
       >
-        <div className="mobile-navigation-heading">
+        <div className="grid gap-[0.65rem] border-b border-border pb-5">
           <div id="mobile-navigation-title" className="site-wordmark">
             INDRA<span>.</span>DEV
           </div>
-          <p>Navigasi INDRA.DEV</p>
+          <p className="m-0 text-[0.85rem] leading-[1.5] text-muted-foreground">
+            Menu INDRA.DEV
+          </p>
         </div>
         <button
           type="button"
-          className="icon-button mobile-navigation-close"
+          className="icon-button absolute top-4 right-4"
           aria-label={dictionary.navigation.close}
           title={dictionary.navigation.close}
           onClick={closeDialog}
         >
           <X size={20} aria-hidden="true" />
         </button>
-        <nav className="mobile-navigation-links" aria-label="Navigasi seluler">
-          <Link href={portfolioUrl} onClick={closeDialog}>
+        <nav className="flex flex-col" aria-label="Menu seluler">
+          <Link
+            className="flex min-h-14 items-center border-b border-border py-4 text-[1.1rem] font-[750] text-foreground hover:text-cue-rose focus-visible:text-cue-rose aria-[current=page]:text-cue-rose"
+            href={portfolioUrl}
+            onClick={closeDialog}
+          >
             {dictionary.navigation.portfolio}
           </Link>
-          <Link href="/" aria-current="page" onClick={closeDialog}>
+          <Link
+            className="flex min-h-14 items-center border-b border-border py-4 text-[1.1rem] font-[750] text-foreground hover:text-cue-rose focus-visible:text-cue-rose aria-[current=page]:text-cue-rose"
+            href="/"
+            aria-current="page"
+            onClick={closeDialog}
+          >
             {dictionary.navigation.blog}
           </Link>
         </nav>

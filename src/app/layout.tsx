@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
+import dictionary from "@/i18n/messages/id.json";
 import { siteConfig } from "@/lib/site-config";
 import "./globals.css";
 
@@ -8,9 +9,11 @@ const themeScript = `(()=>{try{const t=localStorage.getItem("theme")==="light"?"
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.blogUrl),
-  title: { default: "INDRA.DEV Blog", template: "%s — INDRA.DEV" },
-  description:
-    "Tulisan teknis tentang React, Next.js, TypeScript, dan React Native.",
+  title: {
+    default: "INDRA.DEV | Catatan engineering",
+    template: "%s | INDRA.DEV",
+  },
+  description: dictionary.blog.description,
 };
 
 export default function RootLayout({
@@ -36,8 +39,11 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
 -->`,
           }}
         />
-        <a href="#main-content" className="skip-link">
-          Lewati ke konten
+        <a
+          href="#main-content"
+          className="fixed left-3 top-3 z-[60] -translate-y-[200%] bg-cue-day px-4 py-3 font-[750] text-cue-night focus:translate-y-0"
+        >
+          Langsung ke konten utama
         </a>
         <SiteHeader />
         {children}

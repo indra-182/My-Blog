@@ -24,17 +24,17 @@ describe("skip-link targets", () => {
   it("renders not-found and error copy from the dictionary", () => {
     render(<NotFound />);
     expect(
-      screen.getByRole("heading", { name: "Halaman tidak ditemukan" }),
+      screen.getByRole("heading", { name: "Halaman tidak tersedia" }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("link", { name: "Ke beranda" }),
+      screen.getByRole("link", { name: "Buka halaman utama" }),
     ).toBeInTheDocument();
 
     cleanup();
 
     render(<ArticleNotFound />);
     expect(
-      screen.getByRole("heading", { name: "Tulisan tidak ditemukan" }),
+      screen.getByRole("heading", { name: "Tulisan tidak tersedia" }),
     ).toBeInTheDocument();
   });
 });
