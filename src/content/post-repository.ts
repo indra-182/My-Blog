@@ -90,12 +90,16 @@ export async function loadPostCollection(
   const documents: PostDocument[] = [];
   const issues: ContentIssue[] = [];
   const slugs = new Map<string, string>();
+  const results = await Promise.all(
+    filenames.map(async (filename) => {
+      const filePath = path.join(rootDirectory, filename);
+      return parsePostSource(await readFile(filePath, "utf8"), filePath);
+    }),
+  );
 
-  for (const filename of filenames) {
-    const filePath = path.join(rootDirectory, filename);
-    const result = parsePostSource(await readFile(filePath, "utf8"), filePath);
+  for (const result of results) {
     if (!result.success) {
-      issues.push({ filePath, message: result.error.message });
+      issues.push({ filePath: result.filePath, message: result.error.message });
       continue;
     }
 
@@ -103,7 +107,7 @@ export async function loadPostCollection(
     documents.push(document);
     if (!document.draft && !isPublished(document, now)) {
       issues.push({
-        filePath,
+        filePath: result.filePath,
         message: "publishedAt cannot be in the future unless draft is true",
       });
     }
@@ -111,11 +115,11 @@ export async function loadPostCollection(
     const existingFilePath = slugs.get(document.slug);
     if (existingFilePath) {
       issues.push({
-        filePath,
+        filePath: result.filePath,
         message: `duplicate slug "${document.slug}" also used by ${existingFilePath}`,
       });
     } else {
-      slugs.set(document.slug, filePath);
+      slugs.set(document.slug, result.filePath);
     }
   }
 
@@ -151,10 +155,10 @@ export function createPostRepository(rootDirectory?: string) {
     return documents.sort(publishedAtDesc);
   });
 
-  async function getPublicDocuments(): Promise<PostDocument[]> {
+  const getPublicDocuments = cache(async (): Promise<PostDocument[]> => {
     const documents = await loadDocuments();
     return documents.filter((document) => isPublished(document));
-  }
+  });
 
   async function getAllPosts() {
     const documents = await getPublicDocuments();

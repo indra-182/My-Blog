@@ -19,10 +19,11 @@ test("search preserves the editorial discovery flow", async ({ page }) => {
 });
 
 test("latest feed validates published metadata only", async ({ request }) => {
-  const response = await request.get("/api/posts/latest?limit=3");
+  const response = await request.get("/api/posts/latest?limit=1");
   expect(response.ok()).toBeTruthy();
   const body = await response.json();
   expect(body.version).toBe(1);
+  expect(body.posts).toHaveLength(1);
   expect(body).not.toHaveProperty("locale");
   expect(
     body.posts.every(
@@ -30,6 +31,10 @@ test("latest feed validates published metadata only", async ({ request }) => {
         !("source" in post) && !("draft" in post) && !("locale" in post),
     ),
   ).toBe(true);
+
+  const expandedResponse = await request.get("/api/posts/latest?limit=2");
+  expect(expandedResponse.ok()).toBeTruthy();
+  expect((await expandedResponse.json()).posts).toHaveLength(2);
 });
 
 test("legacy locale routes are unavailable", async ({ request }) => {
