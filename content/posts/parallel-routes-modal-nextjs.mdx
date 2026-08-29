@@ -1,0 +1,169 @@
+---
+title: "Parallel Routes di Next.js: Modal yang Tetap Bisa Di-back"
+slug: "parallel-routes-modal-nextjs"
+description: "Bangun modal berbasis URL dengan Parallel Routes dan Intercepting Routes di Next.js App Router, lengkap dengan fallback dan navigasi browser."
+publishedAt: "2026-08-29T01:00:00+07:00"
+topics: ["Next.js", "React"]
+draft: true
+---
+
+## Modal biasa sering kehilangan konteks navigasi
+
+Modal untuk detail foto, preview produk, atau login biasanya dibuat sebagai state lokal. Komponen menyimpan `isOpen`, lalu menampilkan modal ketika tombol diklik. Cara ini cepat, tetapi URL tidak berubah. Akibatnya tombol Back tidak menutup modal, halaman tidak bisa dibagikan dalam keadaan terbuka, dan refresh mengembalikan pengguna ke halaman tanpa konteks yang sedang dilihat.
+
+App Router punya pola yang lebih cocok untuk kasus ini: gabungkan Parallel Routes dengan Intercepting Routes. Navigasi dari daftar dapat menampilkan detail sebagai modal, sedangkan URL detail tetap memiliki halaman penuh ketika dibuka langsung atau setelah refresh.
+
+## Siapkan slot untuk modal
+
+Misalkan halaman utama menampilkan daftar foto dan setiap foto punya URL `/photos/[id]`. Buat slot bernama `@modal` di dalam route `photos`:
+
+```text
+app/
+└── photos/
+    ├── layout.tsx
+    ├── page.tsx
+    ├── [id]/
+    │   └── page.tsx
+    └── @modal/
+        ├── default.tsx
+        └── (.)[id]/
+            └── page.tsx
+```
+
+Nama folder `@modal` adalah route segment untuk slot parallel. Folder `(.)[id]` adalah Intercepting Route. Notasi `(.)` berarti Next.js mencegat navigasi ke segment yang sejajar dari lokasi saat ini. Saat pengguna mengklik link dari `/photos`, Next.js merender file ini ke slot `modal`, bukan mengganti seluruh halaman.
+
+Buat layout yang menerima slot tersebut:
+
+```tsx
+// app/photos/layout.tsx
+import type { ReactNode } from "react";
+
+export default function PhotosLayout({
+  children,
+  modal,
+}: {
+  children: ReactNode;
+  modal: ReactNode;
+}) {
+  return (
+    <>
+      {children}
+      {modal}
+    </>
+  );
+}
+```
+
+`children` merender halaman daftar seperti biasa. Slot `modal` selalu punya tempat di layout, meskipun isinya kosong.
+
+## Sediakan keadaan kosong
+
+Ketika pengguna membuka `/photos` secara langsung, slot `modal` tidak punya route aktif. File `default.tsx` memberi nilai fallback untuk keadaan tersebut:
+
+```tsx
+// app/photos/@modal/default.tsx
+export default function DefaultModal() {
+  return null;
+}
+```
+
+Tanpa default UI, navigasi ke parent route atau refresh tertentu dapat membuat slot tidak memiliki hasil render yang jelas. Untuk modal, `null` adalah fallback yang tepat karena daftar foto tidak perlu menampilkan overlay.
+
+## Render detail sebagai modal saat dinavigasi
+
+Gunakan ulang komponen detail agar halaman penuh dan modal tidak memiliki dua versi logika data. Komponen pembungkus modal hanya mengatur backdrop, ukuran, dan tombol tutup:
+
+```tsx
+// app/photos/@modal/(.)[id]/page.tsx
+import { PhotoDetail } from "@/components/photo-detail";
+import { Modal } from "@/components/modal";
+
+export default async function PhotoModal({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+
+  return (
+    <Modal>
+      <PhotoDetail id={id} />
+    </Modal>
+  );
+}
+```
+
+Di Next.js 16, `params` pada Page bersifat asynchronous sehingga perlu di-`await`. Komponen `PhotoDetail` dapat mengambil data di server dan dipakai lagi oleh halaman penuh:
+
+```tsx
+// app/photos/[id]/page.tsx
+import { PhotoDetail } from "@/components/photo-detail";
+
+export default async function PhotoPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  return <PhotoDetail id={id} />;
+}
+```
+
+Perhatikan perbedaan hasilnya. Link dari daftar memakai Intercepting Route sehingga daftar tetap berada di belakang modal. Link langsung ke `/photos/42` tidak melewati konteks daftar, jadi Next.js merender `app/photos/[id]/page.tsx` sebagai halaman penuh.
+
+## Tutup modal dengan navigasi
+
+Tombol tutup sebaiknya melakukan navigasi, bukan hanya mengubah state lokal. Dengan begitu history browser tetap sesuai dengan tampilan yang terlihat. Komponen client sederhana bisa memakai `router.back()`:
+
+```tsx
+"use client";
+
+import { useRouter } from "next/navigation";
+import type { ReactNode } from "react";
+
+export function Modal({ children }: { children: ReactNode }) {
+  const router = useRouter();
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      className="modal-backdrop"
+      onClick={(event) => {
+        if (event.target === event.currentTarget) router.back();
+      }}
+    >
+      <div className="modal-panel">
+        <button type="button" onClick={() => router.back()}>
+          Tutup
+        </button>
+        {children}
+      </div>
+    </div>
+  );
+}
+```
+
+`router.back()` cocok ketika modal memang dibuka melalui klik dari daftar. Jika pengguna datang dari bookmark atau membuka tab baru, tidak ada state modal yang perlu dipertahankan karena URL tersebut akan dirender sebagai halaman penuh.
+
+## Loading dan error tetap per slot
+
+Slot modal memiliki boundary sendiri. Tambahkan `loading.tsx` dan `error.tsx` di dalam `@modal/(.)[id]` jika detail membutuhkan fetch yang lambat atau bisa gagal:
+
+```text
+@modal/
+└── (.)[id]/
+    ├── page.tsx
+    ├── loading.tsx
+    └── error.tsx
+```
+
+Dengan susunan ini, skeleton dapat muncul di overlay tanpa mengganti daftar foto. Error juga bisa menyediakan tombol coba lagi untuk bagian detail saja. Pastikan `error.tsx` memakai `"use client"` karena error boundary React adalah Client Component.
+
+## Batasan yang sering terlewat
+
+Pola ini bergantung pada struktur route. Jika slot berada di level yang salah, notasi interceptor seperti `(.)` tidak akan menargetkan segment yang kamu harapkan. Hitung posisi segment dari folder route, bukan dari nama URL saja. Untuk segment yang lebih dalam, Next.js juga menyediakan `( .. )`, `(...)`, dan variasi lain sesuai kedalaman route.
+
+Modal berbasis URL juga tidak otomatis menyelesaikan aksesibilitas. Komponen tetap harus mengatur fokus ke panel, mengembalikan fokus ke link pemicu ketika ditutup, dan merespons tombol Escape. Tambahkan `aria-labelledby` jika dialog memiliki judul, lalu matikan scroll halaman di belakang overlay bila diperlukan.
+
+Parallel Routes dan Intercepting Routes paling berguna ketika tampilan modal dan halaman penuh berbagi URL serta data yang sama. State lokal masih cukup untuk tooltip atau dialog konfirmasi singkat. Untuk detail yang perlu dibagikan, di-refresh, dan ditutup dengan tombol Back, biarkan router menjadi sumber kebenarannya.

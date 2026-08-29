@@ -22,11 +22,7 @@ export default function Error({
           <h1>{dictionary.errors.errorTitle}</h1>
           <p>{dictionary.errors.errorDescription}</p>
           <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
-            <button
-              className="outline-button"
-              type="button"
-              onClick={() => reset()}
-            >
+            <button className="outline-button" type="button" onClick={reset}>
               {dictionary.errors.tryAgain}
             </button>
             <Link href="/">{dictionary.errors.home}</Link>

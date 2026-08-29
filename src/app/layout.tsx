@@ -25,20 +25,6 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body>
-        <script
-          id="impeccable-direction-contract"
-          type="text/plain"
-          dangerouslySetInnerHTML={{
-            __html: `<!--
-THESIS: Cue Horizon stages technical writing as a clear reading path, refusing generic developer-blog chrome and decorative sequencing.
-OWN-WORLD: Near-black cyclorama, cobalt horizon, rose transition, white-day focus, cue tape, matte stage floor, tabular cue labels, and controlled luminance.
-STORY: Engineers identify the writing focus, search or filter published notes, read an article through its headings and code, then continue through series or related links.
-FIRST VIEWPORT: Sticky stage header above a near-black field descending into cobalt; the headline leads, the rose Catatan teknis cue and description follow, and deliberate breathing room separates the hero from discovery tools.
-FORM: Cue Horizon reading stage, pinned sibling-portfolio direction, source seed 6dea048c, code-led.
-FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
--->`,
-          }}
-        />
         <a
           href="#main-content"
           className="fixed left-3 top-3 z-[60] -translate-y-[200%] bg-cue-day px-4 py-3 font-[750] text-cue-night focus:translate-y-0"
