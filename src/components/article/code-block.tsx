@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { Check, Copy } from "@/components/icons";
 import dictionary from "@/i18n/messages/id.json";
+
+const copiedResetMs = 2000;
 
 export function CodeBlock({
   code,
@@ -15,12 +17,21 @@ export function CodeBlock({
   language?: string;
 }) {
   const [status, setStatus] = useState<"idle" | "copied" | "failed">("idle");
+  const copiedTimeoutRef = useRef<number | undefined>(undefined);
+
+  useEffect(() => {
+    return () => window.clearTimeout(copiedTimeoutRef.current);
+  }, []);
 
   async function copyCode() {
     try {
       await navigator.clipboard.writeText(code);
       setStatus("copied");
-      window.setTimeout(() => setStatus("idle"), 2000);
+      window.clearTimeout(copiedTimeoutRef.current);
+      copiedTimeoutRef.current = window.setTimeout(
+        () => setStatus("idle"),
+        copiedResetMs,
+      );
     } catch {
       setStatus("failed");
     }
