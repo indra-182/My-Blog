@@ -1,0 +1,125 @@
+---
+title: "AsyncLocalStorage di Next.js: Request Context Tanpa Prop Drilling"
+slug: "async-local-storage-request-context-nextjs"
+description: "Gunakan AsyncLocalStorage di runtime Node.js untuk membawa metadata request, logger, dan trace ID tanpa meneruskan props ke setiap fungsi."
+publishedAt: "2026-08-28T01:00:00+07:00"
+topics: ["Next.js", "Node.js", "Web Performance"]
+draft: false
+---
+
+## Masalah: metadata request ikut mengalir ke mana-mana
+
+Sebuah request biasanya memiliki konteks yang ingin dipakai oleh banyak fungsi: `requestId` untuk log, locale untuk format tanggal, atau identitas pengguna untuk audit. Cara paling eksplisit adalah meneruskan nilai itu sebagai argumen dari handler ke service, lalu dari service ke repository.
+
+```ts
+await createOrder(userId, requestId, locale, items);
+```
+
+Pendekatan ini aman, tetapi cepat menjadi berisik ketika fungsi di tengah tidak benar-benar membutuhkan konteks tersebut. Perubahan kecil pada kebutuhan logging juga dapat memaksa banyak signature ikut berubah. Di Node.js, `AsyncLocalStorage` menyediakan penyimpanan yang terikat pada rantai eksekusi asynchronous saat ini. Kode di dalam rantai itu dapat membaca konteks tanpa menerima argumen tambahan.
+
+## Buat satu request context
+
+Letakkan instance `AsyncLocalStorage` di modul server-only. Instance harus dibuat satu kali dan dipakai ulang, bukan dibuat setiap kali fungsi `getRequestContext` dipanggil.
+
+```ts
+// src/server/request-context.ts
+import "server-only";
+import { AsyncLocalStorage } from "node:async_hooks";
+
+type RequestContext = {
+  requestId: string;
+  userId?: string;
+};
+
+const storage = new AsyncLocalStorage<RequestContext>();
+
+export function withRequestContext<T>(
+  context: RequestContext,
+  callback: () => T,
+): T {
+  return storage.run(context, callback);
+}
+
+export function getRequestContext() {
+  return storage.getStore();
+}
+```
+
+`server-only` membantu mencegah modul ini tidak sengaja diimpor ke Client Component. `getStore()` mengembalikan konteks yang aktif. Di luar callback `run`, hasilnya `undefined`, jadi fungsi pembaca sebaiknya memperlakukan konteks sebagai opsional atau melempar error dengan pesan yang jelas.
+
+## Pasang konteks di Route Handler
+
+Route Handler menjadi tempat yang tepat untuk membuat konteks request karena handler menerima `Request` dan menguasai seluruh pekerjaan async yang dipicu olehnya. Gunakan header dari reverse proxy bila tersedia, tetapi selalu sediakan fallback yang dibuat server.
+
+```ts
+// app/api/orders/route.ts
+import { randomUUID } from "node:crypto";
+import { NextResponse } from "next/server";
+import { withRequestContext } from "@/src/server/request-context";
+import { createOrder } from "@/src/server/orders";
+
+export const runtime = "nodejs";
+
+export async function POST(request: Request) {
+  const requestId = request.headers.get("x-request-id") ?? randomUUID();
+  const userId = await readAuthenticatedUserId(request);
+  const body = await request.json();
+
+  return withRequestContext({ requestId, userId }, async () => {
+    const order = await createOrder(body.items);
+    return NextResponse.json(order, {
+      headers: { "x-request-id": requestId },
+    });
+  });
+}
+```
+
+Callback `async` tetap mengembalikan `Promise`, dan konteks tersedia saat `createOrder` menunggu database atau API lain. Semua pekerjaan asynchronous yang dibuat di dalam callback akan mengikuti konteks tersebut selama library yang dipakai mempertahankan rantai promise Node.js secara normal.
+
+## Logger tidak perlu menerima requestId
+
+Sekarang service dapat mencatat ID request tanpa menambah parameter di setiap lapisan.
+
+```ts
+// src/server/logger.ts
+import { getRequestContext } from "./request-context";
+
+export function logInfo(message: string, data: Record<string, unknown> = {}) {
+  const context = getRequestContext();
+
+  console.info(JSON.stringify({
+    level: "info",
+    message,
+    requestId: context?.requestId,
+    userId: context?.userId,
+    ...data,
+  }));
+}
+```
+
+Pemakaiannya tetap sederhana:
+
+```ts
+import { logInfo } from "./logger";
+
+export async function createOrder(items: Item[]) {
+  logInfo("Membuat order", { itemCount: items.length });
+  const order = await orderRepository.insert(items);
+  logInfo("Order berhasil dibuat", { orderId: order.id });
+  return order;
+}
+```
+
+Log dari query database dan service lain dapat dikaitkan kembali ke request yang sama. Ini berguna saat satu request memicu beberapa operasi paralel, karena setiap operasi membaca konteksnya sendiri tanpa memakai variabel global yang rawan tertukar.
+
+## Batasan yang perlu dipahami
+
+`AsyncLocalStorage` bukan tempat untuk menyimpan state aplikasi. Jangan menaruh cache global, daftar koneksi, atau objek yang diubah lintas request di dalam store. Isi store sebaiknya kecil dan bersifat request-scoped, misalnya ID dan flag yang sudah ditentukan sebelum pekerjaan utama dimulai.
+
+Pastikan juga runtime memakai Node.js. API `node:async_hooks` tidak tersedia pada Edge Runtime, sehingga modul ini perlu dibatasi ke Route Handler atau Server Component yang mendeklarasikan `runtime = "nodejs"`. Context tidak otomatis menyeberang ke job queue, webhook terpisah, atau proses worker. Untuk alur seperti itu, kirim `requestId` sebagai bagian payload lalu buat context baru di consumer.
+
+Terakhir, jangan mempercayai `x-request-id` mentah dari internet sebagai identitas keamanan. Gunakan nilainya untuk korelasi log setelah validasi format, atau ganti dengan ID baru di boundary publik. `AsyncLocalStorage` membantu membawa data, tetapi tidak memberi autentikasi maupun isolasi keamanan dengan sendirinya.
+
+## Kapan pola ini layak dipakai?
+
+Untuk aplikasi kecil, meneruskan `requestId` secara eksplisit sering lebih mudah dibaca. `AsyncLocalStorage` mulai terasa manfaatnya ketika banyak lapisan membutuhkan metadata yang sama, logger dipakai di berbagai service, atau tracing harus konsisten tanpa mengubah API internal. Mulailah dari satu boundary Node.js, ukur dampaknya pada keterbacaan kode, lalu tambahkan field konteks secara bertahap. Dengan begitu, request context tetap menjadi alat observabilitas yang ringan, bukan global state terselubung.
