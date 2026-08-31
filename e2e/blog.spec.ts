@@ -50,7 +50,8 @@ test("theme hydration uses only light and dark icons", async ({ page }) => {
     name: /Gunakan tema (terang|gelap)/i,
   });
   await expect(toggle).toBeVisible();
-  await expect(toggle.locator(".lucide-monitor")).toHaveCount(0);
+  await expect(toggle.locator('[data-theme-icon="light"]')).toHaveCount(1);
+  await expect(toggle.locator('[data-theme-icon="dark"]')).toHaveCount(1);
   await toggle.click();
   await expect(
     page.getByRole("button", { name: /Gunakan tema (terang|gelap)/i }),
@@ -110,4 +111,102 @@ test("homepage stays within the viewport across shell breakpoints", async ({
       ),
     ).toBe(true);
   }
+});
+
+test("homepage hero horizon uses the bounded native scroll response", async ({
+  page,
+}) => {
+  for (const width of [1280, 375]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto("/");
+
+    const hero = page.locator(".blog-hero");
+    const heading = page.getByRole("heading", {
+      name: /Membangun dengan lebih terarah/i,
+    });
+    const supportsTimeline = await page.evaluate(() =>
+      CSS.supports("animation-timeline: scroll()"),
+    );
+    const pseudoStyle = () =>
+      hero.evaluate((element) => {
+        const style = getComputedStyle(element, "::before");
+        return {
+          animationName: style.animationName,
+          backgroundImage: style.backgroundImage,
+          opacity: style.opacity,
+          transform: style.transform,
+        };
+      });
+
+    await expect(hero).toBeVisible();
+    await expect(heading).toBeVisible();
+
+    if (!supportsTimeline) {
+      const style = await pseudoStyle();
+      expect(style.animationName).toBe("none");
+      expect(style.transform).toBe("none");
+      expect(style.backgroundImage).toContain("linear-gradient");
+      expect(style.opacity).toBe("0.55");
+      continue;
+    }
+
+    const initialStyle = await pseudoStyle();
+    expect(initialStyle.animationName).toBe("cue-horizon-rise");
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await page.evaluate(() => window.scrollTo(0, innerHeight * 0.4));
+    await expect
+      .poll(async () => (await pseudoStyle()).transform)
+      .not.toBe(initialStyle.transform);
+    await expect(heading).toBeVisible();
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    ).toBe(true);
+
+    await page.evaluate(() => window.scrollTo(0, innerHeight * 0.8));
+    const restingStyle = await pseudoStyle();
+    await page.evaluate(() => window.scrollTo(0, innerHeight * 1.2));
+    await expect
+      .poll(async () => (await pseudoStyle()).transform)
+      .toBe(restingStyle.transform);
+    await expect(heading).toBeVisible();
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    ).toBe(true);
+  }
+});
+
+test("homepage motion honors reduced motion", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/");
+
+  const hero = page.locator(".blog-hero");
+  await expect(
+    page.getByRole("heading", {
+      name: /Membangun dengan lebih terarah/i,
+    }),
+  ).toBeVisible();
+  expect(
+    await page.evaluate(
+      () =>
+        getComputedStyle(document.querySelector(".animate-cue-rise")!)
+          .animationName,
+    ),
+  ).toBe("none");
+  const style = await hero.evaluate((element) => {
+    const pseudo = getComputedStyle(element, "::before");
+    return {
+      animationName: pseudo.animationName,
+      backgroundImage: pseudo.backgroundImage,
+      opacity: pseudo.opacity,
+      transform: pseudo.transform,
+    };
+  });
+  expect(style.animationName).toBe("none");
+  expect(style.transform).toBe("none");
+  expect(style.backgroundImage).toContain("linear-gradient");
+  expect(style.opacity).toBe("0.55");
 });

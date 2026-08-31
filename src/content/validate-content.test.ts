@@ -1,12 +1,11 @@
-import { mkdtemp, mkdir, writeFile } from "node:fs/promises";
+import { mkdtemp, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { validateContentDirectory } from "./validate-content";
+import { validateContentDirectory } from "./post-repository";
 
 async function createContentRoot() {
   const root = await mkdtemp(path.join(os.tmpdir(), "blog-validate-"));
-  await mkdir(root, { recursive: true });
   return root;
 }
 

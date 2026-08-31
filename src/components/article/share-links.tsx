@@ -1,35 +1,22 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import dictionary from "@/i18n/messages/id.json";
 import { Check, Copy, Share2 } from "@/components/icons";
+import dictionary from "@/i18n/messages/id.json";
+import { useCopyToClipboard } from "./use-copy-to-clipboard";
 
 const copiedResetMs = 1800;
+const shareButtonClassName =
+  "inline-flex min-h-11 items-center gap-[0.4rem] rounded-[var(--radius-sm)] border border-border bg-transparent px-[0.8rem] text-[0.75rem] text-muted-foreground transition-[border-color,color,background-color] duration-[var(--motion-fast)] ease hover:border-cue-rose hover:bg-surface hover:text-foreground focus-visible:border-cue-rose focus-visible:bg-surface focus-visible:text-foreground";
 
 export function ShareLinks({ title }: { title: string }) {
-  const [copied, setCopied] = useState(false);
-  const copiedTimeoutRef = useRef<number | undefined>(undefined);
-
-  useEffect(() => {
-    return () => window.clearTimeout(copiedTimeoutRef.current);
-  }, []);
-
-  async function copyLink() {
-    try {
-      await navigator.clipboard.writeText(window.location.href);
-      setCopied(true);
-      window.clearTimeout(copiedTimeoutRef.current);
-      copiedTimeoutRef.current = window.setTimeout(() => {
-        setCopied(false);
-      }, copiedResetMs);
-    } catch {
-      setCopied(false);
-    }
-  }
+  const { status, copy } = useCopyToClipboard(
+    () => window.location.href,
+    copiedResetMs,
+  );
 
   async function share() {
     if (!navigator.share) {
-      await copyLink();
+      await copy();
       return;
     }
     try {
@@ -37,7 +24,7 @@ export function ShareLinks({ title }: { title: string }) {
     } catch (error) {
       // Cancelling the native share sheet is not a failure.
       if ((error as { name?: string })?.name === "AbortError") return;
-      await copyLink();
+      await copy();
     }
   }
 
@@ -61,32 +48,26 @@ export function ShareLinks({ title }: { title: string }) {
         {dictionary.article.share}
       </h2>
       <div className="flex flex-wrap gap-2">
-        <button
-          className="inline-flex min-h-11 items-center gap-[0.4rem] rounded-[var(--radius-sm)] border border-border bg-transparent px-[0.8rem] text-[0.75rem] text-muted-foreground transition-[border-color,color,background-color] duration-[var(--motion-fast)] ease hover:border-cue-rose hover:bg-surface hover:text-foreground focus-visible:border-cue-rose focus-visible:bg-surface focus-visible:text-foreground"
-          type="button"
-          onClick={share}
-        >
+        <button className={shareButtonClassName} type="button" onClick={share}>
           <Share2 size={15} aria-hidden="true" />{" "}
           {dictionary.article.shareAction}
         </button>
         <button
-          className="inline-flex min-h-11 items-center gap-[0.4rem] rounded-[var(--radius-sm)] border border-border bg-transparent px-[0.8rem] text-[0.75rem] text-muted-foreground transition-[border-color,color,background-color] duration-[var(--motion-fast)] ease hover:border-cue-rose hover:bg-surface hover:text-foreground focus-visible:border-cue-rose focus-visible:bg-surface focus-visible:text-foreground"
+          className={shareButtonClassName}
           type="button"
           onClick={shareToLinkedIn}
         >
           LinkedIn
         </button>
-        <button
-          className="inline-flex min-h-11 items-center gap-[0.4rem] rounded-[var(--radius-sm)] border border-border bg-transparent px-[0.8rem] text-[0.75rem] text-muted-foreground transition-[border-color,color,background-color] duration-[var(--motion-fast)] ease hover:border-cue-rose hover:bg-surface hover:text-foreground focus-visible:border-cue-rose focus-visible:bg-surface focus-visible:text-foreground"
-          type="button"
-          onClick={copyLink}
-        >
-          {copied ? (
+        <button className={shareButtonClassName} type="button" onClick={copy}>
+          {status === "copied" ? (
             <Check size={15} aria-hidden="true" />
           ) : (
             <Copy size={15} aria-hidden="true" />
           )}{" "}
-          {copied ? dictionary.article.copied : dictionary.article.copyLink}
+          {status === "copied"
+            ? dictionary.article.copied
+            : dictionary.article.copyLink}
         </button>
       </div>
     </section>

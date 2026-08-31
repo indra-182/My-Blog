@@ -1,0 +1,189 @@
+---
+title: "Generate Metadata Dinamis untuk SEO di Next.js App Router"
+slug: "generate-metadata-seo-nextjs"
+description: "Membuat title, description, dan Open Graph yang dinamis di Next.js App Router dengan generateMetadata, data fetch, dan fallback yang aman untuk SEO."
+publishedAt: "2026-08-31T01:00:00+07:00"
+topics: ["Next.js", "React", "Web Performance"]
+draft: false
+---
+
+## Metadata statis tidak cukup untuk route dinamis
+
+Pada route dinamis seperti `/blog/[slug]` atau `/produk/[id]`, title dan description tidak bisa ditulis manual di `export const metadata`. Jika dipaksakan statis, semua halaman akan berbagi title yang sama, preview di media sosial jadi generik, dan peringkat SEO melemah karena Google tidak mendapat sinyal spesifik per halaman.
+
+App Router menyelesaikan ini dengan `generateMetadata`. Fungsi ini berjalan di server sebelum rendering, boleh melakukan `fetch` atau akses database, dan hasilnya otomatis digabung dengan metadata statis. Tidak perlu lagi mengelola `<Head>` manual atau library tambahan.
+
+## Bentuk dasar generateMetadata
+
+`generateMetadata` diekspor dari file `page.tsx` yang sama dengan komponen halaman. Ia menerima `params` dan `searchParams` sebagai argumen dan harus mengembalikan objek `Metadata` dari `next`.
+
+```tsx
+// app/blog/[slug]/page.tsx
+import type { Metadata } from "next";
+
+type Props = {
+  params: Promise<{ slug: string }>;
+};
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params;
+  return {
+    title: `Artikel: ${slug}`,
+    description: `Baca artikel lengkap tentang ${slug} di blog kami.`,
+  };
+}
+
+export default async function BlogPost({ params }: Props) {
+  const { slug } = await params;
+  return <article>Konten untuk {slug}</article>;
+}
+```
+
+Perhatikan `params` sekarang berupa `Promise` di Next.js terbaru. Selalu `await` sebelum dipakai. Jika lupa, build akan gagal dengan tipe yang tidak cocok.
+
+## Mengambil data asli untuk title dan description
+
+Contoh generik di atas belum berguna untuk SEO. Pada praktiknya, kita fetch data postingan terlebih dahulu, lalu turunkan metadata dari data tersebut.
+
+```tsx
+// app/blog/[slug]/page.tsx
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+
+async function getPost(slug: string) {
+  const res = await fetch(`https://api.example.com/posts/${slug}`, {
+    next: { revalidate: 3600 },
+  });
+  if (!res.ok) return null;
+  return res.json() as Promise<{
+    title: string;
+    excerpt: string;
+    coverImage: string;
+    author: string;
+  }>;
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const post = await getPost(slug);
+
+  if (!post) {
+    return {
+      title: "Artikel tidak ditemukan",
+      description: "Artikel yang kamu cari tidak tersedia.",
+    };
+  }
+
+  return {
+    title: `${post.title} | Blog Kami`,
+    description: post.excerpt.slice(0, 155),
+    authors: [{ name: post.author }],
+    openGraph: {
+      title: post.title,
+      description: post.excerpt.slice(0, 155),
+      images: [post.coverImage],
+      type: "article",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: post.title,
+      description: post.excerpt.slice(0, 155),
+      images: [post.coverImage],
+    },
+  };
+}
+```
+
+Keuntungan pola ini adalah `generateMetadata` dan komponen halaman bisa berbagi fungsi `getPost` yang sama. Untuk menghindari fetch ganda, Next.js otomatis melakukan deduplikasi `fetch` dengan URL dan opsi yang identik dalam satu render. Jika memakai ORM langsung tanpa `fetch`, bungkus pemanggilannya dengan `cache` dari `react`.
+
+```tsx
+import { cache } from "react";
+
+export const getPostCached = cache(async (slug: string) => {
+  // query database di sini
+  return db.post.findUnique({ where: { slug } });
+});
+```
+
+## Fallback dan canonical yang sering terlewat
+
+Dua kesalahan umum saat membuat metadata dinamis adalah lupa menangani post tidak ditemukan dan tidak menetapkan URL kanonis. Tanpa canonical, halaman dengan query `?utm_source` atau trailing slash yang berbeda bisa dianggap duplikat.
+
+```tsx
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const post = await getPost(slug);
+  const baseUrl = "https://example.com";
+
+  if (!post) return { title: "Tidak ditemukan" };
+
+  return {
+    title: post.title,
+    description: post.excerpt.slice(0, 155),
+    alternates: {
+      canonical: `${baseUrl}/blog/${slug}`,
+    },
+    openGraph: {
+      url: `${baseUrl}/blog/${slug}`,
+      images: [{ url: post.coverImage, width: 1200, height: 630 }],
+    },
+  };
+}
+```
+
+Selalu potong description di sekitar 150 sampai 160 karakter agar tidak terpotong di hasil pencarian. Untuk title, jaga di bawah 60 karakter atau letakkan brand di akhir setelah tanda pipa.
+
+## Open Graph dinamis dengan opengraph-image
+
+Selain metadata teks, App Router mendukung file `opengraph-image.tsx` untuk menghasilkan gambar OG secara dinamis dengan `next/og`. Ini berguna ketika setiap artikel butuh cover OG dengan title yang berbeda tanpa membuatnya manual di Figma.
+
+```tsx
+// app/blog/[slug]/opengraph-image.tsx
+import { ImageResponse } from "next/og";
+
+export const size = { width: 1200, height: 630 };
+export const contentType = "image/png";
+
+export default async function OgImage({
+  params,
+}: {
+  params: { slug: string };
+}) {
+  return new ImageResponse(
+    (
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          width: "100%",
+          height: "100%",
+          padding: 48,
+          background: "#0a0a0a",
+          color: "white",
+        }}
+      >
+        <p style={{ fontSize: 28, opacity: 0.7 }}>example.com/blog</p>
+        <h1 style={{ fontSize: 64, lineHeight: 1.1 }}>{params.slug}</h1>
+      </div>
+    ),
+    size,
+  );
+}
+```
+
+Jika halaman sudah mendefinisikan `openGraph.images`, Next.js akan memprioritaskan gambar dari `opengraph-image.tsx` saat file tersebut ada. Tidak perlu mengisi URL gambar manual lagi.
+
+## Kapan memakai generateMetadata dan kapan tidak
+
+Gunakan `generateMetadata` untuk halaman yang datanya tersedia di server: detail artikel, profil pengguna, halaman produk. Hindari memakainya untuk halaman yang sepenuhnya interaktif di client atau yang title-nya bergantung pada state lokal. Untuk kasus tersebut, metadata statis plus pembaruan title via `document.title` di client masih lebih tepat, meski tidak terindeks oleh crawler.
+
+Ukur hasilnya dengan memeriksa View Source halaman, bukan hanya DevTools Elements. Metadata yang benar akan terlihat sebagai tag `<title>` dan `<meta>` di HTML awal, bukan hasil hidrasi JavaScript. Lanjutkan validasi dengan Rich Results Test Google dan validator Open Graph untuk memastikan preview tampil sesuai harapan.

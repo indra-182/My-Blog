@@ -177,6 +177,7 @@
   }
 
   .blog-hero::before {
+    --cue-horizon-offset: clamp(0.5rem, 1.8vw, 1.25rem);
     position: absolute;
     inset: auto 0 0;
     height: 22%;
@@ -188,6 +189,15 @@
     content: "";
     opacity: 0.55;
     pointer-events: none;
+    transform-origin: bottom center;
+  }
+
+  @supports (animation-timeline: scroll()) {
+    .blog-hero::before {
+      animation: cue-horizon-rise 1s linear both;
+      animation-timeline: scroll(root block);
+      animation-range: 0 40vh;
+    }
   }
 
   .mobile-navigation-dialog {
@@ -286,9 +296,23 @@
     transform: translateY(0);
   }
 }
+@keyframes cue-horizon-rise {
+  from {
+    transform: translateY(var(--cue-horizon-offset)) scaleY(0.8);
+  }
+  to {
+    transform: translateY(0) scaleY(1);
+  }
+}
 
 @keyframes pulse {
   50% {
     opacity: 0.5;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .blog-hero::before {
+    animation: none;
+    transform: none;
   }
 }

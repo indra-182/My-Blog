@@ -15,12 +15,12 @@ export function SiteHeader() {
           className="hidden items-center gap-1 md:flex"
           aria-label="Navigasi situs"
         >
-          <Link
+          <a
             className="inline-flex min-h-11 items-center border-b border-transparent px-[0.7rem] py-[0.8rem] font-mono text-[0.66rem] tracking-[0.09em] text-muted-foreground uppercase transition-[color,border-color] duration-[var(--motion-fast)] ease hover:border-cue-rose hover:text-foreground focus-visible:border-cue-rose focus-visible:text-foreground"
             href={siteConfig.portfolioUrl}
           >
             {dictionary.navigation.portfolio}
-          </Link>
+          </a>
           <Link
             className="inline-flex min-h-11 items-center border-b border-cue-rose px-[0.7rem] py-[0.8rem] font-mono text-[0.66rem] tracking-[0.09em] text-foreground uppercase transition-[color,border-color] duration-[var(--motion-fast)] ease"
             href="/"

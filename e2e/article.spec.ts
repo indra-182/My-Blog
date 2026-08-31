@@ -11,12 +11,90 @@ test("article exposes reading primitives and copy code", async ({ page }) => {
     page.getByRole("navigation", { name: "Navigasi halaman" }),
   ).toBeVisible();
   await expect(
+    page.getByRole("navigation", { name: "Pindah antar tulisan dalam seri" }),
+  ).toBeVisible();
+  await expect(
     page.getByRole("link", { name: /Jaga URL tetap dapat dibagikan/i }),
   ).toBeVisible();
   await expect(
     page.getByRole("button", { name: "Salin kode", exact: true }),
   ).toBeVisible();
   await expect(page.getByText("React Architecture")).toBeVisible();
+});
+test("article metadata uses fallbacks and social overrides", async ({
+  page,
+}) => {
+  await page.goto("/blog/react-state");
+  await expect(page).toHaveTitle(
+    "Memisahkan Server State dari UI State | INDRA.DEV",
+  );
+  await expect(page.locator('meta[name="description"]')).toHaveAttribute(
+    "content",
+    "Batas praktis antara cache server, state antarmuka, dan URL.",
+  );
+  await expect(page.locator('meta[property="og:description"]')).toHaveAttribute(
+    "content",
+    "Batas praktis antara cache server, state antarmuka, dan URL.",
+  );
+  await expect(page.locator('meta[property="og:title"]')).toHaveAttribute(
+    "content",
+    "Memisahkan Server State dari UI State",
+  );
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
+    "href",
+    /\/blog\/react-state$/,
+  );
+  await expect(page.locator('meta[property="og:type"]')).toHaveAttribute(
+    "content",
+    "article",
+  );
+  expect(
+    Date.parse(
+      (await page
+        .locator('meta[property="article:published_time"]')
+        .getAttribute("content")) ?? "",
+    ),
+  ).toBe(Date.parse("2026-08-01T20:00:00+07:00"));
+  await expect(
+    page.locator('meta[property="article:modified_time"]'),
+  ).toHaveCount(0);
+
+  await page.goto("/blog/typescript-errors");
+  await expect(page).toHaveTitle("Desain Error TypeScript | INDRA.DEV");
+  await expect(page.locator('meta[name="description"]')).toHaveAttribute(
+    "content",
+    "Cara membaca error TypeScript sebagai petunjuk desain.",
+  );
+  await expect(page.locator('meta[property="og:description"]')).toHaveAttribute(
+    "content",
+    "Cara membaca error TypeScript sebagai petunjuk desain.",
+  );
+  await expect(page.locator('meta[property="og:title"]')).toHaveAttribute(
+    "content",
+    "Desain Error TypeScript",
+  );
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
+    "href",
+    "https://example.com/canonical/typescript-errors",
+  );
+  await expect(page.locator('meta[property="og:type"]')).toHaveAttribute(
+    "content",
+    "article",
+  );
+  expect(
+    Date.parse(
+      (await page
+        .locator('meta[property="article:published_time"]')
+        .getAttribute("content")) ?? "",
+    ),
+  ).toBe(Date.parse("2026-08-05T20:00:00+07:00"));
+  expect(
+    Date.parse(
+      (await page
+        .locator('meta[property="article:modified_time"]')
+        .getAttribute("content")) ?? "",
+    ),
+  ).toBe(Date.parse("2026-08-06T20:00:00+07:00"));
 });
 test("article shows Kembali ke atas after its header leaves the viewport", async ({
   page,
@@ -219,18 +297,4 @@ test("article moves the table of contents before prose on mobile", async ({
       );
     }),
   ).toBe(true);
-});
-
-test("homepage entrance cue is disabled for reduced motion", async ({
-  page,
-}) => {
-  await page.emulateMedia({ reducedMotion: "reduce" });
-  await page.goto("/");
-  expect(
-    await page.evaluate(
-      () =>
-        getComputedStyle(document.querySelector(".animate-cue-rise")!)
-          .animationName,
-    ),
-  ).toBe("none");
 });

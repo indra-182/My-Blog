@@ -1,4 +1,4 @@
-import { validateContentDirectory } from "@/content/validate-content";
+import { validateContentDirectory } from "@/content/post-repository";
 
 async function main() {
   const issues = await validateContentDirectory();

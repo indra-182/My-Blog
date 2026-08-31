@@ -9,7 +9,7 @@ const formatters = {
   }),
 };
 
-export type DateFormatStyle = keyof typeof formatters;
+type DateFormatStyle = keyof typeof formatters;
 
 export function formatDate(date: string, style: DateFormatStyle = "medium") {
   return formatters[style].format(new Date(date));

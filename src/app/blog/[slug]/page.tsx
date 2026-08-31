@@ -26,15 +26,17 @@ export async function generateMetadata({
   const post = await postRepository.getPostBySlug(slug);
   if (!post) return {};
   const baseUrl = siteConfig.blogUrl;
+  const title = post.socialTitle ?? post.title;
+  const description = post.socialDescription ?? post.description;
   return {
-    title: post.socialTitle ?? post.title,
-    description: post.socialDescription ?? post.description,
+    title,
+    description,
     alternates: {
       canonical: post.canonical ?? `${baseUrl}/blog/${post.slug}`,
     },
     openGraph: {
-      title: post.socialTitle ?? post.title,
-      description: post.socialDescription ?? post.description,
+      title,
+      description,
       type: "article",
       publishedTime: post.publishedAt,
       modifiedTime: post.updatedAt,

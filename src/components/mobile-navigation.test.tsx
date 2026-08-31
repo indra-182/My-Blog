@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { siteConfig } from "@/lib/site-config";
 import { MobileNavigation } from "./mobile-navigation";
@@ -20,7 +20,6 @@ beforeEach(() => {
 afterEach(() => {
   dialogPrototype.showModal = originalShowModal;
   dialogPrototype.close = originalClose;
-  cleanup();
 });
 
 describe("MobileNavigation", () => {

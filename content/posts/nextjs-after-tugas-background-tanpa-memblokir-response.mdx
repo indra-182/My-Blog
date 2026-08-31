@@ -1,0 +1,142 @@
+---
+title: "Next.js `after`: Menjalankan Tugas Background Tanpa Memblokir Response"
+slug: "nextjs-after-tugas-background-tanpa-memblokir-response"
+description: "Pelajari cara menggunakan API `after` di Next.js untuk menjalankan logging, analitik, dan pembersihan data setelah response terkirim tanpa memperlambat pengalaman pengguna."
+publishedAt: "2026-08-31T01:00:00+07:00"
+topics: ["Next.js"]
+draft: false
+---
+
+## Masalah: Semua Ingin Dijalankan Sebelum Response
+
+Di App Router, kita sering menambahkan tugas sekunder di dalam Server Action atau Route Handler. Misalnya mencatat log audit, mengirim event ke analitik, atau menghapus file sementara. Masalahnya, jika semua tugas itu kita `await` sebelum mengembalikan response, pengguna akan menunggu lebih lama.
+
+Alternatifnya adalah tidak di-`await` sama sekali. Tapi ini berisiko. Jika server mengakhiri eksekusi terlalu cepat, tugas yang tidak di-`await` bisa terpotong dan tidak pernah selesai. Kita butuh cara untuk berkata: "kirim response dulu, lalu lanjutkan pekerjaan ini di background".
+
+Untuk kasus inilah API `after` hadir.
+
+## Apa Itu `after` dan Kapan Menggunakannya
+
+`after` adalah API dari `next/server` yang memungkinkan kamu menjadwalkan pekerjaan untuk dijalankan setelah response selesai dikirim ke client. Pekerjaan tersebut tetap berjalan di server, tetapi tidak memblokir Time to First Byte (TTFB).
+
+Gunakan `after` untuk tugas yang tidak perlu dilihat hasilnya oleh pengguna:
+
+* Logging dan audit trail
+* Mengirim event ke layanan analitik eksternal
+* Sinkronisasi data ke sistem lain
+* Pembersihan cache atau file sementara
+
+Jangan gunakan `after` untuk tugas yang hasilnya dibutuhkan untuk merender halaman, seperti fetch data utama atau mutasi database yang menentukan redirect. Untuk itu, tetap gunakan `await` biasa.
+
+`after` hanya berjalan di runtime Node.js. Ia dipakai di konteks server seperti Server Components, Server Actions, dan Route Handlers. Jangan memanggilnya dari Client Component.
+
+## Contoh 1: Logging Audit di Server Action
+
+Bayangkan kamu punya Server Action untuk membuat pesanan. Kamu ingin response kembali secepatnya, tapi tetap mencatat siapa yang membuat pesanan ke sistem logging.
+
+```typescript
+// app/actions/create-order.ts
+'use server';
+
+import { after } from 'next/server';
+import { db } from '@/lib/db';
+import { logAudit } from '@/lib/audit';
+
+export async function createOrder(formData: FormData) {
+  const productId = formData.get('productId') as string;
+  const userId = formData.get('userId') as string;
+
+  // 1. Tugas kritis: harus selesai sebelum response
+  const order = await db.order.create({
+    data: { productId, userId, status: 'PENDING' },
+  });
+
+  // 2. Tugas non-kritis: jalankan setelah response terkirim
+  after(async () => {
+    // Kode di dalam after tidak akan menunda response di atas
+    await logAudit({
+      action: 'order.created',
+      userId,
+      orderId: order.id,
+      timestamp: new Date().toISOString(),
+    });
+  });
+
+  return order;
+}
+```
+
+Pada contoh ini, `db.order.create` tetap di-`await` karena client butuh `order.id`. Sementara `logAudit` dibungkus `after`. Pengguna akan menerima response segera setelah order dibuat, tanpa menunggu layanan audit selesai.
+
+Penting untuk menangkap error di dalam `after` sendiri. Error yang tidak tertangani di dalam `after` tidak akan terlihat oleh client, tapi akan tercatat di log server.
+
+## Contoh 2: Analitik di Route Handler
+
+Pola yang sama berguna di Route Handler. Misalnya endpoint untuk mencatat view pada artikel.
+
+```typescript
+// app/api/articles/[id]/view/route.ts
+import { after } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { db } from '@/lib/db';
+import { trackEvent } from '@/lib/analytics';
+
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const { id: articleId } = await params;
+
+  // Tugas utama: tambah view count
+  await db.article.update({
+    where: { id: articleId },
+    data: { views: { increment: 1 } },
+  });
+
+  // Tugas background: kirim ke analitik eksternal
+  after(async () => {
+    try {
+      const ip = request.headers.get('x-forwarded-for') ?? 'unknown';
+      await trackEvent({
+        name: 'article_view',
+        properties: { articleId, ip },
+      });
+    } catch (error) {
+      // Jangan lempar error ke client, cukup log di server
+      console.error('[after] gagal mengirim analitik', error);
+    }
+  });
+
+  return NextResponse.json({ success: true });
+}
+```
+
+Di sini client hanya perlu tahu bahwa `views` berhasil ditambah. Pengiriman ke `trackEvent` yang mungkin lambat karena network call ke pihak ketiga tidak perlu memblokir response JSON.
+
+## Batasan dan Kesalahan Umum
+
+### 1. Mengakses Request Body yang Sudah Dibaca
+
+Objek `request` di dalam `after` masih bisa diakses, tapi stream-nya mungkin sudah terkonsumsi. Hindari memanggil `request.json()` atau `request.formData()` di dalam `after` jika kamu sudah membacanya sebelumnya. Simpan nilainya ke variabel dulu sebelum masuk ke `after`.
+
+### 2. Mengira `after` Menjamin Eksekusi
+
+`after` memperpanjang lifecycle eksekusi server hingga tugas selesai, tetapi tidak memberikan garansi 100% seperti queue yang persisten. Jika server crash atau di-restart paksa, tugas di dalam `after` bisa hilang. Untuk pekerjaan kritis yang tidak boleh hilang seperti mengirim email pembayaran atau memproses antrian, gunakan job queue yang sesungguhnya seperti BullMQ atau layanan queue eksternal.
+
+### 3. Menjalankan Tugas Berat yang Memakan Memori
+
+`after` tetap berjalan di instance server yang sama. Jika kamu menjalankan tugas berat seperti memproses gambar besar atau loop yang lama, itu akan membebani server dan bisa memengaruhi request lain. Batasi `after` untuk I/O ringan seperti fetch atau query kecil.
+
+### 4. Lupa Menangani Error
+
+Karena error di dalam `after` tidak akan dikirim ke client, banyak developer lupa menambahkan `try/catch`. Akibatnya, kegagalan analitik atau logging menjadi silent failure. Selalu bungkus isi `after` dengan penanganan error dan logging yang eksplisit.
+
+### 5. Mencoba Memakai di Client Component
+
+`after` hanya bisa diimpor dan dipanggil di server. Jika kamu mengimpornya di Client Component atau di dalam `useEffect`, build akan gagal. Pastikan pemanggilannya berada di file dengan `'use server'` atau di Route Handler.
+
+## Penutup
+
+`after` membantu memisahkan mana pekerjaan yang harus memblokir response dan mana yang bisa ditunda. Dengan memindahkan logging, analitik, dan tugas non-kritis lainnya ke `after`, kamu menjaga response tetap cepat tanpa mengorbankan observability.
+
+Mulailah dari satu tempat: cari Server Action yang paling sering dipanggil dan pindahkan satu `await` non-kritis ke dalam `after`. Ukur perbedaannya pada durasi response, lalu terapkan pola yang sama secara konsisten.

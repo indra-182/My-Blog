@@ -98,7 +98,7 @@ components:
 
 Cue Horizon stages technical writing as a clear reading path. The reader enters a near-black field, finds a cobalt horizon and rose transition, then moves through search, filters, headings, code, and continuation links. The blog is a Read surface, so typography, wayfinding, and content density carry the experience.
 
-The blog shares the sibling portfolio's visual language without copying its recruiter-only content or proof sequence. It uses a sticky stage header, direct shell alignment, thin structural rules, flat rectangular surfaces, and a single hero cue-rise. The first visit is dark; an explicit light choice persists as the white-day counterpart.
+The blog shares the sibling portfolio's visual language without copying its recruiter-only content or proof sequence. It uses a sticky stage header, direct shell alignment, thin structural rules, flat rectangular surfaces, a single hero cue-rise, and one bounded hero-only horizon response over the first `40vh`. The first visit is dark; an explicit light choice persists as the white-day counterpart.
 
 **Key Characteristics:**
 
@@ -161,7 +161,7 @@ The semantic palette keeps neutral values responsible for reading load, cobalt f
 
 The full-width stage uses a centered shell with `1rem` gutters below 640px, `1.5rem` gutters from 640px, and a `76rem` maximum. The header is sticky at `4.75rem`. Desktop navigation appears from 768px; below that breakpoint the menu trigger opens a right-side native modal dialog using `--popover`.
 
-The homepage hero owns the near-black to cobalt field and restrained rose lower wash. Its copy has one `480ms` cue-rise and deliberate lower padding before discovery begins. Discovery starts as a separate shell-aligned section with search, topic, and series controls, then direct post rows. Article pages align breadcrumbs, header, prose, table of contents, and footer content directly to the shell. The table of contents is sticky beside prose on desktop and moves before prose below 768px.
+The homepage hero owns the near-black to cobalt field and restrained rose lower wash. Its copy has one `480ms` cue-rise, and its horizon has one bounded scroll response over the first `40vh`; unsupported browsers and reduced motion use the static rose wash. Discovery starts as a separate shell-aligned section with search, topic, and series controls, then direct post rows. Article pages align breadcrumbs, header, prose, table of contents, and footer content directly to the shell. The table of contents is sticky beside prose on desktop and moves before prose below 768px.
 
 ## Elevation & Depth
 
@@ -205,7 +205,7 @@ The form language is rectangular and precise. Controls use the `0.15rem` small r
 
 - **Homepage:** Headline, rose cue, description, breathing room, filters, result count, flat post rows, and load-more action.
 - **Article:** Topic badges, headline, description, publication metadata, optional series notice, prose, sticky or pre-prose TOC, Dracula code blocks, series navigation, related posts, and sharing controls.
-- **Motion:** Only hero copy enters. Reduced motion sets motion tokens to `0ms`, disables cue-rise, and uses automatic scrolling.
+- **Motion:** Homepage copy retains the `480ms` cue-rise and adds one bounded hero-only horizon response over the first `40vh`. Unsupported browsers and reduced motion use the static rose wash; article prose, post rows, and other sections remain unanimated.
 
 ## Do's and Don'ts
 
