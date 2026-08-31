@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { Check, Copy } from "@/components/icons";
 import dictionary from "@/i18n/messages/id.json";
+import { useCopyToClipboard } from "./use-copy-to-clipboard";
 
 const copiedResetMs = 2000;
 
@@ -16,26 +16,7 @@ export function CodeBlock({
   highlightedCode?: ReactNode;
   language?: string;
 }) {
-  const [status, setStatus] = useState<"idle" | "copied" | "failed">("idle");
-  const copiedTimeoutRef = useRef<number | undefined>(undefined);
-
-  useEffect(() => {
-    return () => window.clearTimeout(copiedTimeoutRef.current);
-  }, []);
-
-  async function copyCode() {
-    try {
-      await navigator.clipboard.writeText(code);
-      setStatus("copied");
-      window.clearTimeout(copiedTimeoutRef.current);
-      copiedTimeoutRef.current = window.setTimeout(
-        () => setStatus("idle"),
-        copiedResetMs,
-      );
-    } catch {
-      setStatus("failed");
-    }
-  }
+  const { status, copy } = useCopyToClipboard(() => code, copiedResetMs);
 
   const label =
     status === "copied"
@@ -56,7 +37,7 @@ export function CodeBlock({
       <button
         className="absolute top-2 right-2 min-h-11 rounded-[var(--radius-sm)] border border-[#6272a4] bg-[#44475a] px-3 text-[0.72rem] text-[#f8f8f2] hover:border-[#ff79c6] hover:bg-[#6272a4] hover:text-white focus-visible:border-[#ff79c6] focus-visible:bg-[#6272a4] focus-visible:text-white"
         type="button"
-        onClick={copyCode}
+        onClick={copy}
         aria-label={label}
       >
         {status === "copied" ? (

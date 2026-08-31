@@ -87,18 +87,12 @@ importers:
       '@vitejs/plugin-react':
         specifier: ^6.0.5
         version: 6.0.5(vite@8.2.1(@types/node@20.19.43)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))
-      '@vitest/coverage-v8':
-        specifier: ^4.1.10
-        version: 4.1.11(vitest@4.1.11)
       eslint:
         specifier: ^9
         version: 9.39.5(jiti@2.7.0)
       eslint-config-next:
         specifier: 16.3.0
         version: 16.3.0(@typescript-eslint/parser@8.67.0(eslint@9.39.5(jiti@2.7.0))(typescript@5.9.3))(eslint@9.39.5(jiti@2.7.0))(typescript@5.9.3)
-      husky:
-        specifier: ^9.1.7
-        version: 9.1.7
       jsdom:
         specifier: ^30.0.1
         version: 30.0.1
@@ -2009,11 +2003,6 @@ packages:
   html-void-elements@3.0.0:
     resolution: {integrity: sha512-bEqo66MRXsUGxWHV5IP0PUiAWwoEjba4VCzg0LjFJBpchPaTfyfCKTG6bc5F8ucKec3q5y6qOdGyYTSBEvhCrg==}
 
-  husky@9.1.7:
-    resolution: {integrity: sha512-5gs5ytaNjBrh5Ow3zrvdUUY+0VxIuWVL4i9irt6friV+BqdCfmV11CQTWMiBYWHbXhco+J1kHfTOUkePhCDvMA==}
-    engines: {node: '>=18'}
-    hasBin: true
-
   ignore@5.3.2:
     resolution: {integrity: sha512-hsBTNUqQTDwkWtcdYI2i06Y/nUBEsNEDJKjWdigLvegy8kDuJAS8uRlpkkcQpyEXL0Z/pjDy5HBmMjRCJ2gq+g==}
     engines: {node: '>= 4'}
@@ -3575,7 +3564,8 @@ snapshots:
       '@babel/helper-string-parser': 7.29.7
       '@babel/helper-validator-identifier': 7.29.7
 
-  '@bcoe/v8-coverage@1.0.2': {}
+  '@bcoe/v8-coverage@1.0.2':
+    optional: true
 
   '@bramus/specificity@2.4.2':
     dependencies:
@@ -4429,6 +4419,7 @@ snapshots:
       std-env: 4.2.0
       tinyrainbow: 3.1.1
       vitest: 4.1.11(@types/node@20.19.43)(@vitest/coverage-v8@4.1.11)(jsdom@30.0.1)(vite@8.2.1(@types/node@20.19.43)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))
+    optional: true
 
   '@vitest/expect@4.1.11':
     dependencies:
@@ -4580,6 +4571,7 @@ snapshots:
       '@jridgewell/trace-mapping': 0.3.31
       estree-walker: 3.0.3
       js-tokens: 10.0.0
+    optional: true
 
   astring@1.9.0: {}
 
@@ -5462,11 +5454,10 @@ snapshots:
     transitivePeerDependencies:
       - '@noble/hashes'
 
-  html-escaper@2.0.2: {}
+  html-escaper@2.0.2:
+    optional: true
 
   html-void-elements@3.0.0: {}
-
-  husky@9.1.7: {}
 
   ignore@5.3.2: {}
 
@@ -5626,18 +5617,21 @@ snapshots:
 
   isexe@2.0.0: {}
 
-  istanbul-lib-coverage@3.2.2: {}
+  istanbul-lib-coverage@3.2.2:
+    optional: true
 
   istanbul-lib-report@3.0.1:
     dependencies:
       istanbul-lib-coverage: 3.2.2
       make-dir: 4.0.0
       supports-color: 7.2.0
+    optional: true
 
   istanbul-reports@3.2.0:
     dependencies:
       html-escaper: 2.0.2
       istanbul-lib-report: 3.0.1
+    optional: true
 
   iterator.prototype@1.1.5:
     dependencies:
@@ -5650,7 +5644,8 @@ snapshots:
 
   jiti@2.7.0: {}
 
-  js-tokens@10.0.0: {}
+  js-tokens@10.0.0:
+    optional: true
 
   js-tokens@4.0.0: {}
 
@@ -5854,10 +5849,12 @@ snapshots:
       '@babel/parser': 7.29.8
       '@babel/types': 7.29.8
       source-map-js: 1.2.1
+    optional: true
 
   make-dir@4.0.0:
     dependencies:
       semver: 7.8.5
+    optional: true
 
   markdown-extensions@2.0.0: {}
 

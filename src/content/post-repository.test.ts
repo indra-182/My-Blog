@@ -1,4 +1,4 @@
-import { mkdtemp, mkdir, writeFile } from "node:fs/promises";
+import { mkdtemp, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
@@ -46,7 +46,6 @@ describe("post repository", () => {
 
   it("rejects duplicate slugs instead of choosing a document", async () => {
     const root = await mkdtemp(path.join(os.tmpdir(), "blog-content-"));
-    await mkdir(root, { recursive: true });
     const frontmatter = `---
 title: "Duplicate"
 slug: "same-slug"
@@ -115,7 +114,6 @@ Body`;
 describe("content edge cases", () => {
   it("rejects malformed files instead of serving a partial collection", async () => {
     const root = await mkdtemp(path.join(os.tmpdir(), "blog-content-"));
-    await mkdir(root, { recursive: true });
     await writeFile(
       path.join(root, "broken.mdx"),
       '---\ntitle: "Broken"\n---\n\nBody',

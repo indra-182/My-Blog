@@ -61,13 +61,13 @@ export function MobileNavigation({ portfolioUrl }: { portfolioUrl: string }) {
           <X size={20} aria-hidden="true" />
         </button>
         <nav className="flex flex-col" aria-label="Menu seluler">
-          <Link
+          <a
             className="flex min-h-14 items-center border-b border-border py-4 text-[1.1rem] font-[750] text-foreground hover:text-cue-rose focus-visible:text-cue-rose aria-[current=page]:text-cue-rose"
             href={portfolioUrl}
             onClick={closeDialog}
           >
             {dictionary.navigation.portfolio}
-          </Link>
+          </a>
           <Link
             className="flex min-h-14 items-center border-b border-border py-4 text-[1.1rem] font-[750] text-foreground hover:text-cue-rose focus-visible:text-cue-rose aria-[current=page]:text-cue-rose"
             href="/"

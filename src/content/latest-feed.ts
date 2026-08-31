@@ -1,9 +1,22 @@
-import {
-  latestPostFeedSchema,
-  type LatestPostFeedV1,
-} from "./latest-feed-schema";
-import { isPublished } from "./post-repository";
+import { z } from "zod";
 import type { PostSummary } from "./post-types";
+
+const latestPostFeedSchema = z.object({
+  version: z.literal(1),
+  generatedAt: z.string().datetime({ offset: true }),
+  posts: z.array(
+    z.object({
+      title: z.string(),
+      slug: z.string(),
+      description: z.string(),
+      publishedAt: z.string().datetime({ offset: true }),
+      topics: z.array(z.string()),
+      readingTimeMinutes: z.number().int().positive(),
+    }),
+  ),
+});
+
+type LatestPostFeedV1 = z.infer<typeof latestPostFeedSchema>;
 
 function clampFeedLimit(value: number) {
   return Math.min(10, Math.max(1, Math.trunc(value)));
@@ -18,7 +31,6 @@ export function buildLatestFeed(
     version: 1 as const,
     generatedAt,
     posts: posts
-      .filter((post) => isPublished(post))
       .slice(0, clampFeedLimit(limit))
       .map(
         ({

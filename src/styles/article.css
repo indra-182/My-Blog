@@ -91,19 +91,6 @@
     font-size: 0.82em;
   }
 
-  .prose pre {
-    overflow-x: auto;
-    margin: 1.5em 0;
-    border: 1px solid #44475a;
-    background: #282a36;
-    color: #f8f8f2;
-    padding: 1.1rem;
-    font-family:
-      ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-    font-size: 0.82rem;
-    line-height: 1.7;
-  }
-
   .prose blockquote {
     border-left: 1px solid var(--cue-rose);
     padding-left: 1.1rem;

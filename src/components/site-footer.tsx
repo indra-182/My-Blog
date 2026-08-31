@@ -3,7 +3,7 @@ import dictionary from "@/i18n/messages/id.json";
 import { siteConfig } from "@/lib/site-config";
 import { Briefcase, Mail } from "@/components/icons";
 
-function GithubIcon() {
+function GitHubIcon() {
   return (
     <svg
       className="size-4 flex-none text-cue-rose"
@@ -18,7 +18,7 @@ function GithubIcon() {
   );
 }
 
-function LinkedinIcon() {
+function LinkedInIcon() {
   return (
     <svg
       className="size-4 flex-none text-cue-rose"
@@ -49,7 +49,7 @@ export function SiteFooter() {
           className="grid grid-cols-[repeat(2,minmax(0,max-content))] gap-x-4 gap-y-[0.65rem] md:flex md:items-center"
           aria-label={dictionary.footer.navigationLabel}
         >
-          <Link
+          <a
             className="inline-flex min-h-11 items-center gap-2 font-mono text-[0.65rem] tracking-[0.06em] text-muted-foreground uppercase transition-colors duration-[var(--motion-fast)] ease hover:text-foreground focus-visible:text-foreground"
             href={siteConfig.portfolioUrl}
             aria-label={dictionary.footer.portfolio}
@@ -62,8 +62,8 @@ export function SiteFooter() {
               aria-hidden="true"
             />
             <span>{dictionary.footer.portfolio}</span>
-          </Link>
-          <Link
+          </a>
+          <a
             className="inline-flex min-h-11 items-center gap-2 font-mono text-[0.65rem] tracking-[0.06em] text-muted-foreground uppercase transition-colors duration-[var(--motion-fast)] ease hover:text-foreground focus-visible:text-foreground"
             href={siteConfig.githubUrl}
             target="_blank"
@@ -71,10 +71,10 @@ export function SiteFooter() {
             aria-label={dictionary.footer.github}
             title={dictionary.footer.github}
           >
-            <GithubIcon />
+            <GitHubIcon />
             <span>{dictionary.footer.github}</span>
-          </Link>
-          <Link
+          </a>
+          <a
             className="inline-flex min-h-11 items-center gap-2 font-mono text-[0.65rem] tracking-[0.06em] text-muted-foreground uppercase transition-colors duration-[var(--motion-fast)] ease hover:text-foreground focus-visible:text-foreground"
             href={siteConfig.linkedinUrl}
             target="_blank"
@@ -82,10 +82,10 @@ export function SiteFooter() {
             aria-label={dictionary.footer.linkedin}
             title={dictionary.footer.linkedin}
           >
-            <LinkedinIcon />
+            <LinkedInIcon />
             <span>{dictionary.footer.linkedin}</span>
-          </Link>
-          <Link
+          </a>
+          <a
             className="inline-flex min-h-11 items-center gap-2 font-mono text-[0.65rem] tracking-[0.06em] text-muted-foreground uppercase transition-colors duration-[var(--motion-fast)] ease hover:text-foreground focus-visible:text-foreground"
             href={`mailto:${siteConfig.contactEmail}`}
             aria-label={dictionary.footer.email}
@@ -98,7 +98,7 @@ export function SiteFooter() {
               aria-hidden="true"
             />
             <span>{dictionary.footer.email}</span>
-          </Link>
+          </a>
         </nav>
       </div>
       <div className="shell flex flex-col gap-2 pt-4 font-mono text-[0.62rem] tracking-[0.04em] text-muted-foreground md:flex-row md:items-center md:justify-between">

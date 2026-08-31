@@ -45,13 +45,10 @@ Environment names are documented in `.env.example`: `NEXT_PUBLIC_BLOG_URL`, `NEX
 
 ## Quality gate
 
+Run the full quality gate before handoff:
+
 ```bash
-pnpm content:validate
-pnpm test
-pnpm lint
-pnpm typecheck
-pnpm build
-pnpm test:e2e
+pnpm verify
 ```
 
 Hermes scheduling, CMS publishing, analytics, comments, newsletter, and deployment automation are outside this MVP.

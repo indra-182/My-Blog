@@ -1,0 +1,222 @@
+---
+title: "TypeScript const Type Parameters: Menjaga Literal Type pada Generic Helper"
+slug: "typescript-const-type-parameters"
+description: "Panduan praktis memakai const type parameters untuk mempertahankan literal type pada konfigurasi dan array generic tanpa assertion berulang."
+publishedAt: "2026-08-30T01:00:00+07:00"
+topics: ["TypeScript", "React", "Next.js"]
+draft: false
+---
+
+## Mengapa Literal Type Sering Melebar
+
+Saat membuat helper generic untuk konfigurasi, routing, atau design system di Next.js, kita sering ingin TypeScript mengingat nilai literal yang kita tulis, bukan versi melebar-nya.
+
+Pertanyaannya: kapan `const` pada type parameter benar-benar dibutuhkan?
+
+Ambil contoh paling sederhana:
+
+```ts
+function id<T extends string>(x: T) {
+  return x;
+}
+
+const a = id("hello"); // T di-infer sebagai "hello", bukan string
+```
+
+Sejak lama, TypeScript sudah menginfer `string` literal untuk argumen literal pada generic `T extends string`. Jadi untuk parameter primitif tunggal, modifier `const` tidak menambah apa pun. Kekeliruan umum adalah mengira `const` diperlukan agar `"hello"` tidak melebar menjadi `string`.
+
+Manfaat `const` baru terasa pada **object literal dan array literal**.
+
+```ts
+function getConfig<T extends Record<string, string>>(config: T) {
+  return config;
+}
+
+const config = getConfig({ theme: "dark", variant: "outline" });
+// T adalah { theme: string; variant: string } -> melebar!
+// "dark" menjadi string, bukan "dark"
+```
+
+Tanpa `const`, properti di dalam object literal akan melebar menjadi `string`. Kita kehilangan informasi literal yang justru kita butuhkan untuk autocomplete dan type-safety.
+
+## Apa Itu `const` Type Parameter
+
+Diperkenalkan di TypeScript 5.0, `const` type parameter membuat inferensi berperilaku seperti menambahkan `as const` pada argumen, tetapi tanpa memaksa pemanggil menulis assertion setiap kali.
+
+Sintaksnya menempel langsung pada deklarasi generic:
+
+```ts
+function helper<const T>(arg: T) { ... }
+```
+
+Aturan penting yang sering terlewat: **modifier `const` hanya valid pada type parameter milik fungsi, metode, dan kelas/generic class.** Tidak valid pada `type` alias atau `interface`.
+
+```ts
+// Valid
+function defineConfig<const T>(config: T) {}
+class Store<const T> { constructor(public value: T) {} }
+
+// Tidak valid - akan error
+type MyHelper<const T> = T;
+interface Repo<const T> { data: T }
+```
+
+Jika kamu butuh `const` di level type alias, solusinya tetap membungkusnya lewat fungsi helper.
+
+## Kasus Utama: Array dan Object Literal
+
+### 1. Menjaga Array Literal Tetap Tuple Literal
+
+Ini adalah kasus paling umum di helper routing atau navigasi Next.js.
+
+Tanpa `const`:
+
+```ts
+function defineRoutes<T extends readonly string[]>(routes: T) {
+  return routes;
+}
+
+const routes = defineRoutes(["/", "/about", "/blog"]);
+// T di-infer sebagai string[] -> kehilangan informasi literal dan panjang tuple
+```
+
+Dengan `const`:
+
+```ts
+function defineRoutes<const T extends readonly string[]>(routes: T) {
+  return routes;
+}
+
+const routes = defineRoutes(["/", "/about", "/blog"]);
+// T di-infer sebagai readonly ["/", "/about", "/blog"]
+```
+
+Sekarang `typeof routes[number]` adalah `"/" | "/about" | "/blog"`, bukan `string`. Kita bisa menurunkan tipe turunan yang aman:
+
+```ts
+type Route = typeof routes[number];
+//   ^? "/" | "/about" | "/blog"
+
+function Link({ href }: { href: Route }) {
+  return <a href={href} />;
+}
+
+Link({ href: "/" }); // ok
+Link({ href: "/admin" }); // error: type-check menangkap typo
+```
+
+Ini sangat berguna untuk `typedRoutes` di Next.js, navigasi sidebar, atau breadcrumb tanpa harus menulis `as const` di setiap pemanggilan.
+
+### 2. Menjaga Properti Object Literal
+
+Untuk konfigurasi komponen atau theming:
+
+```ts
+function defineConfig<const T extends Record<string, unknown>>(config: T) {
+  return config;
+}
+
+const config = defineConfig({
+  theme: "dark",
+  layout: { sidebar: "collapsible", density: "compact" },
+  features: ["search", "auth"] as const, // di dalam const generic, nested literal tetap terjaga
+});
+
+// T mempertahankan "dark", bukan string
+type Theme = typeof config["theme"]; // "dark"
+type Layout = typeof config["layout"]["sidebar"]; // "collapsible"
+```
+
+Tanpa `const`, `theme` akan menjadi `string` dan kamu harus mengulang `as const` di setiap call site. Dengan `const`, cukup deklarasikan sekali di definisi helper.
+
+## Hubungan `const` dengan Constraint `mutable` vs `readonly`
+
+Ada detail halus soal constraint yang wajib dipahami. Ketika memakai `const`, TypeScript akan menginfer tipe yang paling spesifik, yang seringkali adalah `readonly`.
+
+Itulah kenapa contoh di atas menggunakan `readonly string[]`, bukan `string[]`:
+
+```ts
+// Kurang tepat jika pakai const
+function defineRoutes<const T extends string[]>(routes: T) {}
+
+// Lebih tepat
+function defineRoutes<const T extends readonly string[]>(routes: T) {}
+```
+
+Jika constraint-nya `string[]` (mutable), tetapi inferensi `const` menghasilkan `readonly ["/", "/about"]`, maka akan terjadi konflik assignability. Array `readonly` tidak bisa di-assign ke `mutable`. Dengan menulis `readonly string[]` sebagai constraint, kita memberi tahu TypeScript bahwa helper memang menerima array readonly, sehingga inferensi `const` yang readonly bisa masuk dengan mulus.
+
+Pola yang sama berlaku untuk object:
+
+```ts
+// Untuk const, constraint sebaiknya mampu menampung readonly
+function defineConfig<const T extends Record<string, unknown>>(config: T) {}
+
+// Atau lebih eksplisit jika kamu butuh imutabilitas penuh
+function defineConfig<const T extends Readonly<Record<string, unknown>>>(config: T) {}
+```
+
+Intinya: jika memakai `const`, biasakan constraint memakai `readonly` untuk array/tuple dan pertimbangkan `Readonly` untuk object jika helper tidak akan memutasi input.
+
+## Trade-off dan Kapan Tidak Perlu `const`
+
+`const` bukan sihir yang harus dipakai di semua generic. Ada trade-off `readonly` yang perlu dipertimbangkan.
+
+**1. Data menjadi readonly.** Hasil inferensi `const` seringkali `readonly`. Jika helper kamu perlu memutasi array di dalamnya (misal `routes.push()`), kamu akan mendapat error. Solusinya adalah tetap memakai `const` untuk inferensi, tetapi buat salinan mutable di dalam implementasi:
+
+```ts
+function defineRoutes<const T extends readonly string[]>(routes: T) {
+  const mutable = [...routes]; // salinan mutable jika perlu mutasi
+  mutable.push("/new-route");
+  return routes;
+}
+```
+
+**2. Jangan pakai `const` untuk primitif tunggal.** Seperti contoh `id<T extends string>`, `const` tidak memberi nilai tambah. Cukup biarkan inferensi default bekerja.
+
+**3. Alternatif `as const` masih valid.** Jika kamu hanya punya satu-dua call site dan ingin literal tetap terjaga tanpa mengubah definisi helper, `as const` di sisi pemanggil tetap sah:
+
+```ts
+const routes = defineRoutes(["/", "/about"] as const);
+```
+
+Gunakan `const` type parameter ketika kamu adalah **pemilik helper** dan ingin semua konsumen otomatis mendapat literal type tanpa mengingat `as const`. Gunakan `as const` atau `Readonly<T>` ketika kamu adalah **konsumen** dan tidak bisa mengubah definisi helper.
+
+## Pola Praktis di React dan Next.js
+
+Di codebase Next.js, `const` type parameter sangat pas untuk factory helper:
+
+```ts
+// lib/config.ts
+export function createNav<const T extends readonly string[]>(items: T) {
+  return items.map((href) => ({ href, label: href.slice(1) || "home" })) as {
+    [K in keyof T]: { href: T[K]; label: string };
+  };
+}
+
+// app/layout.tsx
+import { createNav } from "@/lib/config";
+
+const nav = createNav(["/", "/dashboard", "/settings"]);
+// nav[0].href bertipe "/"
+
+type NavHref = typeof nav[number]["href"];
+```
+
+Kamu juga bisa mengkombinasikannya dengan generic lain yang tidak `const`:
+
+```ts
+function defineEndpoint<const T extends readonly string[], U extends Record<string, unknown>>(
+  path: T,
+  meta: U
+) {
+  return { path, meta } as const;
+}
+```
+
+Hanya `T` yang mendapat perlakuan `const`, sedangkan `U` tetap inferensi normal. Ini berguna untuk memisahkan bagian yang butuh literal ketat dan bagian yang boleh melebar.
+
+## Kesimpulan
+
+`const` type parameter bukan untuk membuat `string` tetap `"hello"` pada `id<T extends string>`, karena itu sudah otomatis. Kekuatannya ada pada object dan array literal agar properti tidak melebar menjadi `string` atau `string[]`.
+
+Ingat tiga aturannya: pakai `const` hanya pada fungsi/metode/kelas, sesuaikan constraint menjadi `readonly` agar kompatibel dengan hasil inferensi, dan pertimbangkan trade-off imutabilitas. Dengan begitu, helper seperti `defineRoutes` atau `defineConfig` bisa memberikan type-safety maksimal di seluruh aplikasi React/Next.js tanpa membebani pemanggil dengan `as const` berulang.

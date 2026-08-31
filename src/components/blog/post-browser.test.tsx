@@ -1,10 +1,4 @@
-import {
-  act,
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-} from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { PostSummary } from "@/content/post-types";
 import { PostBrowser } from "./post-browser";
@@ -48,7 +42,6 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  cleanup();
   vi.useRealTimers();
   window.history.replaceState(null, "", "/");
 });
@@ -56,6 +49,9 @@ afterEach(() => {
 describe("PostBrowser", () => {
   it("filters immediately while typing without touching the URL", () => {
     render(<PostBrowser posts={posts} initialFilters={initialFilters} />);
+    expect(
+      screen.getByRole("region", { name: "Daftar tulisan" }),
+    ).toBeInTheDocument();
     const input = screen.getByLabelText("Temukan tulisan");
 
     fireEvent.change(input, { target: { value: "tulisan 7" } });

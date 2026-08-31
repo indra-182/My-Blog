@@ -1,13 +1,9 @@
-import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
 import ArticleNotFound from "./blog/[slug]/not-found";
 import ErrorPage from "./error";
 import Loading from "./loading";
 import NotFound from "./not-found";
-
-afterEach(() => {
-  cleanup();
-});
 
 describe("skip-link targets", () => {
   it.each([
@@ -21,7 +17,7 @@ describe("skip-link targets", () => {
     expect(main).toHaveAttribute("id", "main-content");
   });
 
-  it("renders not-found and error copy from the dictionary", () => {
+  it("renders the root and article not-found copy from the dictionary", () => {
     render(<NotFound />);
     expect(
       screen.getByRole("heading", { name: "Halaman tidak tersedia" }),
@@ -35,6 +31,18 @@ describe("skip-link targets", () => {
     render(<ArticleNotFound />);
     expect(
       screen.getByRole("heading", { name: "Tulisan tidak tersedia" }),
+    ).toBeInTheDocument();
+  });
+
+  it("renders the error fallback actions and retries", () => {
+    const reset = vi.fn();
+    render(<ErrorPage error={new Error("boom")} reset={reset} />);
+
+    expect(screen.getByText("500")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Ulangi percobaan" }));
+    expect(reset).toHaveBeenCalledTimes(1);
+    expect(
+      screen.getByRole("link", { name: "Buka halaman utama" }),
     ).toBeInTheDocument();
   });
 });

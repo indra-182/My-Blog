@@ -10,15 +10,20 @@ type PostFileResult =
   | { success: true; data: PostDocument; filePath: string }
   | { success: false; filePath: string; error: Error };
 
-export interface ContentIssue {
+type ContentIssue = {
   filePath: string;
   message: string;
-}
+};
 
 const defaultContentDirectory = path.join(process.cwd(), "content/posts");
 
-export function defaultRootDirectory() {
-  return process.env.CONTENT_ROOT ?? defaultContentDirectory;
+function resolveContentRoot(rootDirectory?: string) {
+  return {
+    rootDirectory:
+      rootDirectory ?? process.env.CONTENT_ROOT ?? defaultContentDirectory,
+    allowMissing:
+      rootDirectory === undefined && process.env.CONTENT_ROOT === undefined,
+  };
 }
 
 export function isPublished(
@@ -126,15 +131,27 @@ export async function loadPostCollection(
   return { documents, issues };
 }
 
+export async function validateContentDirectory(
+  rootDirectory?: string,
+  now: number = Date.now(),
+) {
+  const { rootDirectory: resolvedRootDirectory, allowMissing } =
+    resolveContentRoot(rootDirectory);
+  const { issues } = await loadPostCollection(
+    resolvedRootDirectory,
+    now,
+    allowMissing,
+  );
+  return issues;
+}
+
 function publishedAtDesc(a: PostSummary, b: PostSummary) {
   return new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime();
 }
 
 export function createPostRepository(rootDirectory?: string) {
-  const resolvedRootDirectory = rootDirectory ?? defaultRootDirectory();
-  const allowMissing =
-    rootDirectory === undefined && process.env.CONTENT_ROOT === undefined;
-
+  const { rootDirectory: resolvedRootDirectory, allowMissing } =
+    resolveContentRoot(rootDirectory);
   // React cache dedupes reads and parses within a single server request.
   const loadDocuments = cache(async (): Promise<PostDocument[]> => {
     const { documents, issues } = await loadPostCollection(
@@ -143,13 +160,12 @@ export function createPostRepository(rootDirectory?: string) {
       allowMissing,
     );
     if (issues.length > 0) {
+      const issueMessages = issues.map(
+        ({ filePath, message }) => `${filePath}: ${message}`,
+      );
       throw new AggregateError(
-        issues.map(
-          ({ filePath, message }) => new Error(`${filePath}: ${message}`),
-        ),
-        issues
-          .map(({ filePath, message }) => `${filePath}: ${message}`)
-          .join("\n"),
+        issueMessages.map((message) => new Error(message)),
+        issueMessages.join("\n"),
       );
     }
     return documents.sort(publishedAtDesc);

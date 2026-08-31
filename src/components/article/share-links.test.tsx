@@ -7,18 +7,9 @@ import {
 } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ShareLinks } from "./share-links";
-
-function mockClipboard() {
-  const writeText = vi.fn().mockResolvedValue(undefined);
-  Object.defineProperty(navigator, "clipboard", {
-    configurable: true,
-    value: { writeText },
-  });
-  return writeText;
-}
+import { mockClipboard } from "@/test/mock-clipboard";
 
 afterEach(() => {
-  cleanup();
   vi.useRealTimers();
   delete (navigator as { share?: unknown }).share;
 });
