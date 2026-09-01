@@ -1,0 +1,129 @@
+---
+title: "content-visibility: auto untuk Daftar Panjang di React/Next.js"
+slug: "content-visibility-react-daftar-panjang"
+description: "Memanfaatkan content-visibility: auto untuk mengurangi biaya render daftar panjang di React dan Next.js, kapan efektif dipakai, dan batasan teknis yang perlu diperhatikan."
+publishedAt: "2026-09-02T01:00:00+07:00"
+topics: ["React", "Next.js", "Web Performance"]
+draft: false
+---
+
+## Daftar panjang menguras biaya render
+
+Daftar dengan ratusan card, baris tabel, atau komentar akan tetap dirender semua oleh browser meski hanya 10-20 item yang terlihat di viewport. Di React, ini berarti banyak DOM node, style calculation, dan layout yang dikerjakan di awal.
+
+Akibatnya interaksi pertama terasa berat. Scroll jadi tidak halus, terutama di perangkat menengah ke bawah. Filter atau tab yang mengganti daftar juga butuh waktu lebih lama untuk paint ulang.
+
+Solusi umum adalah virtualisasi. Tapi tidak semua daftar butuh virtualisasi. Untuk kasus di mana DOM tetap perlu ada agar find-in-page dan aksesibilitas tetap jalan, `content-visibility: auto` bisa jadi opsi yang lebih sederhana.
+
+## Apa yang dilakukan content-visibility: auto
+
+`content-visibility: auto` memberi tahu browser untuk melewati pekerjaan render pada elemen yang berada di luar viewport. Elemen tetap ada di DOM, tapi browser menunda layout, paint, dan style untuk subtree di dalamnya sampai mendekati viewport.
+
+Berbeda dengan `display: none`, elemen tetap memengaruhi scroll. Berbeda dengan virtualisasi, kamu tidak perlu mengukur posisi atau memotong DOM secara manual.
+
+Properti ini bekerja bersama `contain`. Saat kamu set `content-visibility: auto`, browser secara implisit menerapkan `contain: layout paint style`. Artinya perubahan di dalam satu item tidak mudah memicu layout ulang untuk seluruh halaman.
+
+## Kapan berguna di Next.js
+
+Paling terasa untuk daftar statis yang panjang dan seragam. Contoh: katalog produk 200 item, daftar artikel arsip, tabel log, atau list FAQ yang dirender sekaligus dari server.
+
+Cocok jika:
+
+- Item dirender sekaligus di server dan tidak butuh unmount logika berat.
+- Tinggi item relatif mirip atau bisa diperkirakan.
+- Kamu ingin tetap mempertahankan DOM lengkap untuk SEO, Ctrl+F, dan navigasi anchor.
+- Virtualisasi terasa berlebihan karena daftar hanya 100-500 item, bukan ribuan.
+
+Kurang cocok jika daftar sangat dinamis dengan tinggi yang sangat bervariasi, atau kamu butuh kontrol presisi atas recycling DOM untuk ribuan baris.
+
+## Implementasi paling sederhana di React
+
+Cukup terapkan style pada wrapper tiap item. Tidak perlu library tambahan.
+
+```tsx
+type Item = {
+  id: string
+  title: string
+  price: number
+}
+
+export function DaftarProduk({ items }: { items: Item[] }) {
+  return (
+    <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+      {items.map((item) => (
+        <li
+          key={item.id}
+          style={{
+            contentVisibility: 'auto',
+            containIntrinsicSize: 'auto 120px',
+          }}
+        >
+          <div style={{ padding: '16px', borderBottom: '1px solid #e5e5e5' }}>
+            <h3 style={{ margin: 0, fontSize: '16px', lineHeight: '1.4' }}>
+              {item.title}
+            </h3>
+            <p style={{ margin: '4px 0 0', color: '#555' }}>
+              Rp {item.price.toLocaleString('id-ID')}
+            </p>
+          </div>
+        </li>
+      ))}
+    </ul>
+  )
+}
+```
+
+Jika pakai CSS Module atau Tailwind, pindahkan ke class:
+
+```css
+.item {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 120px;
+}
+```
+
+Di Next.js App Router, komponen ini bisa jadi Server Component jika datanya diambil di server. Tidak ada perubahan khusus. Style ini murni urusan browser, jadi aman untuk SSR.
+
+## contain-intrinsic-size wajib diisi
+
+Tanpa `contain-intrinsic-size`, browser tidak tahu tinggi elemen yang diskip. Hasilnya scrollbar akan loncat-loncat saat kamu scroll. Estimasi tinggi jadi penentu pengalaman scroll.
+
+`contain-intrinsic-size: auto 120px` artinya: pakai 120px sebagai perkiraan, tapi jika elemen sudah pernah dirender, ingat ukuran aslinya. Angka 120px sesuaikan dengan tinggi rata-rata item kamu. Untuk card produk dengan gambar 80px plus teks, 120-180px biasanya cukup.
+
+Jika tinggi item sangat bervariasi, ambil nilai median, bukan maksimum. Terlalu besar membuat scroll terasa kosong. Terlalu kecil membuat scrollbar memendek tiba-tiba saat item dirender.
+
+Untuk daftar dengan dua atau tiga varian tinggi, buat class terpisah:
+
+```css
+.item-sm { contain-intrinsic-size: auto 80px; }
+.item-md { contain-intrinsic-size: auto 140px; }
+.item-lg { contain-intrinsic-size: auto 240px; }
+```
+
+## Batasan dan efek samping yang perlu diketahui
+
+Pertama, pencarian di halaman. Browser modern sudah mendukung find-in-page untuk konten dengan `content-visibility: auto`, tapi tetap ada jeda karena konten harus dirender dulu saat dicari. Uji di Chrome dan Safari terbaru sebelum mengandalkan perilaku ini untuk daftar kritikal.
+
+Kedua, anchor link dan scroll ke elemen. Jika kamu punya `href="#item-150"` atau memanggil `element.scrollIntoView()`, browser akan merender targetnya secara otomatis. Pastikan tiap item punya `id` yang stabil.
+
+Ketiga, pengukuran layout. Kode yang memanggil `getBoundingClientRect`, `offsetHeight`, atau `IntersectionObserver` pada item yang belum dirender akan mendapat nilai estimasi, bukan ukuran asli. Jika kamu punya logic yang bergantung pada ukuran presisi, seperti sticky header yang menghitung posisi item, hasilnya bisa meleset.
+
+Keempat, state dan efek di dalam item. React tetap mount komponen meski browser melewati render subtree. `useEffect` tetap jalan. Jadi `content-visibility: auto` tidak mengurangi biaya JavaScript React, hanya mengurangi biaya layout dan paint di browser. Jika bottleneck ada di JS, seperti banyak komputasi di render, properti ini tidak banyak membantu.
+
+Kelima, dukungan browser. Sudah didukung di Chromium dan Safari terbaru, tapi cek kebutuhan audiens kamu. Untuk browser yang belum mendukung, properti ini diabaikan begitu saja, daftar tetap tampil normal tanpa error.
+
+## Kapan tetap butuh virtualisasi
+
+Gunakan virtualisasi jika jumlah DOM node sudah ribuan dan kamu melihat memori membengkak atau hydration jadi lambat. `content-visibility: auto` tidak mengurangi jumlah node, hanya menunda render visualnya.
+
+Gunakan `content-visibility: auto` jika jumlah item ratusan, DOM masih wajar, dan kamu ingin solusi tanpa mengubah struktur data atau menambah logika windowing. Keduanya bisa dikombinasikan, tapi biasanya pilih salah satu agar tidak menambah kompleksitas.
+
+## Checklist sebelum pakai
+
+1. Pastikan tiap item punya wrapper dengan `content-visibility: auto` dan `contain-intrinsic-size` yang realistis.
+2. Hindari mengukur tinggi item dari JS sebelum item terlihat.
+3. Uji scroll, find-in-page, dan navigasi anchor di daftar nyata.
+4. Periksa di DevTools Rendering panel, aktifkan Layout Shift Regions untuk melihat apakah estimasi tinggi menyebabkan pergeseran.
+5. Jika daftar dirender di dalam container dengan `overflow: auto`, properti tetap bekerja, tapi pastikan container tersebut yang menjadi scrollport.
+
+Untuk daftar panjang yang seragam di Next.js, `content-visibility: auto` adalah cara cepat memangkas pekerjaan browser tanpa merombak komponen. Kuncinya ada di estimasi tinggi yang masuk akal dan pemahaman bahwa yang dihemat adalah biaya layout dan paint, bukan biaya JavaScript React itu sendiri.
