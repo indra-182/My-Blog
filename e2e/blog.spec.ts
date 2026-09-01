@@ -120,7 +120,7 @@ test("homepage hero horizon uses the bounded native scroll response", async ({
     await page.setViewportSize({ width, height: 900 });
     await page.goto("/");
 
-    const hero = page.locator(".blog-hero");
+    const hero = page.locator("section.blog-hero");
     const heading = page.getByRole("heading", {
       name: /Membangun dengan lebih terarah/i,
     });
@@ -183,7 +183,7 @@ test("homepage motion honors reduced motion", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/");
 
-  const hero = page.locator(".blog-hero");
+  const hero = page.locator("section.blog-hero");
   await expect(
     page.getByRole("heading", {
       name: /Membangun dengan lebih terarah/i,
