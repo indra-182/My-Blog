@@ -1,0 +1,187 @@
+---
+title: "Observability di Next.js dengan instrumentation.ts dan OpenTelemetry"
+slug: "observability-nextjs-instrumentation-opentelemetry"
+description: "Menerapkan observability di Next.js App Router menggunakan instrumentation.ts dan OpenTelemetry untuk tracing, metrik, dan diagnosis performa di production."
+publishedAt: "2026-09-02T01:00:00+07:00"
+topics: ["Next.js", "OpenTelemetry", "Observability"]
+draft: false
+---
+
+Next.js di production sering sulit di-debug hanya dengan `console.log`. Request melewati middleware, Server Component, Route Handler, dan fetch eksternal. Tanpa tracing yang terkorelasi, kita tidak tahu bagian mana yang lambat atau gagal. `instrumentation.ts` memberikan titik masuk resmi untuk menginisialisasi observability sebelum aplikasi menerima request.
+
+## Apa Itu instrumentation.ts dan Kapan Dieksekusi
+
+`instrumentation.ts` adalah file khusus di root project atau di dalam `src` (sejajar dengan `app` atau `src/app`). Next.js akan memanggil fungsi `register()` yang kamu export dari file ini satu kali saat server instance dimulai.
+
+Sejak Next.js 15, `instrumentation.ts` sudah **stable** dan tidak lagi memerlukan flag eksperimental. Kamu tidak perlu menambahkan `experimental.instrumentationHook` di `next.config.ts`. Cukup buat file-nya, Next.js akan otomatis menjalankannya.
+
+Fungsi `register()` dieksekusi sebelum kode aplikasi lain berjalan dan harus selesai sebelum request pertama diterima. Karena itu tempat ini ideal untuk registrasi library observability, patching global, atau inisialisasi SDK. Jangan lakukan koneksi database berat atau fetch eksternal di dalamnya karena akan memperlambat startup dan bisa membuat health check gagal.
+
+Ada dua runtime yang perlu diperhatikan:
+
+* `nodejs` untuk server Node.js biasa
+* `edge` untuk Edge Runtime
+
+Kamu bisa membedakan keduanya lewat `process.env.NEXT_RUNTIME`. Next.js sendiri sudah memiliki dukungan OpenTelemetry internal, jadi kamu tidak perlu setup manual yang rumit jika hanya butuh tracing dasar.
+
+## Opsi 1: Cara Cepat dengan @vercel/otel
+
+Jika kamu deploy di Vercel atau ingin setup paling minimal, gunakan `@vercel/otel`. Ini adalah wrapper di atas OpenTelemetry yang sudah dioptimalkan untuk Next.js.
+
+Instal dependensinya:
+
+```bash
+npm install @vercel/otel @opentelemetry/api
+```
+
+Lalu buat `instrumentation.ts`:
+
+```ts
+// instrumentation.ts
+import { registerOTel } from '@vercel/otel'
+
+export function register() {
+  registerOTel({
+    serviceName: 'nextjs-app',
+  })
+}
+```
+
+Cukup itu saja. `@vercel/otel` akan otomatis menginstrumentasi fetch, Server Component, dan Route Handler, serta mengirim trace ke endpoint OTLP yang kamu konfigurasi lewat `OTEL_EXPORTER_OTLP_ENDPOINT`. Ini cara tercepat untuk mendapat visibilitas tanpa mengelola `NodeSDK` sendiri.
+
+## Opsi 2: Manual dengan NodeSDK dan Import Kondisional
+
+Untuk kontrol penuh atau saat menggunakan collector self-hosted seperti Jaeger atau Grafana Tempo, kamu bisa menjalankan `NodeSDK` secara manual. Kuncinya: **jangan import paket Node langsung di `instrumentation.ts`**, karena file tersebut juga dievaluasi untuk Edge Runtime dan `NodeSDK` tidak kompatibel dengan Edge.
+
+Pola yang benar adalah memisahkan inisialisasi Node ke file terpisah dan mengimpornya secara kondisional hanya saat `NEXT_RUNTIME === 'nodejs'`.
+
+Instal dependensi:
+
+```bash
+npm install @opentelemetry/api @opentelemetry/sdk-node @opentelemetry/exporter-trace-otlp-http @opentelemetry/auto-instrumentations-node @opentelemetry/resources @opentelemetry/semantic-conventions
+```
+
+Buat file utama:
+
+```ts
+// instrumentation.ts di root atau src/instrumentation.ts
+export async function register() {
+  if (process.env.NEXT_RUNTIME === 'nodejs') {
+    await import('./instrumentation.node.ts')
+  }
+}
+```
+
+Lalu buat file khusus Node:
+
+```ts
+// instrumentation.node.ts
+import { NodeSDK } from '@opentelemetry/sdk-node'
+import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http'
+import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node'
+import { Resource } from '@opentelemetry/resources'
+import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions'
+
+const traceExporter = new OTLPTraceExporter({
+  url: process.env.OTEL_EXPORTER_OTLP_ENDPOINT ?? 'http://localhost:4318/v1/traces',
+})
+
+const sdk = new NodeSDK({
+  resource: new Resource({
+    [SemanticResourceAttributes.SERVICE_NAME]: 'nextjs-app',
+    [SemanticResourceAttributes.SERVICE_VERSION]: process.env.APP_VERSION ?? 'dev',
+  }),
+  traceExporter,
+  instrumentations: [getNodeAutoInstrumentations()],
+})
+
+sdk.start()
+```
+
+Dengan `await import('./instrumentation.node.ts')`, bundle Edge tidak akan ikut membawa kode Node. Auto-instrumentations akan otomatis membuat span untuk `http`, `net`, `dns`, dan `fetch` tanpa mengubah kode bisnis.
+
+## Membuat Trace Manual untuk Server Component dan Route Handler
+
+Auto-instrumentations hanya menangkap hal umum. Untuk query database atau proses berat, buat span manual agar trace lebih informatif.
+
+```ts
+// lib/db.ts
+import { trace } from '@opentelemetry/api'
+
+const tracer = trace.getTracer('app.db')
+
+export async function getProductById(id: string) {
+  return tracer.startActiveSpan('db.getProductById', async (span) => {
+    try {
+      span.setAttribute('db.system', 'postgres')
+      span.setAttribute('product.id', id)
+
+      const result = await pool.query('SELECT * FROM products WHERE id = $1', [id])
+      span.setAttribute('db.row_count', result.rowCount)
+      return result.rows[0]
+    } catch (error) {
+      span.recordException(error as Error)
+      span.setStatus({ code: 2, message: (error as Error).message })
+      throw error
+    } finally {
+      span.end()
+    }
+  })
+}
+```
+
+Gunakan di Server Component. Di Next.js modern, `params` adalah `Promise` yang harus di-await:
+
+```ts
+// app/products/[id]/page.tsx
+import { getProductById } from '@/lib/db'
+
+export default async function ProductPage({
+  params,
+}: {
+  params: Promise<{ id: string }>
+}) {
+  const { id } = await params
+  const product = await getProductById(id)
+  if (!product) return <p>Produk tidak ditemukan</p>
+  return <h1>{product.name}</h1>
+}
+```
+
+Trace yang dihasilkan akan terhubung otomatis: request HTTP -> render Server Component -> span `db.getProductById`. Di dashboard seperti Grafana atau Datadog, kamu bisa melihat durasi tiap tahap dan menemukan bottleneck dengan cepat. Pola yang sama berlaku untuk Route Handler, tambahkan atribut seperti `http.route` atau `user.id` agar filtering lebih mudah.
+
+## Mengorelasikan Log dengan Trace ID
+
+Log tanpa konteks trace sulit ditelusuri. Dengan OTel, setiap log bisa ditempeli `traceId` dan `spanId` yang aktif.
+
+```ts
+// lib/logger.ts
+import { trace } from '@opentelemetry/api'
+
+export function logInfo(message: string, meta: Record<string, unknown> = {}) {
+  const span = trace.getActiveSpan()
+  const context = span?.spanContext()
+
+  console.log(
+    JSON.stringify({
+      level: 'info',
+      message,
+      traceId: context?.traceId,
+      spanId: context?.spanId,
+      ...meta,
+    })
+  )
+}
+```
+
+Saat kamu memanggil `logInfo('checkout started', { cartId: '123' })` di dalam span aktif, log tersebut akan punya ID yang sama dengan trace. Ini memudahkan pencarian dari log ke trace dan sebaliknya. Untuk metrik, kamu bisa menambahkan `MeterProvider` di `instrumentation.node.ts` dengan cara serupa, lalu catat counter custom seperti `checkout.duration` atau `api.error.count`.
+
+## Kapan Perlu dan Kapan Tidak
+
+Gunakan `instrumentation.ts` + OpenTelemetry ketika aplikasi sudah di production dan kamu butuh visibilitas latensi antar layanan, ada banyak fetch ke API eksternal atau database yang perlu diukur, dan tim butuh korelasi antara log, trace, dan metrik dalam satu sistem.
+
+Tunda atau hindari jika project masih tahap awal dengan traffic rendah. Overhead setup collector dan sampling bisa lebih besar dari manfaatnya. Jika kamu deploy penuh di Edge Runtime, banyak instrumentasi Node tidak tersedia dan `NodeSDK` memang tidak kompatibel dengan Edge. Untuk Edge, pertimbangkan logging terstruktur sederhana atau vendor yang mendukung Edge secara native.
+
+Perhatikan juga sampling dan cold start. Mengirim 100% trace di traffic tinggi akan membebani collector dan biaya penyimpanan. Mulai dengan sampling 5-10% dan naikkan untuk endpoint kritis. Jaga agar import tetap dinamis dan hanya muat yang diperlukan agar waktu start server tetap cepat.
+
+Dengan setup minimal di atas, kamu sudah punya fondasi observability yang bisa berkembang. Mulai dari `@vercel/otel` jika ingin cepat, atau pola `instrumentation.node.ts` jika butuh kontrol penuh, lalu tambahkan span manual secara bertahap di bagian paling kritis seperti checkout, autentikasi, dan query yang paling sering lambat.
