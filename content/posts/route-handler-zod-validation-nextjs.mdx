@@ -1,0 +1,124 @@
+---
+title: "Validasi Input Route Handler Next.js dengan Zod"
+slug: "route-handler-zod-validation-nextjs"
+description: "Bangun batas input yang aman di Route Handler Next.js dengan Zod 4, safeParse, dan response error yang konsisten."
+publishedAt: "2026-09-03T01:00:00+07:00"
+topics: ["Next.js", "TypeScript", "Node.js"]
+draft: false
+---
+
+## Input dari client selalu tidak tepercaya
+
+Route Handler di App Router sering menerima query string, parameter URL, dan JSON body. TypeScript membantu kita saat menulis kode, tetapi tipe TypeScript hilang ketika aplikasi berjalan. Data yang datang dari browser atau layanan lain tetap bisa berupa string kosong, angka negatif, field tambahan, atau JSON yang bentuknya salah.
+
+Karena itu, tipe seperti `CreateUserInput` tidak cukup untuk mengamankan handler. Kita perlu memeriksa nilai runtime sebelum data diteruskan ke database atau service. Zod cocok untuk pekerjaan ini karena schema dapat memvalidasi input sekaligus menghasilkan tipe TypeScript yang bisa dipakai setelah validasi berhasil.
+
+## Letakkan schema di dekat kontrak input
+
+Misalnya, endpoint membuat item baru dan menerima `name`, `price`, serta `stock`. Schema menjadi satu tempat untuk mendokumentasikan aturan input tersebut.
+
+```ts
+// src/features/products/schema.ts
+import { z } from "zod";
+
+export const createProductSchema = z.object({
+  name: z.string().trim().min(1).max(120),
+  price: z.number().finite().nonnegative(),
+  stock: z.number().int().nonnegative().max(1_000_000),
+});
+
+export type CreateProductInput = z.infer<typeof createProductSchema>;
+```
+
+`z.infer` tidak melakukan validasi apa pun. Ia hanya mengambil tipe statis dari schema, sehingga service dapat menerima `CreateProductInput` tanpa menulis ulang struktur yang sama. Validasi tetap harus dilakukan terhadap nilai yang benar-benar masuk ke handler.
+
+Gunakan schema yang lebih ketat bila endpoint membutuhkan aturan tambahan. Contohnya, `z.string().trim()` memastikan spasi di awal dan akhir tidak ikut disimpan, sedangkan `min(1)` menolak nama yang hanya berisi spasi.
+
+## Gunakan safeParse di Route Handler
+
+`safeParse` mengembalikan objek hasil, bukan melempar exception untuk input yang tidak valid. Pola ini membuat jalur error menjadi eksplisit dan mencegah input buruk tercampur dengan alur sukses.
+
+```ts
+// app/api/products/route.ts
+import { NextResponse } from "next/server";
+import { createProductSchema } from "@/src/features/products/schema";
+import { createProduct } from "@/src/features/products/service";
+
+export async function POST(request: Request) {
+  let rawBody: unknown;
+
+  try {
+    rawBody = await request.json();
+  } catch {
+    return NextResponse.json(
+      { error: "Body harus berupa JSON yang valid." },
+      { status: 400 },
+    );
+  }
+
+  const parsed = createProductSchema.safeParse(rawBody);
+
+  if (!parsed.success) {
+    return NextResponse.json(
+      {
+        error: "Input tidak valid.",
+        fields: parsed.error.issues.map((issue) => ({
+          path: issue.path.join("."),
+          message: issue.message,
+        })),
+      },
+      { status: 400 },
+    );
+  }
+
+  const product = await createProduct(parsed.data);
+  return NextResponse.json(product, { status: 201 });
+}
+```
+
+Perhatikan bahwa `createProduct` hanya dipanggil setelah `parsed.success` bernilai `true`. Pada cabang itu, `parsed.data` sudah memiliki tipe hasil inferensi schema. Jangan memakai `rawBody` langsung ke service karena nilainya masih `unknown` dan belum melewati pemeriksaan.
+
+## Validasi query string
+
+Semua nilai dari `URLSearchParams` berbentuk string atau `null`. Jika endpoint menerima pagination, ubah dan validasi nilainya dalam schema, bukan dengan asumsi bahwa input tersebut sudah berupa angka.
+
+```ts
+const listQuerySchema = z.object({
+  page: z.coerce.number().int().positive().default(1),
+  limit: z.coerce.number().int().positive().max(100).default(20),
+  q: z.string().trim().max(100).optional(),
+});
+
+export async function GET(request: Request) {
+  const url = new URL(request.url);
+  const parsed = listQuerySchema.safeParse({
+    page: url.searchParams.get("page") ?? undefined,
+    limit: url.searchParams.get("limit") ?? undefined,
+    q: url.searchParams.get("q") ?? undefined,
+  });
+
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: "Parameter query tidak valid." },
+      { status: 400 },
+    );
+  }
+
+  const products = await findProducts(parsed.data);
+  return NextResponse.json(products);
+}
+```
+
+`z.coerce.number()` mencoba mengubah string menjadi angka sebelum aturan `int`, `positive`, dan `max` diterapkan. Nilai default dipakai ketika parameter tidak ada. Tetap tentukan batas maksimum agar client tidak bisa meminta ribuan record dalam satu request.
+
+## Jangan bocorkan detail internal
+
+Pesan error dari schema boleh dikirim ke client jika memang berguna untuk memperbaiki form. Namun, hindari mengirim stack trace, nama tabel, query database, atau detail exception service. Untuk API publik, format error yang stabil lebih penting daripada menyalin seluruh objek exception.
+
+Pada aplikasi yang memiliki banyak endpoint, buat helper untuk mengubah `ZodError` menjadi format yang sama. Konsistensi ini menyederhanakan kode client dan memudahkan pengujian. Log detail lengkap di server hanya jika tidak mengandung data sensitif.
+
+## Validasi bukan autentikasi
+
+Schema memastikan bentuk dan rentang data, tetapi tidak menjawab siapa yang boleh melakukan aksi. Handler tetap perlu memeriksa session atau token, lalu memastikan pengguna tersebut memiliki izin terhadap resource yang diminta. Validasi juga bukan pengganti rate limit, proteksi CSRF sesuai arsitektur aplikasi, atau sanitasi khusus ketika data akan dimasukkan ke konteks tertentu.
+
+Urutan yang umum adalah membaca identitas request, memeriksa otorisasi, mem-parsing input dengan schema, lalu memanggil service. Untuk operasi yang mengubah data, tambahkan constraint di database sebagai lapisan terakhir. Dengan begitu, Route Handler memiliki batas yang jelas: input yang lolos schema boleh diproses, sedangkan input lain berhenti dengan response `400` yang terukur dan aman.
