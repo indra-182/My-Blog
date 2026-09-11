@@ -27,6 +27,7 @@ export const postFrontmatterSchema = z
     series: nonEmptyText.optional(),
     seriesOrder: z.number().int().positive().optional(),
     draft: z.boolean(),
+    featured: z.boolean().optional(),
     canonical: z.string().url().optional(),
     socialTitle: nonEmptyText.optional(),
     socialDescription: nonEmptyText.optional(),

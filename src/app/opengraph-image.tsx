@@ -5,8 +5,8 @@ export default async function OpenGraphImage() {
   return new ImageResponse(
     <div
       style={{
-        background: "#0B0D10",
-        color: "#F5F7FA",
+        background: "#07161D",
+        color: "#EDF1F2",
         width: "1200px",
         height: "630px",
         display: "flex",
@@ -16,7 +16,7 @@ export default async function OpenGraphImage() {
         fontFamily: "sans-serif",
       }}
     >
-      <div style={{ color: "#60A5FA", fontSize: 28, fontWeight: 700 }}>
+      <div style={{ color: "#2E5BFF", fontSize: 28, fontWeight: 700 }}>
         INDRA.DEV
       </div>
       <div
@@ -29,8 +29,8 @@ export default async function OpenGraphImage() {
       >
         {dictionary.blog.title}
       </div>
-      <div style={{ color: "#A6ADB8", fontSize: 24 }}>
-        React · Next.js · TypeScript · React Native
+      <div style={{ color: "#B8C6CB", fontSize: 24 }}>
+        Catatan engineering · React · Next.js · TypeScript · React Native
       </div>
     </div>,
     { width: 1200, height: 630 },

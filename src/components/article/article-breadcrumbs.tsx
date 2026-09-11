@@ -8,7 +8,7 @@ export function ArticleBreadcrumbs({ title }: { title: string }) {
       aria-label="Navigasi halaman"
     >
       <Link
-        className="underline decoration-transparent transition-[color,text-decoration-color] duration-[var(--motion-fast)] ease hover:text-cue-rose hover:decoration-current focus-visible:text-cue-rose focus-visible:decoration-current"
+        className="underline decoration-transparent transition-[color,text-decoration-color] duration-[var(--motion-feedback)] ease hover:text-accent-strong hover:decoration-current focus-visible:text-accent-strong focus-visible:decoration-current"
         href="/"
       >
         {dictionary.article.home}

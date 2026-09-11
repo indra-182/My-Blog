@@ -13,12 +13,15 @@ function frontmatter(overrides: {
   slug?: string;
   publishedAt?: string;
   draft?: boolean;
+  featured?: boolean;
 }) {
   const {
     slug = "valid-post",
     publishedAt = "2020-01-01T20:00:00+07:00",
     draft = false,
+    featured,
   } = overrides;
+  const featuredLine = featured === undefined ? "" : `featured: ${featured}\n`;
   return `---
 title: "Valid"
 slug: "${slug}"
@@ -26,6 +29,7 @@ description: "Valid"
 publishedAt: "${publishedAt}"
 topics: ["React"]
 draft: ${draft}
+${featuredLine}
 ---
 
 Body`;
@@ -115,5 +119,36 @@ describe("validateContentDirectory", () => {
         message: "content directory does not exist",
       },
     ]);
+  });
+
+  it("rejects featured drafts", async () => {
+    const root = await createContentRoot();
+    await writeFile(
+      path.join(root, "draft-featured.mdx"),
+      frontmatter({ slug: "draft-featured", draft: true, featured: true }),
+    );
+
+    const issues = await validateContentDirectory(root);
+    expect(issues).toHaveLength(1);
+    expect(issues[0]?.message).toContain("draft");
+    expect(issues[0]?.message).toContain("featured");
+  });
+
+  it("rejects more than one published featured post", async () => {
+    const root = await createContentRoot();
+    await writeFile(
+      path.join(root, "one.mdx"),
+      frontmatter({ slug: "one", featured: true }),
+    );
+    await writeFile(
+      path.join(root, "two.mdx"),
+      frontmatter({ slug: "two", featured: true }),
+    );
+
+    const issues = await validateContentDirectory(root);
+    expect(issues).toHaveLength(2);
+    expect(
+      issues.every((issue) => issue.message.includes("more than one")),
+    ).toBe(true);
   });
 });

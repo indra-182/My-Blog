@@ -1,190 +1,69 @@
 @layer components {
-  .shell {
-    width: min(calc(100% - 2rem), var(--content-max));
-    margin-inline: auto;
-  }
-
-  .page-main {
-    min-height: 70vh;
-  }
-
-  .site-wordmark {
-    display: inline-flex;
-    min-height: 2.75rem;
-    flex: none;
-    align-items: center;
-    color: var(--foreground);
-    font-family:
-      ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-    font-size: 0.78rem;
-    font-weight: 800;
-    letter-spacing: 0.18em;
-    line-height: 1;
-    text-decoration: none;
-    text-transform: uppercase;
-  }
-
-  .site-wordmark span {
-    color: var(--cue-rose);
-  }
-
-  .icon-button {
-    display: inline-flex;
-    min-width: 2.75rem;
-    min-height: 2.75rem;
-    align-items: center;
-    justify-content: center;
-    border: 0;
-    border-bottom: 1px solid transparent;
-    border-radius: 0;
-    background: transparent;
-    color: var(--muted-foreground);
-    font-family:
-      ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-    font-size: 0.65rem;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    transition:
-      color var(--motion-fast) ease,
-      border-color var(--motion-fast) ease;
-  }
-
-  .icon-button:hover,
-  .icon-button:focus-visible {
-    border-bottom-color: var(--cue-rose);
-    background: transparent;
-    color: var(--foreground);
-  }
-
-  .cue-label {
-    color: var(--cue-rose);
-    font-family:
-      ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-    font-size: 0.65rem;
-    font-weight: 700;
-    letter-spacing: 0.16em;
-    line-height: 1.4;
-    text-transform: uppercase;
-  }
-
-  .metadata-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-    color: var(--muted-foreground);
-    font-family:
-      ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-    font-size: 0.68rem;
-    font-variant-numeric: tabular-nums;
-    letter-spacing: 0.04em;
-  }
-
-  .topic-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.4rem;
-    margin-top: 1.15rem;
-  }
-
-  .topic {
-    padding: 0.25rem 0.625rem;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-pill);
-    color: var(--muted-foreground);
-    font-family:
-      ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-    font-size: 0.65rem;
-    letter-spacing: 0.04em;
-  }
-
-  .outline-button {
-    min-height: 2.75rem;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    background: transparent;
-    color: var(--foreground);
-    padding: 0 1.1rem;
-    font-weight: 750;
-    transition:
-      border-color var(--motion-fast) ease,
-      color var(--motion-fast) ease,
-      background-color var(--motion-fast) ease;
-  }
-
-  .outline-button:hover,
-  .outline-button:focus-visible {
-    border-color: var(--cue-rose);
-    background: var(--surface);
-    color: var(--cue-rose);
-  }
-
-  .route-state {
-    display: grid;
-    min-height: 60vh;
-    place-items: center;
-    padding-block: 5rem;
-    text-align: center;
-  }
-
-  .route-state h1 {
-    margin: 1rem 0 0;
-    font-size: clamp(2.3rem, 6vw, 4.75rem);
-    font-weight: 800;
-    letter-spacing: -0.04em;
-    line-height: 0.95;
-  }
-
-  .route-state p {
-    max-width: 46ch;
-    margin: 1rem auto 0;
-    color: var(--muted-foreground);
-    line-height: 1.65;
-  }
-
-  .route-state a {
-    display: inline-flex;
-    min-height: 2.75rem;
-    align-items: center;
-    padding: 0 1rem;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    color: var(--foreground);
-    font-weight: 750;
-    transition:
-      border-color var(--motion-fast) ease,
-      color var(--motion-fast) ease;
-  }
-
-  .route-state a:hover,
-  .route-state a:focus-visible {
-    border-color: var(--cue-rose);
-    color: var(--cue-rose);
-  }
-
+  .atlas-hero,
   .blog-hero {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
     background:
       radial-gradient(
-        ellipse at 72% 58%,
-        color-mix(in srgb, var(--cue-cobalt) 60%, transparent),
-        transparent 38%
+        ellipse at 82% 28%,
+        color-mix(in srgb, var(--atlas-route-blue) 38%, transparent),
+        transparent 40%
       ),
       linear-gradient(
-        180deg,
-        var(--cue-night) 0%,
-        var(--cue-night) 58%,
-        color-mix(in srgb, var(--cue-cobalt) 48%, var(--cue-night)) 100%
+        152deg,
+        var(--atlas-night-water) 0%,
+        color-mix(
+            in srgb,
+            var(--atlas-night-water) 88%,
+            var(--atlas-route-blue)
+          )
+          58%,
+        color-mix(
+            in srgb,
+            var(--atlas-route-blue) 42%,
+            var(--atlas-night-water)
+          )
+          100%
       );
   }
 
+  .light .atlas-hero,
+  .light .blog-hero {
+    background:
+      radial-gradient(
+        ellipse at 82% 24%,
+        color-mix(in srgb, var(--atlas-route-blue) 18%, transparent),
+        transparent 42%
+      ),
+      linear-gradient(
+        152deg,
+        var(--atlas-survey-paper) 0%,
+        color-mix(
+            in srgb,
+            var(--atlas-survey-paper) 82%,
+            var(--atlas-route-blue)
+          )
+          64%,
+        color-mix(
+            in srgb,
+            var(--atlas-route-blue) 19%,
+            var(--atlas-survey-paper)
+          )
+          100%
+      );
+  }
+
+  .atlas-hero::before,
   .blog-hero::before {
-    --cue-horizon-offset: clamp(0.5rem, 1.8vw, 1.25rem);
+    --atlas-horizon-offset: clamp(0.5rem, 1.8vw, 1.25rem);
     position: absolute;
     inset: auto 0 0;
-    height: 22%;
+    height: 25%;
     background: linear-gradient(
       180deg,
       transparent,
-      color-mix(in srgb, var(--cue-rose) 38%, transparent)
+      color-mix(in srgb, var(--atlas-signal-orange) 40%, transparent)
     );
     content: "";
     opacity: 0.55;
@@ -193,11 +72,136 @@
   }
 
   @supports (animation-timeline: scroll()) {
+    .atlas-hero::before,
     .blog-hero::before {
-      animation: cue-horizon-rise 1s linear both;
+      animation: atlas-horizon-rise 1s linear both;
       animation-timeline: scroll(root block);
       animation-range: 0 40vh;
     }
+  }
+
+  .atlas-hero-content {
+    position: relative;
+    z-index: 1;
+  }
+
+  .atlas-featured-route {
+    position: relative;
+    margin-top: clamp(2rem, 5vw, 4rem);
+    border-block: 1px solid var(--border);
+    background: var(--surface);
+  }
+
+  .atlas-featured-route__inner {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(15rem, 0.45fr);
+    gap: clamp(2rem, 7vw, 7rem);
+    align-items: stretch;
+    padding-block: clamp(2rem, 6vw, 5rem);
+  }
+
+  .atlas-featured-route__copy {
+    display: grid;
+    align-content: center;
+    gap: 1.25rem;
+    max-width: 60ch;
+  }
+
+  .atlas-featured-route__copy h2 {
+    margin: 0;
+    max-width: 18ch;
+    font-size: clamp(2rem, 4.5vw, 4.25rem);
+    font-weight: 780;
+    letter-spacing: -0.055em;
+    line-height: 0.96;
+    text-wrap: balance;
+  }
+
+  .atlas-featured-route__copy p {
+    max-width: 56ch;
+    margin: 0;
+    color: var(--muted-foreground);
+    font-size: 1rem;
+    line-height: 1.65;
+  }
+
+  .atlas-featured-route__link {
+    display: inline-flex;
+    width: fit-content;
+    min-height: 2.75rem;
+    align-items: center;
+    gap: 0.5rem;
+    border-bottom: 1px solid var(--accent-strong);
+    color: var(--foreground);
+    font-weight: 720;
+    transition:
+      color var(--motion-feedback) ease,
+      border-color var(--motion-feedback) ease;
+  }
+
+  .atlas-featured-route__link:hover,
+  .atlas-featured-route__link:focus-visible {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .atlas-featured-route__map {
+    position: relative;
+    display: grid;
+    min-height: 13rem;
+    place-items: center;
+    overflow: hidden;
+    border-left: 1px solid var(--border);
+  }
+
+  .atlas-featured-route__map::before,
+  .atlas-featured-route__map::after {
+    position: absolute;
+    background: var(--border);
+    content: "";
+  }
+
+  .atlas-featured-route__map::before {
+    width: 100%;
+    height: 1px;
+  }
+
+  .atlas-featured-route__map::after {
+    width: 1px;
+    height: 100%;
+  }
+
+  .atlas-route-path {
+    position: relative;
+    z-index: 1;
+    width: 86%;
+    height: 70%;
+  }
+
+  .atlas-route-path path {
+    fill: none;
+    stroke: var(--accent);
+    stroke-linecap: round;
+    stroke-width: 2;
+  }
+
+  .atlas-route-path circle {
+    fill: var(--accent-strong);
+    stroke: var(--background);
+    stroke-width: 2;
+  }
+
+  .atlas-route-path[data-motion-state="reduced"] path {
+    stroke-dasharray: none !important;
+    stroke-dashoffset: 0 !important;
+  }
+
+  .archive-results {
+    min-height: 12rem;
+  }
+
+  .archive-results[data-animate="true"] > * {
+    transform-origin: top center;
   }
 
   .mobile-navigation-dialog {
@@ -222,7 +226,7 @@
   }
 
   .mobile-navigation-dialog::backdrop {
-    background: color-mix(in srgb, var(--cue-night) 68%, transparent);
+    background: color-mix(in srgb, var(--atlas-night-water) 72%, transparent);
   }
 
   .back-to-top {
@@ -246,10 +250,10 @@
     visibility: hidden;
     white-space: nowrap;
     transition:
-      opacity var(--motion-fast) ease,
-      visibility var(--motion-fast) ease,
-      border-color var(--motion-fast) ease,
-      background-color var(--motion-fast) ease;
+      opacity var(--motion-feedback) ease,
+      visibility var(--motion-feedback) ease,
+      border-color var(--motion-feedback) ease,
+      background-color var(--motion-feedback) ease;
   }
 
   .back-to-top[data-visible="true"] {
@@ -260,7 +264,7 @@
 
   .back-to-top:hover,
   .back-to-top:focus-visible {
-    border-color: var(--cue-rose);
+    border-color: var(--accent-strong);
     background: var(--surface-strong);
     color: var(--foreground);
   }
@@ -269,50 +273,186 @@
     flex: none;
   }
 
-  .loading-block {
-    min-height: 1.1rem;
-    background: var(--surface);
-    animation: pulse 1.4s ease-in-out infinite;
+  .article-progress {
+    display: none;
   }
 
-  @media (min-width: 640px) {
-    .shell {
-      width: min(calc(100% - 3rem), var(--content-max));
+  .article-toc {
+    display: block;
+  }
+
+  .article-progress-map {
+    position: sticky;
+    top: 6.5rem;
+    display: grid;
+    gap: 0.8rem;
+    max-height: calc(100vh - 8rem);
+    overflow: auto;
+    padding-left: 1rem;
+    border-left: 1px solid var(--border);
+    scrollbar-width: thin;
+  }
+
+  .article-progress-map h2,
+  .article-progress-compact h2 {
+    margin: 0;
+    color: var(--muted-foreground);
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    line-height: 1.4;
+    text-transform: uppercase;
+  }
+
+  .article-progress-map ol {
+    position: relative;
+    display: grid;
+    gap: 0.15rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .article-progress-map li {
+    position: relative;
+  }
+
+  .article-progress-map a {
+    display: grid;
+    min-height: 2.75rem;
+    grid-template-columns: 0.55rem minmax(0, 1fr);
+    gap: 0.6rem;
+    align-items: center;
+    color: var(--muted-foreground);
+    font-size: 0.8rem;
+    line-height: 1.4;
+    transition: color var(--motion-feedback) ease;
+  }
+
+  .article-progress-map a::before {
+    width: 0.55rem;
+    height: 0.55rem;
+    border: 1px solid currentColor;
+    border-radius: 50%;
+    content: "";
+    transition:
+      background-color var(--motion-feedback) ease,
+      border-color var(--motion-feedback) ease;
+  }
+
+  .article-progress-map li[data-active="true"] a,
+  .article-progress-map a:hover,
+  .article-progress-map a:focus-visible {
+    color: var(--foreground);
+  }
+
+  .article-progress-map li[data-active="true"] a::before {
+    border-color: var(--accent-strong);
+    background: var(--accent-strong);
+  }
+
+  .article-progress-compact {
+    display: grid;
+    gap: 0.7rem;
+    padding: 1rem;
+    border-block: 1px solid var(--border);
+  }
+
+  .article-progress-compact__meta {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    color: var(--muted-foreground);
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .article-progress-compact__bar {
+    height: 0.3rem;
+    overflow: hidden;
+    background: var(--surface-strong);
+  }
+
+  .article-progress-compact__bar span {
+    display: block;
+    width: var(--article-progress, 0%);
+    height: 100%;
+    background: var(--accent);
+    transition: width var(--motion-state) var(--motion-ease);
+  }
+
+  @media (min-width: 768px) {
+    .article-progress {
+      display: block;
+      grid-column: 2;
+      grid-row: 1;
+    }
+
+    .article-progress-compact {
+      display: none;
+    }
+
+    .article-toc {
+      display: none;
+    }
+  }
+
+  @media (max-width: 767px) {
+    .article-progress {
+      display: block;
+      grid-column: 1;
+      order: -2;
+    }
+
+    .article-progress-map {
+      display: none;
+    }
+
+    .article-progress-compact {
+      display: grid;
+    }
+
+    .atlas-featured-route__inner {
+      grid-template-columns: 1fr;
+    }
+
+    .atlas-featured-route__map {
+      min-height: 10rem;
+      border-top: 1px solid var(--border);
+      border-left: 0;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .atlas-hero::before,
+    .blog-hero::before {
+      animation: none;
+      transform: none;
+    }
+
+    .article-progress-compact__bar span {
+      transition: none;
+    }
+
+    .archive-results > * {
+      opacity: 1 !important;
+      transform: none !important;
+    }
+
+    .atlas-route-path path {
+      stroke-dasharray: none !important;
+      stroke-dashoffset: 0 !important;
     }
   }
 }
 
-.animate-cue-rise {
-  animation: cue-rise var(--motion-enter) cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-@keyframes cue-rise {
+@keyframes atlas-horizon-rise {
   from {
-    opacity: 0;
-    transform: translateY(0.75rem);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-@keyframes cue-horizon-rise {
-  from {
-    transform: translateY(var(--cue-horizon-offset)) scaleY(0.8);
+    transform: translateY(var(--atlas-horizon-offset)) scaleY(0.8);
   }
   to {
     transform: translateY(0) scaleY(1);
-  }
-}
-
-@keyframes pulse {
-  50% {
-    opacity: 0.5;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .blog-hero::before {
-    animation: none;
-    transform: none;
   }
 }

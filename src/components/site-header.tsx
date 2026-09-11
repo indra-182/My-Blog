@@ -16,13 +16,13 @@ export function SiteHeader() {
           aria-label="Navigasi situs"
         >
           <a
-            className="inline-flex min-h-11 items-center border-b border-transparent px-[0.7rem] py-[0.8rem] font-mono text-[0.66rem] tracking-[0.09em] text-muted-foreground uppercase transition-[color,border-color] duration-[var(--motion-fast)] ease hover:border-cue-rose hover:text-foreground focus-visible:border-cue-rose focus-visible:text-foreground"
+            className="inline-flex min-h-11 items-center border-b border-transparent px-[0.7rem] py-[0.8rem] font-mono text-[0.66rem] tracking-[0.09em] text-muted-foreground uppercase transition-[color,border-color] duration-[var(--motion-feedback)] ease hover:border-accent-strong hover:text-foreground focus-visible:border-accent-strong focus-visible:text-foreground"
             href={siteConfig.portfolioUrl}
           >
             {dictionary.navigation.portfolio}
           </a>
           <Link
-            className="inline-flex min-h-11 items-center border-b border-cue-rose px-[0.7rem] py-[0.8rem] font-mono text-[0.66rem] tracking-[0.09em] text-foreground uppercase transition-[color,border-color] duration-[var(--motion-fast)] ease"
+            className="inline-flex min-h-11 items-center border-b border-accent-strong px-[0.7rem] py-[0.8rem] font-mono text-[0.66rem] tracking-[0.09em] text-foreground uppercase transition-[color,border-color] duration-[var(--motion-feedback)] ease"
             href="/"
             aria-current="page"
           >

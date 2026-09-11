@@ -9,7 +9,9 @@ import {
   useState,
 } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import { ChevronDown, Search } from "@/components/icons";
+import { useHydrated } from "@/components/use-hydrated";
 import type { PostSummary } from "@/content/post-types";
 import dictionary from "@/i18n/messages/id.json";
 import {
@@ -22,6 +24,12 @@ import { PostCard } from "./post-card";
 
 const pageSize = 6;
 const searchDebounceMs = 300;
+const atlasLayoutTransition = {
+  type: "spring" as const,
+  stiffness: 260,
+  damping: 28,
+  mass: 0.8,
+};
 
 function buildSearchPath(pathname: string, filters: PostFilters) {
   const queryString = serializePostFilters(filters);
@@ -38,6 +46,9 @@ export function PostBrowser({
   const router = useRouter();
   const pathname = usePathname();
   const { query: urlQuery, topic, series } = initialFilters;
+  const reducedMotion = useReducedMotion();
+  const hydrated = useHydrated();
+  const reduce = hydrated && reducedMotion === true;
   const currentPath = buildSearchPath(pathname, initialFilters);
   // Typing stays in local state so filtering is immediate; the URL catches up
   // debounced. lastPushedQueryRef marks our own URL writes so their echo does
@@ -155,7 +166,7 @@ export function PostBrowser({
               aria-hidden="true"
             />
             <input
-              className="min-h-11 w-full appearance-none rounded-[var(--radius-sm)] border border-input bg-surface px-[0.85rem] pl-[2.6rem] text-foreground transition-[border-color,background-color] duration-[var(--motion-fast)] ease placeholder:text-muted-foreground hover:border-cue-rose focus-visible:border-cue-rose focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-offset-2 focus-visible:outline-ring"
+              className="min-h-11 w-full appearance-none rounded-[var(--radius-sm)] border border-input bg-surface px-[0.85rem] pl-[2.6rem] text-foreground transition-[border-color,background-color] duration-[var(--motion-feedback)] ease placeholder:text-muted-foreground hover:border-accent-strong focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-offset-2 focus-visible:outline-ring"
               id="post-search"
               value={query}
               onChange={(event) => handleQueryChange(event.target.value)}
@@ -177,7 +188,7 @@ export function PostBrowser({
               aria-hidden="true"
             />
             <select
-              className="min-h-11 w-full appearance-none rounded-[var(--radius-sm)] border border-input bg-surface px-[0.85rem] pr-[2.6rem] text-foreground transition-[border-color,background-color] duration-[var(--motion-fast)] ease hover:border-cue-rose focus-visible:border-cue-rose focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-offset-2 focus-visible:outline-ring"
+              className="min-h-11 w-full appearance-none rounded-[var(--radius-sm)] border border-input bg-surface px-[0.85rem] pr-[2.6rem] text-foreground transition-[border-color,background-color] duration-[var(--motion-feedback)] ease hover:border-accent-strong focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-offset-2 focus-visible:outline-ring"
               id="topic-filter"
               value={topic}
               onChange={(event) => applyFilters({ topic: event.target.value })}
@@ -214,7 +225,7 @@ export function PostBrowser({
               aria-hidden="true"
             />
             <select
-              className="min-h-11 w-full appearance-none rounded-[var(--radius-sm)] border border-input bg-surface px-[0.85rem] pr-[2.6rem] text-foreground transition-[border-color,background-color] duration-[var(--motion-fast)] ease hover:border-cue-rose focus-visible:border-cue-rose focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-offset-2 focus-visible:outline-ring"
+              className="min-h-11 w-full appearance-none rounded-[var(--radius-sm)] border border-input bg-surface px-[0.85rem] pr-[2.6rem] text-foreground transition-[border-color,background-color] duration-[var(--motion-feedback)] ease hover:border-accent-strong focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-offset-2 focus-visible:outline-ring"
               id="series-filter"
               value={series}
               onChange={(event) => applyFilters({ series: event.target.value })}
@@ -262,10 +273,37 @@ export function PostBrowser({
         </div>
       ) : (
         <>
-          <div className="grid">
-            {visiblePosts.map((post) => (
-              <PostCard key={post.slug} post={post} />
-            ))}
+          <div
+            className="archive-results grid"
+            data-animate="true"
+            data-motion-state={
+              hydrated ? (reduce ? "reduced" : "animated") : "static"
+            }
+          >
+            <AnimatePresence initial={false} mode="popLayout">
+              {visiblePosts.map((post) => (
+                <m.div
+                  key={post.slug}
+                  layout="position"
+                  initial={hydrated && !reduce ? { opacity: 0, y: 12 } : false}
+                  animate={hydrated && !reduce ? { opacity: 1, y: 0 } : false}
+                  exit={hydrated && !reduce ? { opacity: 0, y: -8 } : undefined}
+                  transition={{
+                    layout: reduce ? { duration: 0 } : atlasLayoutTransition,
+                    opacity: {
+                      duration: reduce ? 0 : 0.26,
+                      ease: [0.16, 1, 0.3, 1],
+                    },
+                    y: {
+                      duration: reduce ? 0 : 0.26,
+                      ease: [0.16, 1, 0.3, 1],
+                    },
+                  }}
+                >
+                  <PostCard post={post} />
+                </m.div>
+              ))}
+            </AnimatePresence>
           </div>
           {visibleCount < filteredPosts.length ? (
             <div className="flex justify-center pt-8">

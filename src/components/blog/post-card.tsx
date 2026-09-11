@@ -25,7 +25,7 @@ export function PostCard({ post }: { post: PostSummary }) {
         </div>
         <h2 className="m-0 mt-2 mb-[0.65rem] max-w-[26ch] text-[clamp(1.4rem,2.5vw,2.25rem)] font-[750] leading-[1.05] tracking-[-0.04em]">
           <Link
-            className="underline decoration-transparent decoration-[0.08em] transition-[color,text-decoration-color] duration-[var(--motion-fast)] ease hover:text-cue-rose hover:decoration-current focus-visible:text-cue-rose focus-visible:decoration-current"
+            className="underline decoration-transparent decoration-[0.08em] transition-[color,text-decoration-color] duration-[var(--motion-feedback)] ease hover:text-accent-strong hover:decoration-current focus-visible:text-accent-strong focus-visible:decoration-current"
             href={`/blog/${post.slug}`}
           >
             {post.title}
@@ -44,7 +44,7 @@ export function PostCard({ post }: { post: PostSummary }) {
       </div>
       <div className="flex items-center text-muted-foreground">
         <ArrowUpRight
-          className="transition-[transform,color] duration-[var(--motion-fast)] ease group-hover:translate-x-1 group-hover:-translate-y-1 group-hover:text-cue-rose group-focus-within:translate-x-1 group-focus-within:-translate-y-1 group-focus-within:text-cue-rose"
+          className="transition-[transform,color] duration-[var(--motion-feedback)] ease group-hover:translate-x-1 group-hover:-translate-y-1 group-hover:text-accent-strong group-focus-within:translate-x-1 group-focus-within:-translate-y-1 group-focus-within:text-accent-strong"
           size={20}
           aria-hidden="true"
         />

@@ -10,7 +10,7 @@
     "switchToDark": "Gunakan tema gelap"
   },
   "blog": {
-    "eyebrow": "Catatan engineering",
+    "eyebrow": "INDRA.DEV / Catatan engineering",
     "title": "Membangun dengan lebih terarah.",
     "description": "Catatan praktis tentang React, Next.js, TypeScript, React Native, serta keputusan kecil yang menjaga produk tetap tangguh di produksi.",
     "search": "Temukan tulisan",
@@ -24,7 +24,9 @@
     "reset": "Bersihkan filter",
     "emptyTitle": "Tulisan baru segera hadir.",
     "emptyDescription": "Belum ada tulisan yang terbit. Kembali lagi untuk membaca catatan engineering berikutnya.",
-    "noResults": "Tidak ada tulisan yang sesuai dengan filter ini."
+    "noResults": "Tidak ada tulisan yang sesuai dengan filter ini.",
+    "featuredLabel": "Featured route",
+    "featuredAction": "Baca rute ini"
   },
   "article": {
     "home": "Halaman utama",
@@ -43,11 +45,13 @@
     "copyFailed": "Penyalinan gagal. Pilih kode secara manual.",
     "backToBlog": "Kembali ke halaman blog",
     "partOf": "Termasuk dalam seri",
-    "backToTop": "Ke awal tulisan"
+    "backToTop": "Ke awal tulisan",
+    "progressMap": "Peta progres tulisan",
+    "progressPosition": "Bagian {current} dari {total}"
   },
   "footer": {
     "navigationLabel": "Navigasi bagian bawah",
-    "description": "Catatan engineering untuk perangkat lunak yang bertahan lama.",
+    "description": "INDRA.DEV — catatan engineering untuk perangkat lunak yang bertahan lama.",
     "portfolio": "Portfolio",
     "github": "Github",
     "linkedin": "LinkedIn",

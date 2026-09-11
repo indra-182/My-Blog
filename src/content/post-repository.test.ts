@@ -7,6 +7,7 @@ import {
   isPublished,
   loadPostCollection,
   parsePostSource,
+  selectFeaturedPost,
 } from "./post-repository";
 
 const fixtureRoot = path.join(process.cwd(), "src/test/fixtures/posts");
@@ -112,6 +113,36 @@ Body`;
 });
 
 describe("content edge cases", () => {
+  it("selects the featured route or falls back to the newest post", () => {
+    const posts = [
+      {
+        title: "Newest",
+        slug: "newest",
+        description: "Newest",
+        publishedAt: "2026-08-05T20:00:00+07:00",
+        topics: ["React"],
+        draft: false,
+        readingTimeMinutes: 1,
+      },
+      {
+        title: "Pinned",
+        slug: "pinned",
+        description: "Pinned",
+        publishedAt: "2026-08-01T20:00:00+07:00",
+        topics: ["React"],
+        draft: false,
+        featured: true,
+        readingTimeMinutes: 1,
+      },
+    ];
+
+    expect(selectFeaturedPost(posts)?.slug).toBe("pinned");
+    expect(
+      selectFeaturedPost(posts.map(({ featured: _, ...post }) => post))?.slug,
+    ).toBe("newest");
+    expect(selectFeaturedPost([])).toBeNull();
+  });
+
   it("rejects malformed files instead of serving a partial collection", async () => {
     const root = await mkdtemp(path.join(os.tmpdir(), "blog-content-"));
     await writeFile(
