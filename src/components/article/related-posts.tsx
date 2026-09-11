@@ -15,7 +15,7 @@ export function RelatedPosts({ posts }: { posts: PostSummary[] }) {
       <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,16rem),1fr))] gap-px bg-border max-[767px]:grid-cols-1">
         {posts.map((post) => (
           <Link
-            className="grid min-h-36 content-start gap-3 bg-background p-4 transition-colors duration-[var(--motion-fast)] ease hover:text-cue-rose focus-visible:text-cue-rose"
+            className="grid min-h-36 content-start gap-3 bg-background p-4 transition-colors duration-[var(--motion-feedback)] ease hover:text-accent-strong focus-visible:text-accent-strong"
             href={`/blog/${post.slug}`}
             key={post.slug}
           >

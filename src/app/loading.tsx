@@ -7,7 +7,7 @@ export default function Loading() {
       aria-busy="true"
       aria-label="Menyiapkan tulisan"
     >
-      <div className="shell blog-hero relative isolate overflow-hidden pt-[clamp(4.5rem,10vw,8rem)] pb-[clamp(7rem,14vw,12rem)]">
+      <div className="shell blog-hero atlas-hero relative isolate overflow-hidden pt-[clamp(4.5rem,10vw,8rem)] pb-[clamp(7rem,14vw,12rem)]">
         <div className="loading-block max-w-[120px]" />
         <div className="loading-block mt-6 h-[92px] max-w-[620px]" />
         <div className="loading-block mt-[22px] max-w-[520px]" />

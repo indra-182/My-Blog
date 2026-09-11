@@ -6,7 +6,7 @@ import { useCopyToClipboard } from "./use-copy-to-clipboard";
 
 const copiedResetMs = 1800;
 const shareButtonClassName =
-  "inline-flex min-h-11 items-center gap-[0.4rem] rounded-[var(--radius-sm)] border border-border bg-transparent px-[0.8rem] text-[0.75rem] text-muted-foreground transition-[border-color,color,background-color] duration-[var(--motion-fast)] ease hover:border-cue-rose hover:bg-surface hover:text-foreground focus-visible:border-cue-rose focus-visible:bg-surface focus-visible:text-foreground";
+  "inline-flex min-h-11 items-center gap-[0.4rem] rounded-[var(--radius-sm)] border border-border bg-transparent px-[0.8rem] text-[0.75rem] text-muted-foreground transition-[border-color,color,background-color] duration-[var(--motion-feedback)] ease hover:border-accent-strong hover:bg-surface hover:text-foreground focus-visible:border-accent-strong focus-visible:bg-surface focus-visible:text-foreground";
 
 export function ShareLinks({ title }: { title: string }) {
   const { status, copy } = useCopyToClipboard(

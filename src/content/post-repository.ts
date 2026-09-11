@@ -95,6 +95,7 @@ export async function loadPostCollection(
   const documents: PostDocument[] = [];
   const issues: ContentIssue[] = [];
   const slugs = new Map<string, string>();
+  const publishedFeatured: PostDocument[] = [];
   const results = await Promise.all(
     filenames.map(async (filename) => {
       const filePath = path.join(rootDirectory, filename);
@@ -110,6 +111,15 @@ export async function loadPostCollection(
 
     const document = result.data;
     documents.push(document);
+    if (document.featured && document.draft) {
+      issues.push({
+        filePath: result.filePath,
+        message: "draft posts cannot be featured",
+      });
+    }
+    if (document.featured && isPublished(document, now)) {
+      publishedFeatured.push(document);
+    }
     if (!document.draft && !isPublished(document, now)) {
       issues.push({
         filePath: result.filePath,
@@ -125,6 +135,15 @@ export async function loadPostCollection(
       });
     } else {
       slugs.set(document.slug, result.filePath);
+    }
+  }
+
+  if (publishedFeatured.length > 1) {
+    for (const document of publishedFeatured) {
+      issues.push({
+        filePath: slugs.get(document.slug) ?? rootDirectory,
+        message: `more than one published post is featured ("${document.slug}")`,
+      });
     }
   }
 
@@ -147,6 +166,17 @@ export async function validateContentDirectory(
 
 function publishedAtDesc(a: PostSummary, b: PostSummary) {
   return new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime();
+}
+
+/** Return the explicit featured route, or the newest published route. */
+export function selectFeaturedPost(
+  posts: PostSummary[],
+  now: number = Date.now(),
+) {
+  const publishedPosts = posts.filter((post) => isPublished(post, now));
+  return (
+    publishedPosts.find((post) => post.featured) ?? publishedPosts[0] ?? null
+  );
 }
 
 export function createPostRepository(rootDirectory?: string) {
@@ -184,6 +214,10 @@ export function createPostRepository(rootDirectory?: string) {
   async function getPostBySlug(slug: string) {
     const documents = await getPublicDocuments();
     return documents.find((document) => document.slug === slug) ?? null;
+  }
+
+  async function getFeaturedPost() {
+    return selectFeaturedPost(await getAllPosts());
   }
 
   async function getRelatedPosts(post: PostSummary, limit = 3) {
@@ -224,6 +258,7 @@ export function createPostRepository(rootDirectory?: string) {
   return {
     getAllPosts,
     getPostBySlug,
+    getFeaturedPost,
     getRelatedPosts,
     getSeriesNeighbors,
   };

@@ -298,3 +298,50 @@ test("article moves the table of contents before prose on mobile", async ({
     }),
   ).toBe(true);
 });
+
+test("article progress map adapts between desktop and mobile", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto("/blog/react-state");
+  const progressMap = page.getByRole("navigation", {
+    name: "Peta progres tulisan",
+  });
+  await expect(progressMap).toBeVisible();
+  await expect(
+    page.getByRole("navigation", { name: "Dalam tulisan ini" }),
+  ).toBeHidden();
+  const mapLinks = progressMap.locator("a");
+  const mapLinkMetrics = await mapLinks.evaluateAll((links) =>
+    links.map((link) => {
+      const rect = link.getBoundingClientRect();
+      return { width: rect.width, height: rect.height };
+    }),
+  );
+  expect(mapLinkMetrics.length).toBeGreaterThan(1);
+  expect(
+    mapLinkMetrics.every(({ width, height }) => width >= 44 && height >= 44),
+  ).toBe(true);
+
+  await page.setViewportSize({ width: 375, height: 800 });
+  await expect(
+    page.getByRole("progressbar", { name: "Peta progres tulisan" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("navigation", { name: "Dalam tulisan ini" }),
+  ).toBeVisible();
+});
+
+test("article progress resolves its hydrated reduced-motion final state", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/blog/react-state");
+
+  const progress = page.locator(".article-progress");
+  await expect(progress).toHaveAttribute("data-motion-state", "reduced");
+  await expect(
+    progress.locator(".article-progress-map a").first(),
+  ).toBeVisible();
+});

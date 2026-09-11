@@ -1,4 +1,4 @@
-# INDRA.DEV Blog
+# INDRA.DEV Blog — Decision Atlas
 
 Indonesian technical blog for React, Next.js, TypeScript, and React Native. The application uses the App Router, TypeScript, custom CSS, and file-backed MDX.
 
@@ -22,9 +22,10 @@ description: "One-sentence summary"
 publishedAt: "2026-08-01T20:00:00+07:00"
 topics: ["React"]
 draft: false
+featured: false # optional; at most one published post may be true
 ```
 
-`updatedAt`, canonical/social overrides, and the paired `series` plus positive integer `seriesOrder` are optional. Slugs must be unique. Publication timestamps use Asia/Jakarta semantics. Future posts must remain drafts; drafts are excluded from the site, RSS, sitemap, and latest-post feed.
+`updatedAt`, canonical/social overrides, and the paired `series` plus positive integer `seriesOrder` are optional. `featured` is optional; a draft cannot be featured and more than one published featured post fails validation. If no published post is featured, the newest published post becomes the homepage's featured route. Slugs must be unique. Publication timestamps use Asia/Jakarta semantics. Future posts must remain drafts; drafts are excluded from the site, RSS, sitemap, and latest-post feed.
 
 Validate content with:
 

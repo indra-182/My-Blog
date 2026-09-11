@@ -17,7 +17,7 @@ export function SeriesNavigation({
     >
       {previous ? (
         <Link
-          className="grid min-h-28 content-start gap-2 border border-border p-4 transition-[border-color,color] duration-[var(--motion-fast)] ease hover:border-cue-rose hover:text-cue-rose focus-visible:border-cue-rose focus-visible:text-cue-rose"
+          className="grid min-h-28 content-start gap-2 border border-border p-4 transition-[border-color,color] duration-[var(--motion-feedback)] ease hover:border-accent-strong hover:text-accent-strong focus-visible:border-accent-strong focus-visible:text-accent-strong"
           href={`/blog/${previous.slug}`}
         >
           <span className="font-mono text-[0.68rem] tracking-[0.08em] text-muted-foreground uppercase">
@@ -32,7 +32,7 @@ export function SeriesNavigation({
       )}
       {next ? (
         <Link
-          className="grid min-h-28 content-start gap-2 border border-border p-4 text-right transition-[border-color,color] duration-[var(--motion-fast)] ease hover:border-cue-rose hover:text-cue-rose focus-visible:border-cue-rose focus-visible:text-cue-rose max-[639px]:text-left"
+          className="grid min-h-28 content-start gap-2 border border-border p-4 text-right transition-[border-color,color] duration-[var(--motion-feedback)] ease hover:border-accent-strong hover:text-accent-strong focus-visible:border-accent-strong focus-visible:text-accent-strong max-[639px]:text-left"
           href={`/blog/${next.slug}`}
         >
           <span className="font-mono text-[0.68rem] tracking-[0.08em] text-muted-foreground uppercase">

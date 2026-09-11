@@ -18,6 +18,22 @@ test("search preserves the editorial discovery flow", async ({ page }) => {
   ).toBeVisible();
 });
 
+test("homepage exposes one featured route before the archive", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const featured = page.locator("[data-featured-route]");
+  await expect(featured).toBeVisible();
+  await expect(
+    featured.getByRole("heading", {
+      name: "Memisahkan Server State dari UI State",
+    }),
+  ).toBeVisible();
+  await expect(
+    featured.getByRole("link", { name: "Baca rute ini" }),
+  ).toHaveAttribute("href", "/blog/react-state");
+});
+
 test("latest feed validates published metadata only", async ({ request }) => {
   const response = await request.get("/api/posts/latest?limit=1");
   expect(response.ok()).toBeTruthy();
@@ -65,7 +81,15 @@ test("explicit light theme persists after reload", async ({ page }) => {
   await page.goto("/");
   await page.evaluate(() => localStorage.removeItem("theme"));
   await page.reload();
-  await expect(page.locator("html")).toHaveClass(/dark/);
+  const systemTheme = await page.evaluate(() =>
+    window.matchMedia("(prefers-color-scheme: light)").matches
+      ? "light"
+      : "dark",
+  );
+  await expect(page.locator("html")).toHaveClass(new RegExp(systemTheme));
+  if (systemTheme === "light") {
+    await page.getByRole("button", { name: "Gunakan tema gelap" }).click();
+  }
   await page.getByRole("button", { name: "Gunakan tema terang" }).click();
   await expect(page.locator("html")).toHaveClass(/light/);
   await page.reload();
@@ -151,7 +175,7 @@ test("homepage hero horizon uses the bounded native scroll response", async ({
     }
 
     const initialStyle = await pseudoStyle();
-    expect(initialStyle.animationName).toBe("cue-horizon-rise");
+    expect(initialStyle.animationName).toBe("atlas-horizon-rise");
     await page.evaluate(() => window.scrollTo(0, 0));
     await page.evaluate(() => window.scrollTo(0, innerHeight * 0.4));
     await expect
@@ -192,7 +216,7 @@ test("homepage motion honors reduced motion", async ({ page }) => {
   expect(
     await page.evaluate(
       () =>
-        getComputedStyle(document.querySelector(".animate-cue-rise")!)
+        getComputedStyle(document.querySelector(".animate-atlas-rise")!)
           .animationName,
     ),
   ).toBe("none");

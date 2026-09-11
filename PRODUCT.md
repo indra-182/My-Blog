@@ -36,7 +36,12 @@ Desktop and mobile article discovery plus long-form reading. Readers search and 
 
 ## Brand Commitments
 
-INDRA.DEV. The blog shares the sibling portfolio's current Cue Horizon system while remaining a focused technical-reading product. Preserve the blog's Indonesian technical-reading purpose, routes, content model, and interactions. Do not copy recruiter-only claims, locale routing, portrait or CV assets, testimonials, or portfolio content.
+INDRA.DEV is the public identity; Decision Atlas is the shared visual system.
+The blog uses its quieter reading rhythm while remaining a focused
+technical-reading product. Preserve the blog's Indonesian technical-reading
+purpose, routes, content model, and interactions. Do not copy recruiter-only
+claims, locale routing, portrait or CV assets, testimonials, or portfolio
+content.
 
 ## Evidence on Hand
 
@@ -54,6 +59,9 @@ The repository's real MDX and code are the evidence base. Future work must not f
 - Keep reading structure clearer than decoration.
 - Preserve durable routes and content contracts.
 - Treat code, browser behavior, and accessibility as proof.
+- Make one published post discoverable as the featured route. A draft can
+  never be featured, multiple published featured posts fail validation, and an
+  empty pin falls back to the newest published post.
 
 ## Accessibility & Inclusion
 

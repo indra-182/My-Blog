@@ -48,7 +48,7 @@ export function MobileNavigation({ portfolioUrl }: { portfolioUrl: string }) {
             INDRA<span>.</span>DEV
           </div>
           <p className="m-0 text-[0.85rem] leading-[1.5] text-muted-foreground">
-            Menu INDRA.DEV
+            Menu blog INDRA.DEV
           </p>
         </div>
         <button
@@ -62,14 +62,14 @@ export function MobileNavigation({ portfolioUrl }: { portfolioUrl: string }) {
         </button>
         <nav className="flex flex-col" aria-label="Menu seluler">
           <a
-            className="flex min-h-14 items-center border-b border-border py-4 text-[1.1rem] font-[750] text-foreground hover:text-cue-rose focus-visible:text-cue-rose aria-[current=page]:text-cue-rose"
+            className="flex min-h-14 items-center border-b border-border py-4 text-[1.1rem] font-[750] text-foreground hover:text-accent-strong focus-visible:text-accent-strong aria-[current=page]:text-accent-strong"
             href={portfolioUrl}
             onClick={closeDialog}
           >
             {dictionary.navigation.portfolio}
           </a>
           <Link
-            className="flex min-h-14 items-center border-b border-border py-4 text-[1.1rem] font-[750] text-foreground hover:text-cue-rose focus-visible:text-cue-rose aria-[current=page]:text-cue-rose"
+            className="flex min-h-14 items-center border-b border-border py-4 text-[1.1rem] font-[750] text-foreground hover:text-accent-strong focus-visible:text-accent-strong aria-[current=page]:text-accent-strong"
             href="/"
             aria-current="page"
             onClick={closeDialog}

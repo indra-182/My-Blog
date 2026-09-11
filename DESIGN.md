@@ -1,224 +1,115 @@
 ---
 name: INDRA.DEV Blog
-description: Cue Horizon reading stage for durable Indonesian technical writing.
-colors:
-  background-dark: "#08090d"
-  foreground-dark: "#f4f1e9"
-  surface-dark: "#11131a"
-  surface-strong-dark: "#191d27"
-  muted-dark: "#a9adba"
-  border-dark: "#343a4a"
-  accent-dark: "#f29ab0"
-  accent-foreground-dark: "#130a0e"
-  focus-dark: "#91b9f3"
-  primary-dark: "#f4f1e9"
-  primary-foreground-dark: "#08090d"
-  cobalt: "#173b72"
-  cue-day: "#f4f1e9"
-  background-light: "#f4f1e9"
-  foreground-light: "#08090d"
-  surface-light: "#e9e5de"
-  surface-strong-light: "#ddd9d2"
-  muted-light: "#5d6069"
-  border-light: "#c5c3c0"
-  accent-light: "#8f304e"
-  accent-foreground-light: "#fff8f7"
-  focus-light: "#173b72"
-  popover-light: "#fffdf8"
-  popover-dark: "#191d27"
-typography:
-  display:
-    fontFamily: "ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif"
-    fontSize: "clamp(2.75rem, 6.8vw, 5.25rem)"
-    fontWeight: 800
-    lineHeight: 0.92
-    letterSpacing: "-0.04em"
-  headline:
-    fontFamily: "ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif"
-    fontSize: "clamp(2.25rem, 5vw, 4.75rem)"
-    fontWeight: 800
-    lineHeight: 0.95
-    letterSpacing: "-0.04em"
-  title:
-    fontFamily: "ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif"
-    fontSize: "clamp(1.4rem, 2.5vw, 2.25rem)"
-    fontWeight: 750
-    lineHeight: 1.05
-    letterSpacing: "-0.04em"
-  body:
-    fontFamily: "ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif"
-    fontSize: "1rem"
-    fontWeight: 400
-    lineHeight: 1.65
-  label:
-    fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace"
-    fontSize: "0.65rem"
-    fontWeight: 700
-    lineHeight: 1.4
-    letterSpacing: "0.16em"
-rounded:
-  sm: "0.15rem"
-  md: "0.3rem"
-  pill: "999px"
-spacing:
-  control-height: "2.75rem"
-  shell-mobile-gutter: "1rem"
-  shell-wide-gutter: "1.5rem"
-  content-max: "76rem"
-  prose-max: "72ch"
-components:
-  button-primary:
-    backgroundColor: "{colors.primary-dark}"
-    textColor: "{colors.primary-foreground-dark}"
-    rounded: "{rounded.sm}"
-    padding: "0 1.1rem"
-    height: "2.75rem"
-  button-ghost:
-    backgroundColor: "transparent"
-    textColor: "{colors.muted-dark}"
-    rounded: "0"
-    padding: "0 0.75rem"
-    height: "2.75rem"
-  badge-outline:
-    backgroundColor: "transparent"
-    textColor: "{colors.muted-dark}"
-    rounded: "{rounded.pill}"
-    padding: "0.25rem 0.625rem"
-  site-navigation:
-    backgroundColor: "{colors.background-dark}"
-    textColor: "{colors.foreground-dark}"
-    height: "4.75rem"
+description: Decision Atlas reading stage for durable Indonesian technical writing.
 ---
 
 # Design System: INDRA.DEV Blog
 
-## Overview
+## North star
 
-**Creative North Star: "Cue Horizon"**
+Decision Atlas treats an article as a route through a set of engineering
+decisions. The portfolio can be expressive and persuasive; this reading stage
+is deliberately quieter. Lines and nodes only describe a real relationship:
+the featured route, article progress, a heading, or an interactive state.
 
-Cue Horizon stages technical writing as a clear reading path. The reader enters a near-black field, finds a cobalt horizon and rose transition, then moves through search, filters, headings, code, and continuation links. The blog is a Read surface, so typography, wayfinding, and content density carry the experience.
+The homepage opens with a restrained atlas field, then puts one published
+article on the featured route before discovery. Article pages use a progress
+map for wayfinding, while prose stays still so code and long-form reading are
+never asked to follow an animation.
 
-The blog shares the sibling portfolio's visual language without copying its recruiter-only content or proof sequence. It uses a sticky stage header, direct shell alignment, thin structural rules, flat rectangular surfaces, a single hero cue-rise, and one bounded hero-only horizon response over the first `40vh`. The first visit is dark; an explicit light choice persists as the white-day counterpart.
+## Foundations
 
-**Key Characteristics:**
+### Palette
 
-- Dark-first stage with cobalt horizon and restrained rose lower wash.
-- System sans hierarchy with uppercase monospace cue labels and tabular metadata.
-- Direct shell alignment, 76rem content maximum, and 72ch prose measure.
-- Flat surfaces, one-pixel rules, pill badges only, and no decorative sequence rails.
-- Native modal navigation, visible focus, 44px targets, and reduced-motion support.
+The six shared Decision Atlas values are:
 
-## Colors
+- **Night Water** `#07161D`: dark canvas.
+- **Survey Paper** `#EDF1F2`: light canvas and dark-mode text.
+- **Deep Ink** `#12242C`: light-mode text and popover surface.
+- **Map Fog** `#B8C6CB`: supporting text and quiet structure.
+- **Route Blue** `#2E5BFF`: route links, progress, and directional emphasis.
+- **Signal Orange** `#FF6A3D`: active markers, nodes, and feedback.
 
-The semantic palette keeps neutral values responsible for reading load, cobalt for directional fields, rose for cues and active states, and focus blue for keyboard visibility. `.light` remaps the same roles to the white-day scene.
+Light mode uses Survey Paper and Deep Ink. Dark mode uses Night Water and
+Survey Paper. Surfaces are a six-percent foreground mix; accents never carry
+state alone because active links also change text, border, or position.
 
-### Primary
+### Typography
 
-- **Stage value** (`--primary`): White-day action face in dark mode and cobalt action face in light mode.
-- **Cobalt horizon** (`--cue-cobalt`, #173b72): Hero field and directional signal in both scenes.
+Recursive Variable is self-hosted for display, UI, metadata, and code labels;
+the canonical roles are `--font-ui`, `--font-prose`, and `--font-mono`.
+Its stable metrics make the `CASL`, `MONO`, and `wght` axes safe for a
+signature interaction without text reflow. Literata Variable is self-hosted
+for article prose only. Both font files and their OFL 1.1 licenses live in
+`public/fonts`.
 
-### Secondary
+- Display: `clamp(3rem, 8vw, 7.5rem)` where a route state needs it.
+- Section: `clamp(2rem, 4.5vw, 4.25rem)`.
+- Title: `clamp(1.4rem, 2.5vw, 2.25rem)`.
+- Body: `1rem / 1.65`.
+- Prose: `clamp(1.05rem, 1.5vw, 1.15rem) / 1.75`.
 
-- **Rose transition** (`--cue-rose`): Cue labels, active borders, links, and feedback states.
-- **Focus blue** (`--focus-ring`): Focus-visible rings and keyboard orientation.
+Content is left-aligned. Reading measures cap at `72ch`; the shell caps at
+`76rem` and keeps a `1rem` mobile / `1.5rem` wide gutter.
 
-### Neutral
+### Shape and depth
 
-- **Night field** (`--background`, #08090d): Dark canvas and default scene.
-- **White-day field** (`--background` in `.light`, #f4f1e9): Light counterpart.
-- **Stage surface** (`--surface`): Footer and quiet bounded controls.
-- **Strong stage surface** (`--surface-strong`): Popover and muted overlay roles.
-- **Muted cue text** (`--muted-foreground`): Supporting copy, metadata, and quiet controls.
-- **Structural line** (`--border`): Section rules, field outlines, and navigation boundaries.
+The stage is flat at rest. Small rectangular corners (`0.2rem`) are for
+controls and route boundaries; pill corners are reserved for topic badges.
+There are no card shadows, glass panels, external font requests, WebGL, or
+decorative index rails. One-pixel rules separate real sections and states.
 
-### Named Rules
+## Motion grammar
 
-**The Controlled Luminance Rule.** Rose marks a cue or state, cobalt establishes a horizon, and neutral values carry reading load.
+The local `motion` package is loaded once through `LazyMotion` in
+`MotionProvider`. Client islands are limited to the featured route path,
+archive filter layout, article progress, theme/menu controls, disclosure and
+feedback actions, and back-to-top behavior. Page composition, content, SEO,
+and MDX remain Server Components. There is no route transition.
 
-**The Two-Scene Rule.** Dark and light are the same Cue Horizon world. Light mode is a white-day stage, not a separate brand palette.
+Motion tokens are intentionally small and named by responsibility:
 
-## Typography
+- `--motion-feedback`: `160ms`;
+- `--motion-state`: `260ms`;
+- `--motion-entrance`: `520ms`;
+- `--motion-path`: `900ms`, with `--motion-ease` `[0.16, 1, 0.3, 1]`;
+- `--motion-spring-stiffness: 260`, `--motion-spring-damping: 28`, and
+  `--motion-spring-mass: 0.8`.
 
-**Display Font:** System sans stack from `--font-heading` and the body sans stack.
-**Body Font:** `ui-sans-serif`, `system-ui`, `-apple-system`, BlinkMacSystemFont, and Segoe UI fallbacks.
-**Label/Mono Font:** `ui-monospace`, SFMono-Regular, Menlo, Monaco, Consolas, monospace.
+`prefers-reduced-motion: reduce` renders the final state immediately. It
+removes path drawing, parallax, smooth scrolling, entrance transforms, and
+non-essential transitions. Native scrolling remains available in every mode.
 
-**Character:** Sans headlines are immediate, dense, and dependable. Monospace labels behave like production cue readouts and never compete with the reading headline.
+## Reading surfaces
 
-### Hierarchy
+### Homepage
 
-- **Display** (`800`, `clamp(2.75rem, 6.8vw, 5.25rem)`, `0.92`): Homepage hero and article headline scale.
-- **Headline** (`800`, `clamp(2.25rem, 5vw, 4.75rem)`, `0.95`): Article and route-state headings.
-- **Title** (`750`, `clamp(1.4rem, 2.5vw, 2.25rem)`, `1.05`): Post cards and supporting sections.
-- **Body** (`400`, `1rem`, `1.65`): Descriptions, metadata context, and route copy. Prose stays at `72ch` maximum.
-- **Label** (`700`, `0.65rem`, `0.16em` tracking, uppercase): Cue labels, filters, dates, and control language.
+The order is hero, featured route, search/filter archive, and footer. The
+featured route is a published post selected by frontmatter; if no post is
+featured, the newest published post is used. Search keeps `q`, `topic`, and
+`series`, debounce, load-more, no-results, and URL behavior unchanged. Filter
+results may use `AnimatePresence` and layout animation, but the input remains
+responsive and the content is never hidden before hydration.
 
-### Named Rules
+### Article
 
-**The Headline-Then-Cue Rule.** The sans headline states the writing focus first. Monospace or rose text orients, labels, or timestamps it afterward.
+Desktop shows the sticky article progress map beside the prose. Mobile shows a
+compact progress meter followed by the existing table of contents before the
+prose. The body and code blocks do not receive transforms or entrance effects.
+Headings, series navigation, related posts, share/copy feedback, and the
+back-to-top control remain semantic and keyboard reachable.
 
-## Layout
+## Accessibility contract
 
-The full-width stage uses a centered shell with `1rem` gutters below 640px, `1.5rem` gutters from 640px, and a `76rem` maximum. The header is sticky at `4.75rem`. Desktop navigation appears from 768px; below that breakpoint the menu trigger opens a right-side native modal dialog using `--popover`.
+Keep semantic landmarks, a skip link, visible `:focus-visible` rings, 44px
+interactive targets, native `<dialog>` behavior with Escape and focus return,
+theme anti-flash bootstrap, clipboard/share fallbacks, MDX/code overflow,
+Suspense/feed fallbacks, and no horizontal page overflow. Theme defaults to
+`prefers-color-scheme`; an explicit light or dark choice is persisted.
 
-The homepage hero owns the near-black to cobalt field and restrained rose lower wash. Its copy has one `480ms` cue-rise, and its horizon has one bounded scroll response over the first `40vh`; unsupported browsers and reduced motion use the static rose wash. Discovery starts as a separate shell-aligned section with search, topic, and series controls, then direct post rows. Article pages align breadcrumbs, header, prose, table of contents, and footer content directly to the shell. The table of contents is sticky beside prose on desktop and moves before prose below 768px.
+## Do / don't
 
-## Elevation & Depth
-
-The blog is flat at rest. Depth comes from hero gradients, tonal scene changes, structural rules, and the popover boundary. Blog surfaces do not use shadows. The code block keeps its Dracula-highlighted surface because code readability is the material requirement, not elevation.
-
-### Named Rules
-
-**The Flat Stage Rule.** Do not turn reading rows or controls into floating cards. Borders and tonal fields provide enough separation.
-
-## Shapes
-
-The form language is rectangular and precise. Controls use the `0.15rem` small radius, navigation controls are transparent and zero-radius, and topic badges alone use the `999px` pill radius. One-pixel borders define rows, fields, series links, and article footer boundaries. Interactive targets use a `2.75rem` minimum height, while mobile drawer links use `3.5rem` rows.
-
-## Components
-
-### Buttons
-
-- **Character:** Quiet, tactile stage controls with readable focus.
-- **Primary:** High-contrast semantic action with `2.75rem` minimum height and `0.15rem` radius.
-- **Ghost:** Transparent navigation and theme controls with rose bottom-border hover and focus states.
-- **Hover / Focus:** Color and border transitions use `--motion-fast`; no layout shift or filled glow.
-
-### Badges
-
-- **Style:** Topic badges use transparent backgrounds, a one-pixel border, monospace labels, `0.25rem 0.625rem` padding, and the pill radius.
-- **State:** Badges identify topics. They are not interactive filters.
-
-### Inputs / Fields
-
-- **Style:** Search and select fields use `--surface`, a structural border, small radius, and at least `2.75rem` height.
-- **Focus:** Focus-visible uses the ring token and rose border without changing layout.
-- **State:** Empty, no-results, and loading states retain shell alignment and name recovery actions in Indonesian.
-
-### Navigation
-
-- **Desktop:** Sticky wordmark, external Portfolio link, active Blog link, and theme control. Blog keeps `aria-current="page"`.
-- **Mobile:** Native `<dialog>` opens with `showModal()`, closes with `close()`, delegates Escape to the browser, closes on link selection, and returns focus to the trigger on `close`.
-- **Footer:** Visible icon-plus-text links repeat Portfolio, Github, LinkedIn, and Email paths.
-
-### Reading Surface
-
-- **Homepage:** Headline, rose cue, description, breathing room, filters, result count, flat post rows, and load-more action.
-- **Article:** Topic badges, headline, description, publication metadata, optional series notice, prose, sticky or pre-prose TOC, Dracula code blocks, series navigation, related posts, and sharing controls.
-- **Motion:** Homepage copy retains the `480ms` cue-rise and adds one bounded hero-only horizon response over the first `40vh`. Unsupported browsers and reduced motion use the static rose wash; article prose, post rows, and other sections remain unanimated.
-
-## Do's and Don'ts
-
-### Do:
-
-- **Do** keep the near-black or white-day scene, cobalt horizon, rose cues, thin lines, and direct shell alignment.
-- **Do** use semantic tokens from `src/styles/design-tokens.css`.
-- **Do** preserve Indonesian copy, repository contracts, code overflow, native clipboard and share fallbacks, and optional-section absence.
-- **Do** maintain visible focus, keyboard order, native dialog behavior, 44px targets, and reduced-motion behavior.
-
-### Don't:
-
-- **Don't** add a generic developer-blog hero eyebrow above the heading, visible sequence numbers, or decorative index rails.
-- **Don't** add new production dependencies, external font requests, glass panels, blurred headers, floating card shadows, or rounded card grids.
-- **Don't** use rose or cobalt as a substitute for readable body text or as the only state signal.
-- **Don't** fabricate claims, content, testimonials, credentials, or portfolio proof.
+Do use the semantic tokens from `src/styles/design-tokens.css`, keep Indonesian
+editorial content intact, and make lines answer a wayfinding question. Don't
+invent claims, testimonials, credentials, content, or URLs; don't turn the
+reading surface into a portfolio proof sequence.

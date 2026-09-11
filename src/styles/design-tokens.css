@@ -1,45 +1,72 @@
 :root {
-  --background: #08090d;
-  --foreground: #f4f1e9;
-  --surface: #11131a;
-  --surface-strong: #191d27;
-  --muted-foreground: #a9adba;
-  --border: #343a4a;
-  --accent: #f29ab0;
-  --focus-ring: #91b9f3;
-  --popover: var(--surface-strong);
-  --popover-foreground: var(--foreground);
-  --input: var(--border);
+  /* Site palette: the map stays legible before it becomes expressive. */
+  --atlas-night-water: #07161d;
+  --atlas-survey-paper: #edf1f2;
+  --atlas-deep-ink: #12242c;
+  --atlas-map-fog: #b8c6cb;
+  --atlas-route-blue: #2e5bff;
+  --atlas-signal-orange: #ff6a3d;
+
+  --background: var(--atlas-night-water);
+  --foreground: var(--atlas-survey-paper);
+  --surface: color-mix(in srgb, var(--foreground) 6%, var(--background));
+  --surface-strong: color-mix(
+    in srgb,
+    var(--foreground) 11%,
+    var(--background)
+  );
+  --muted-foreground: var(--atlas-map-fog);
+  --border: color-mix(in srgb, var(--foreground) 24%, transparent);
+  --accent: var(--atlas-route-blue);
+  --accent-strong: var(--atlas-signal-orange);
+  --focus-ring: var(--atlas-route-blue);
+  --popover: var(--atlas-deep-ink);
+  --popover-foreground: var(--atlas-survey-paper);
+  --input: color-mix(in srgb, var(--foreground) 30%, transparent);
   --ring: var(--focus-ring);
-  --cue-night: #08090d;
-  --cue-cobalt: #173b72;
-  --cue-rose: #f29ab0;
-  --cue-day: #f4f1e9;
-  --radius-sm: 0.15rem;
+
+  --radius-sm: 0.2rem;
   --radius-pill: 999px;
-  --motion-fast: 180ms;
-  --motion-enter: 480ms;
   --content-max: 76rem;
   --prose-max: 72ch;
+
+  --font-ui:
+    "Recursive", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
+  --font-prose: "Literata", Georgia, "Times New Roman", serif;
+  --font-mono:
+    "Recursive", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    monospace;
+
+  --motion-feedback: 160ms;
+  --motion-state: 260ms;
+  --motion-entrance: 520ms;
+  --motion-path: 900ms;
+  --motion-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --motion-spring-stiffness: 260;
+  --motion-spring-damping: 28;
+  --motion-spring-mass: 0.8;
 }
 
 .light {
-  --background: #f4f1e9;
-  --foreground: #08090d;
-  --surface: #e9e5de;
-  --surface-strong: #ddd9d2;
-  --muted-foreground: #5d6069;
-  --border: #c5c3c0;
-  --accent: #8f304e;
-  --focus-ring: #173b72;
-  --popover: #fffdf8;
-  --popover-foreground: var(--foreground);
-  --input: var(--border);
+  --background: var(--atlas-survey-paper);
+  --foreground: var(--atlas-deep-ink);
+  --surface: color-mix(in srgb, var(--foreground) 6%, var(--background));
+  --surface-strong: color-mix(
+    in srgb,
+    var(--foreground) 11%,
+    var(--background)
+  );
+  --muted-foreground: #49616b;
+  --border: color-mix(in srgb, var(--foreground) 24%, transparent);
+  --accent: var(--atlas-route-blue);
+  /* A darker text role keeps Signal Orange's light-scene marker accessible. */
+  --accent-strong: #9d321c;
+  --focus-ring: #1d43d9;
+  --popover: #ffffff;
+  --popover-foreground: var(--atlas-deep-ink);
+  --input: color-mix(in srgb, var(--foreground) 28%, transparent);
   --ring: var(--focus-ring);
-  --cue-night: #f4f1e9;
-  --cue-cobalt: #173b72;
-  --cue-rose: #8f304e;
-  --cue-day: #f4f1e9;
 }
 
 @theme inline {
@@ -50,20 +77,31 @@
   --color-muted-foreground: var(--muted-foreground);
   --color-border: var(--border);
   --color-accent: var(--accent);
+  --color-accent-strong: var(--accent-strong);
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --color-cue-night: var(--cue-night);
-  --color-cue-cobalt: var(--cue-cobalt);
-  --color-cue-rose: var(--cue-rose);
-  --color-cue-day: var(--cue-day);
-  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --color-atlas-night-water: var(--atlas-night-water);
+  --color-atlas-survey-paper: var(--atlas-survey-paper);
+  --color-atlas-deep-ink: var(--atlas-deep-ink);
+  --color-atlas-map-fog: var(--atlas-map-fog);
+  --color-atlas-route-blue: var(--atlas-route-blue);
+  --color-atlas-signal-orange: var(--atlas-signal-orange);
+  --font-sans: var(--font-ui);
+  --font-mono:
+    "Recursive", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    monospace;
+  --breakpoint-atlas: 48rem;
+  --breakpoint-atlas-wide: 64rem;
   --breakpoint-hero: 56.25rem;
 }
+
 @media (prefers-reduced-motion: reduce) {
   :root {
-    --motion-fast: 0ms;
-    --motion-enter: 0ms;
+    --motion-feedback: 0ms;
+    --motion-state: 0ms;
+    --motion-entrance: 0ms;
+    --motion-path: 0ms;
   }
 }

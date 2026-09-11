@@ -50,7 +50,7 @@ export function ArticleHeader({ post }: { post: PostSummary }) {
       </div>
       {post.series ? (
         <div className="mt-6 flex flex-wrap gap-2 border-y border-border py-[0.85rem] text-[0.88rem] text-muted-foreground">
-          <span className="cue-label">{dictionary.article.partOf}</span>{" "}
+          <span className="atlas-label">{dictionary.article.partOf}</span>{" "}
           <span>
             {post.series} · {post.seriesOrder}
           </span>

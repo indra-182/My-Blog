@@ -54,7 +54,7 @@ describe("site shell", () => {
     ).toBeInTheDocument();
     expect(
       screen.getByText(
-        "Catatan engineering untuk perangkat lunak yang bertahan lama.",
+        "INDRA.DEV — catatan engineering untuk perangkat lunak yang bertahan lama.",
       ),
     ).toBeInTheDocument();
     expect(screen.getByText(/Hak cipta dilindungi\./)).toBeInTheDocument();

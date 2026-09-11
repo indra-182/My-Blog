@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { BackToTop } from "@/components/article/back-to-top";
 import { ArticleBreadcrumbs } from "@/components/article/article-breadcrumbs";
 import { ArticleHeader } from "@/components/article/article-header";
+import { ArticleProgress } from "@/components/article/article-progress";
 import { ArticleProse } from "@/components/article/article-prose";
 import { RelatedPosts } from "@/components/article/related-posts";
 import { SeriesNavigation } from "@/components/article/series-navigation";
@@ -65,6 +66,7 @@ export default async function ArticlePage({
         <BackToTop />
         <div className="grid grid-cols-[minmax(0,var(--prose-max))_minmax(12rem,15rem)] items-start gap-[clamp(2rem,6vw,5rem)] max-[767px]:grid-cols-1">
           <ArticleProse post={post} />
+          <ArticleProgress items={toc} />
           <TableOfContents items={toc} />
         </div>
         <footer className="mt-[clamp(4rem,8vw,7rem)] border-t border-border pt-8">

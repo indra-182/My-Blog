@@ -19,3 +19,10 @@ _Avoid_: post metadata, editorial metadata
 **Footer parity**:
 The blog footer follows the sibling portfolio's structure, visual behavior, and language while retaining the blog's cross-project navigation destinations.
 _Avoid_: portfolio-only content
+
+**Featured route**:
+The one published article intentionally placed first on the homepage as a
+starting point for a reading session. It is editorially selected with optional
+frontmatter, never belongs to a draft, and falls back to the newest published
+article when no selection exists.
+_Avoid_: a new article type, a second URL, or a claim about article quality

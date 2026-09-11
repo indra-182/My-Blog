@@ -20,7 +20,7 @@ export function RouteState({
     <main id="main-content" className="page-main" tabIndex={-1}>
       <div className="shell route-state">
         <div>
-          <div className="cue-label">{code}</div>
+          <div className="atlas-label">{code}</div>
           <h1>{title}</h1>
           <p>{description}</p>
           <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
