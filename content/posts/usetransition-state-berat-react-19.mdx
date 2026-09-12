@@ -1,0 +1,159 @@
+---
+title: "useTransition di React 19: UI Tetap Responsif Saat State Berat"
+slug: "usetransition-state-berat-react-19"
+description: "Memakai useTransition agar input dan navigasi tab tetap responsif saat React merender daftar besar atau hasil filter yang berat."
+publishedAt: "2026-09-13T01:45:00+07:00"
+topics: ["React", "TypeScript"]
+draft: false
+---
+
+## Masalah: input macet saat merender daftar besar
+
+Sebuah halaman daftar produk punya kolom pencarian dan beberapa ribu baris hasil. Setiap huruf yang diketik memicu filter lalu render ulang seluruh daftar. Hasilnya, kolom input terasa macet: karakter baru muncul terlambat karena React sibuk merender daftar sebelum memproses keystroke berikutnya.
+
+Pola yang sama muncul saat pindah tab dengan konten berat. Klik tab "Laporan" merender tabel besar, dan seluruh UI membeku sesaat sampai render selesai. Pengguna tidak mendapat umpan balik bahwa kliknya sudah diterima.
+
+```tsx
+import { useState } from "react";
+
+function DaftarProduk({ semuaProduk }: { semuaProduk: string[] }) {
+  const [query, setQuery] = useState("");
+
+  // Filter berat: berjalan di setiap render.
+  const hasil = semuaProduk.filter((nama) =>
+    nama.toLowerCase().includes(query.toLowerCase()),
+  );
+
+  return (
+    <div>
+      <input
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        placeholder="Cari produk..."
+      />
+      <ul>
+        {hasil.map((nama) => (
+          <li key={nama}>{nama}</li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+```
+
+Pada contoh ini, `setQuery` adalah update yang mendesak (input harus langsung merespons) sekaligus update yang berat (filter dan render ribuan baris). React memperlakukan keduanya sebagai satu pekerjaan prioritas tinggi, sehingga keystroke berikutnya harus menunggu render daftar selesai.
+
+## Apa yang dilakukan useTransition
+
+`useTransition` memisahkan update menjadi dua prioritas. Update mendesak seperti mengetik di input tetap diproses segera, sedangkan update berat ditandai sebagai transition yang boleh diinterupsi. Jika pengguna mengetik huruf kedua sebelum render daftar selesai, React membuang render yang kedaluwarsa dan memulai yang baru.
+
+Hook ini mengembalikan dua nilai: flag `isPending` dan fungsi `startTransition`. Panggil `startTransition` dengan callback yang berisi update state berat. Selama transition berjalan, `isPending` bernilai `true` sehingga UI bisa menampilkan indikator ringan.
+
+```tsx
+import { useState, useTransition } from "react";
+
+function DaftarProduk({ semuaProduk }: { semuaProduk: string[] }) {
+  const [query, setQuery] = useState("");
+  const [isPending, startTransition] = useTransition();
+
+  const hasil = semuaProduk.filter((nama) =>
+    nama.toLowerCase().includes(query.toLowerCase()),
+  );
+
+  return (
+    <div>
+      <input
+        defaultValue={query}
+        onChange={(e) => {
+          // Mendesak: tidak dibungkus, langsung tercermin di input.
+          // Berat: dibungkus agar bisa diinterupsi.
+          const nilai = e.target.value;
+          startTransition(() => {
+            setQuery(nilai);
+          });
+        }}
+        placeholder="Cari produk..."
+      />
+      {isPending && <p aria-live="polite">Memfilter...</p>}
+      <ul>
+        {hasil.map((nama) => (
+          <li key={nama}>{nama}</li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+```
+
+Perhatikan bahwa input di atas memakai `defaultValue` dengan pembacaan nilai dari event, bukan `value` yang terikat ke state transition. Jika input dikontrol penuh oleh state yang dibungkus transition, karakter ikut tertunda. Pola yang benar: tampilkan nilai input segera (uncontrolled atau state terpisah), dan jadikan hasil filter sebagai transition.
+
+## Contoh: pindah tab tanpa membekukan UI
+
+Kasus kedua adalah navigasi tab dengan konten berat. Tanpa transition, klik tab langsung memblokir sampai tabel selesai dirender. Dengan transition, tab aktif lama tetap terlihat sebentar sementara tab baru disiapkan di latar belakang.
+
+```tsx
+import { useState, useTransition } from "react";
+
+function Dashboard({ childrenRingkasan, childrenLaporan }: {
+  childrenRingkasan: React.ReactNode;
+  childrenLaporan: React.ReactNode;
+}) {
+  const [tab, setTab] = useState<"ringkasan" | "laporan">("ringkasan");
+  const [isPending, startTransition] = useTransition();
+
+  return (
+    <div>
+      <nav>
+        <button
+          disabled={tab === "ringkasan"}
+          onClick={() => {
+            startTransition(() => setTab("ringkasan"));
+          }}
+        >
+          Ringkasan
+        </button>
+        <button
+          disabled={tab === "laporan"}
+          onClick={() => {
+            startTransition(() => setTab("laporan"));
+          }}
+        >
+          Laporan {isPending && "..."}
+        </button>
+      </nav>
+      <section style={{ opacity: isPending ? 0.6 : 1 }}>
+        {tab === "ringkasan" ? childrenRingkasan : childrenLaporan}
+      </section>
+    </div>
+  );
+}
+```
+
+Efek `opacity` di sini memberi sinyal visual bahwa konten sedang berganti, tanpa spinner yang berkedip untuk setiap klik cepat. Untuk konten yang dimuat asinkron, gabungkan dengan `Suspense`: fallback Suspense otomatis tampil jika transition memicu fetch data yang belum siap.
+
+## Kapan tidak perlu useTransition
+
+Tidak semua update state butuh transition. Aturan praktisnya sederhana: jika update hanya mengubah satu input kecil atau toggle boolean tanpa render berat, panggil `setState` biasa. Membungkus semuanya justru menambah kompleksitas tanpa manfaat.
+
+```tsx
+// Tidak perlu: update ringan dan sinkron.
+const [terbuka, setTerbuka] = useState(false);
+<button onClick={() => setTerbuka((v) => !v)}>Menu</button>
+
+// Perlu: memicu render daftar besar atau navigasi konten berat.
+startTransition(() => {
+  setQuery(nilaiBaru);
+});
+```
+
+Hindari juga memasukkan efek samping ke dalam callback `startTransition`: callback harus murni berisi update state (setter, atau `navigate` dari router). Fetch data, `localStorage`, atau analytics tetap ditulis di event handler atau `useEffect` seperti biasa.
+
+## Perbedaan dengan useDeferredValue
+
+`useDeferredValue` adalah sepupu `useTransition` untuk kasus ketika state berat dimiliki komponen induk dan tidak bisa dibungkus langsung. Misalnya, query dipegang halaman induk sementara daftar dirender komponen anak. Anak memakai `useDeferredValue(query)` untuk mendapatkan versi query yang boleh tertinggal satu render.
+
+Pilih `useTransition` ketika kode yang memicu update ada di tangan Anda (event handler). Pilih `useDeferredValue` ketika Anda hanya menerima nilai dari atas dan ingin menunda render berat di komponen sendiri. Keduanya menyelesaikan masalah yang sama: menjaga interaksi mendesak tetap di prioritas utama.
+
+## Ringkasan
+
+`useTransition` memberi React izin untuk menginterupsi render berat demi interaksi mendesak. Tandai update daftar besar, filter, dan pindah tab sebagai transition, tampilkan `isPending` sebagai umpan balik ringan, dan biarkan input pengguna selalu didahulukan.

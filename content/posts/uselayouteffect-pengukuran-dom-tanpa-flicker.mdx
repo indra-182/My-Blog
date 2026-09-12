@@ -1,0 +1,167 @@
+---
+title: "useLayoutEffect di React: Pengukuran DOM Tanpa Flicker"
+slug: "uselayouteffect-pengukuran-dom-tanpa-flicker"
+description: "Memakai useLayoutEffect untuk mengukur DOM dan memperbaiki tampilan sebelum browser melukis, supaya tooltip dan popover tidak berkedip."
+publishedAt: "2026-09-12T07:00:00+07:00"
+topics: ["React", "TypeScript"]
+draft: false
+---
+
+## Masalah: tooltip yang berkedip sebelum pindah posisi
+
+Sebuah tooltip atau popover sering muncul di posisi yang salah selama satu frame, lalu melompat ke posisi yang benar. Kedipan ini terjadi karena urutan kerja `useEffect`: browser melukis dulu, baru Effect membaca ukuran DOM dan mengoreksi posisi.
+
+Misalnya, tooltip dirender di bawah tombol secara default. Setelah dirender, Effect mengukur dan menemukan ruang di bawah tidak cukup, lalu memindahkan tooltip ke atas tombol. Pengguna sempat melihat satu frame tooltip di posisi yang salah.
+
+```tsx
+import { useEffect, useRef, useState } from "react";
+
+function Tooltip({ anchorRef, children }: { anchorRef: React.RefObject<HTMLElement | null>; children: React.ReactNode }) {
+  const tooltipRef = useRef<HTMLDivElement>(null);
+  const [placement, setPlacement] = useState<"top" | "bottom">("bottom");
+
+  useEffect(() => {
+    const tooltip = tooltipRef.current;
+    const anchor = anchorRef.current;
+    if (!tooltip || !anchor) return;
+
+    const spaceBelow = window.innerHeight - anchor.getBoundingClientRect().bottom;
+    if (spaceBelow < tooltip.offsetHeight + 8) {
+      setPlacement("top");
+    }
+  }, [anchorRef]);
+
+  return (
+    <div ref={tooltipRef} data-placement={placement}>
+      {children}
+    </div>
+  );
+}
+```
+
+Pada contoh tersebut, `setPlacement("top")` memicu render ulang setelah browser sudah melukis frame pertama. Hasilnya adalah flicker: satu frame di bawah, frame berikutnya di atas.
+
+## Apa yang dilakukan useLayoutEffect
+
+`useLayoutEffect` berjalan sinkron setelah React menghitung perubahan DOM, tetapi sebelum browser melukis frame tersebut ke layar. Koreksi posisi yang dilakukan di sini diterapkan sebelum pengguna sempat melihat frame yang salah.
+
+```tsx
+import { useLayoutEffect, useRef, useState } from "react";
+
+function Tooltip({ anchorRef, children }: { anchorRef: React.RefObject<HTMLElement | null>; children: React.ReactNode }) {
+  const tooltipRef = useRef<HTMLDivElement>(null);
+  const [placement, setPlacement] = useState<"top" | "bottom">("bottom");
+
+  useLayoutEffect(() => {
+    const tooltip = tooltipRef.current;
+    const anchor = anchorRef.current;
+    if (!tooltip || !anchor) return;
+
+    const spaceBelow = window.innerHeight - anchor.getBoundingClientRect().bottom;
+    if (spaceBelow < tooltip.offsetHeight + 8) {
+      setPlacement("top");
+    }
+  }, [anchorRef]);
+
+  return (
+    <div ref={tooltipRef} data-placement={placement}>
+      {children}
+    </div>
+  );
+}
+```
+
+Perbedaannya hanya satu baris, tetapi urutan eksekusinya berbeda. React menerapkan `setPlacement` sebelum paint, sehingga browser hanya melukis hasil akhirnya. Tooltip langsung muncul di atas tombol tanpa frame perantara.
+
+Urutan lengkapnya adalah: render, mutasi DOM, `useLayoutEffect`, lalu paint. Sedangkan `useEffect` berjalan setelah paint. Karena itu aturan praktisnya sederhana: jika Effect membaca layout lalu menulis kembali ke DOM, pakai `useLayoutEffect`.
+
+## Contoh kedua: scroll ke pesan terbaru
+
+Kasus klasik lain adalah daftar chat yang harus tetap di posisi bawah saat pesan baru masuk. Jika memakai `useEffect`, pengguna sempat melihat daftar melompat karena scroll diperbaiki setelah paint.
+
+```tsx
+import { useLayoutEffect, useRef } from "react";
+
+function ChatList({ messages }: { messages: { id: string; text: string }[] }) {
+  const listRef = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    const list = listRef.current;
+    if (!list) return;
+
+    list.scrollTop = list.scrollHeight;
+  }, [messages]);
+
+  return (
+    <div ref={listRef} style={{ overflowY: "auto", maxHeight: 400 }}>
+      {messages.map((message) => (
+        <p key={message.id}>{message.text}</p>
+      ))}
+    </div>
+  );
+}
+```
+
+Karena scroll diperbaiki sebelum paint, daftar chat terlihat langsung berada di bawah. Tidak ada frame di mana pengguna melihat posisi scroll yang lama.
+
+## Kapan tidak perlu useLayoutEffect
+
+`useLayoutEffect` berjalan sinkron dan memblokir paint. Jika callback-nya berat, halaman terasa macet karena browser menunda melukis sampai Effect selesai. Karena itu, hook ini bukan pengganti default untuk `useEffect`.
+
+Gunakan `useEffect` untuk pekerjaan yang tidak memengaruhi tampilan visual secara langsung:
+
+- mengambil data dari API,
+- memasang event listener atau subscription,
+- mencatat analitik dan logging,
+- sinkronisasi state yang tidak mengubah layout.
+
+Gunakan `useLayoutEffect` hanya ketika Effect membaca geometri DOM (`getBoundingClientRect`, `offsetHeight`, `scrollTop`) lalu segera menulis kembali sesuatu yang terlihat (posisi, ukuran, scroll). Jika tidak ada pembacaan layout, tidak ada alasan memblokir paint.
+
+```tsx
+// Tidak perlu layout effect: tidak ada yang dibaca dari geometri DOM.
+useEffect(() => {
+  const controller = new AbortController();
+
+  void fetch("/api/messages", { signal: controller.signal })
+    .then((response) => response.json())
+    .then(setMessages);
+
+  return () => controller.abort();
+}, []);
+```
+
+Memisahkan kedua jenis pekerjaan ini membuat niat kode jelas. Pembaca langsung tahu bahwa Effect dengan `useLayoutEffect` ada untuk mencegah flicker visual, sementara Effect biasa menangani sinkronisasi di luar paint.
+
+## Peringatan untuk SSR di Next.js
+
+`useLayoutEffect` tidak berjalan di server. Ketika komponen dirender di server lewat Next.js App Router, React menampilkan peringatan bahwa hook ini tidak melakukan apa-apa di SSR. Peringatan itu tidak merusak aplikasi, tetapi menimbulkan noise di log dan bisa membingungkan.
+
+Pola yang umum adalah menunda pengukuran sampai komponen terhidrasi di client. Salah satu caranya adalah merender komponen yang memakai `useLayoutEffect` hanya setelah mount, atau membungkusnya dengan dynamic import `ssr: false` untuk komponen yang murni interaktif seperti popover yang diposisikan manual.
+
+```tsx
+"use client";
+
+import dynamic from "next/dynamic";
+
+const FloatingPopover = dynamic(() => import("./floating-popover"), {
+  ssr: false,
+  loading: () => null,
+});
+
+export function EditorToolbar() {
+  return (
+    <div>
+      <button type="button">Format</button>
+      <FloatingPopover />
+    </div>
+  );
+}
+```
+
+Untuk konten yang harus tetap terindeks SEO, jangan sembunyikan seluruh konten di balik `ssr: false`. Render kontennya di server seperti biasa, dan hanya logika pengukuran posisi yang berjalan di client setelah hidrasi. Dengan begitu crawler tetap melihat isi, sementara pengguna tidak melihat flicker.
+
+## Cara memutuskan dengan cepat
+
+Saat menulis Effect baru, tanyakan dua hal. Pertama, apakah Effect membaca ukuran atau posisi DOM? Kedua, apakah ia menulis sesuatu yang terlihat sebelum pengguna boleh melihat frame berikutnya? Jika kedua jawabannya ya, `useLayoutEffect` adalah pilihan yang tepat.
+
+Untuk kasus lainnya, tetap pakai `useEffect`. Paint yang tidak diblokir membuat halaman terasa cepat, dan pemisahan ini menjaga performa tanpa mengorbankan ketepatan visual di tempat yang memang membutuhkannya.
