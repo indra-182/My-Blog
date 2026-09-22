@@ -95,6 +95,7 @@ export async function loadPostCollection(
   const documents: PostDocument[] = [];
   const issues: ContentIssue[] = [];
   const slugs = new Map<string, string>();
+  const seriesPositions = new Map<string, Map<number, string>>();
   const publishedFeatured: PostDocument[] = [];
   const results = await Promise.all(
     filenames.map(async (filename) => {
@@ -111,6 +112,19 @@ export async function loadPostCollection(
 
     const document = result.data;
     documents.push(document);
+    if (document.series && document.seriesOrder !== undefined) {
+      const positions = seriesPositions.get(document.series) ?? new Map();
+      const existingFilePath = positions.get(document.seriesOrder);
+      if (existingFilePath) {
+        issues.push({
+          filePath: result.filePath,
+          message: `duplicate seriesOrder ${document.seriesOrder} in series "${document.series}" also used by ${existingFilePath}`,
+        });
+      } else {
+        positions.set(document.seriesOrder, result.filePath);
+        seriesPositions.set(document.series, positions);
+      }
+    }
     if (document.featured && document.draft) {
       issues.push({
         filePath: result.filePath,

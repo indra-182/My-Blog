@@ -36,6 +36,13 @@ export const postFrontmatterSchema = z
   .refine(
     (post) => Boolean(post.series) === (post.seriesOrder !== undefined),
     "series and seriesOrder must be provided together",
+  )
+  .refine(
+    (post) =>
+      post.updatedAt === undefined ||
+      new Date(post.updatedAt).getTime() >=
+        new Date(post.publishedAt).getTime(),
+    "updatedAt must not be earlier than publishedAt",
   );
 
 export type PostFrontmatter = z.infer<typeof postFrontmatterSchema>;

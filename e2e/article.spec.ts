@@ -40,6 +40,13 @@ test("article metadata uses fallbacks and social overrides", async ({
     "content",
     "Memisahkan Server State dari UI State",
   );
+  const firstImage = await page
+    .locator('meta[property="og:image"]')
+    .getAttribute("content");
+  expect(firstImage).toContain("/blog/react-state/opengraph-image");
+  const imageResponse = await page.request.get(firstImage!);
+  expect(imageResponse.ok()).toBe(true);
+  expect(imageResponse.headers()["content-type"]).toContain("image/png");
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
     "href",
     /\/blog\/react-state$/,
@@ -73,6 +80,11 @@ test("article metadata uses fallbacks and social overrides", async ({
     "content",
     "Desain Error TypeScript",
   );
+  const secondImage = await page
+    .locator('meta[property="og:image"]')
+    .getAttribute("content");
+  expect(secondImage).toContain("/blog/typescript-errors/opengraph-image");
+  expect(secondImage).not.toBe(firstImage);
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
     "href",
     "https://example.com/canonical/typescript-errors",

@@ -12,23 +12,32 @@ async function createContentRoot() {
 function frontmatter(overrides: {
   slug?: string;
   publishedAt?: string;
+  updatedAt?: string;
+  series?: string;
+  seriesOrder?: number;
   draft?: boolean;
   featured?: boolean;
 }) {
   const {
     slug = "valid-post",
     publishedAt = "2020-01-01T20:00:00+07:00",
+    updatedAt,
+    series,
+    seriesOrder,
     draft = false,
     featured,
   } = overrides;
   const featuredLine = featured === undefined ? "" : `featured: ${featured}\n`;
+  const updatedAtLine = updatedAt ? `updatedAt: "${updatedAt}"\n` : "";
+  const seriesLine = series ? `series: "${series}"\n` : "";
+  const seriesOrderLine = seriesOrder ? `seriesOrder: ${seriesOrder}\n` : "";
   return `---
 title: "Valid"
 slug: "${slug}"
 description: "Valid"
 publishedAt: "${publishedAt}"
-topics: ["React"]
-draft: ${draft}
+${updatedAtLine}topics: ["React"]
+${seriesLine}${seriesOrderLine}draft: ${draft}
 ${featuredLine}
 ---
 
@@ -150,5 +159,47 @@ describe("validateContentDirectory", () => {
     expect(
       issues.every((issue) => issue.message.includes("more than one")),
     ).toBe(true);
+  });
+
+  it("rejects an update date before publication", async () => {
+    const root = await createContentRoot();
+    await writeFile(
+      path.join(root, "early-update.mdx"),
+      frontmatter({ updatedAt: "2019-12-31T20:00:00+07:00" }),
+    );
+
+    const issues = await validateContentDirectory(root);
+    expect(issues).toHaveLength(1);
+    expect(issues[0]?.message).toContain("updatedAt");
+  });
+
+  it("rejects duplicate positions within a series, including drafts", async () => {
+    const root = await createContentRoot();
+    await writeFile(
+      path.join(root, "first.mdx"),
+      frontmatter({ slug: "first", series: "React", seriesOrder: 1 }),
+    );
+    await writeFile(
+      path.join(root, "second.mdx"),
+      frontmatter({
+        slug: "second",
+        series: "React",
+        seriesOrder: 1,
+        draft: true,
+      }),
+    );
+    await writeFile(
+      path.join(root, "other-series.mdx"),
+      frontmatter({
+        slug: "other-series",
+        series: "TypeScript",
+        seriesOrder: 1,
+      }),
+    );
+
+    const issues = await validateContentDirectory(root);
+    expect(issues).toHaveLength(1);
+    expect(issues[0]?.message).toContain("duplicate seriesOrder 1");
+    expect(issues[0]?.message).toContain("React");
   });
 });
