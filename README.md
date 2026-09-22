@@ -25,7 +25,7 @@ draft: false
 featured: false # optional; at most one published post may be true
 ```
 
-`updatedAt`, canonical/social overrides, and the paired `series` plus positive integer `seriesOrder` are optional. `featured` is optional; a draft cannot be featured and more than one published featured post fails validation. If no published post is featured, the newest published post becomes the homepage's featured route. Slugs must be unique. Publication timestamps use Asia/Jakarta semantics. Future posts must remain drafts; drafts are excluded from the site, RSS, sitemap, and latest-post feed.
+`updatedAt`, canonical/social overrides, and the paired `series` plus positive integer `seriesOrder` are optional. `updatedAt` cannot precede `publishedAt`, and each position in a series must be unique. `featured` is optional; a draft cannot be featured and more than one published featured post fails validation. If no published post is featured, the newest published post becomes the homepage's featured route. Slugs must be unique. Publication timestamps use Asia/Jakarta semantics. Future posts must remain drafts; drafts are excluded from the site, RSS, sitemap, and latest-post feed.
 
 Validate content with:
 
@@ -33,7 +33,7 @@ Validate content with:
 pnpm content:validate
 ```
 
-The production content directory intentionally has no sample articles. A missing default `content/posts` directory is treated as an empty blog. Tests use private fixtures under `src/test/fixtures/posts` and Playwright injects that root through `CONTENT_ROOT`; when `CONTENT_ROOT` is set, the directory must exist. Malformed frontmatter, duplicate slugs, and future-dated non-drafts fail validation and runtime loading instead of producing a partial site.
+Published articles live in `content/posts`. A missing default `content/posts` directory is treated as an empty blog. Tests use private fixtures under `src/test/fixtures/posts` and Playwright injects that root through `CONTENT_ROOT`; when `CONTENT_ROOT` is set, the directory must exist. Malformed frontmatter, duplicate slugs or series positions, and future-dated non-drafts fail validation and runtime loading instead of producing a partial site.
 
 ## Public contracts
 
@@ -42,7 +42,7 @@ The production content directory intentionally has no sample articles. A missing
 - Legacy locale-prefixed requests such as `/id` and `/en` return 404.
 - `sitemap.xml` and `robots.txt` use the environment-driven blog origin.
 
-Environment names are documented in `.env.example`: `NEXT_PUBLIC_BLOG_URL`, `NEXT_PUBLIC_PORTFOLIO_URL`, `NEXT_PUBLIC_CONTACT_EMAIL`, and `NEXT_PUBLIC_LINKEDIN_URL`.
+Environment names are documented in `.env.example`: `NEXT_PUBLIC_BLOG_URL`, `NEXT_PUBLIC_PORTFOLIO_URL`, `NEXT_PUBLIC_CONTACT_EMAIL`, `NEXT_PUBLIC_LINKEDIN_URL`, and `NEXT_PUBLIC_GITHUB_URL`.
 
 ## Quality gate
 
@@ -51,5 +51,7 @@ Run the full quality gate before handoff:
 ```bash
 pnpm verify
 ```
+
+GitHub Actions runs the same gate on pull requests and pushes to `master`.
 
 Hermes scheduling, CMS publishing, analytics, comments, newsletter, and deployment automation are outside this MVP.

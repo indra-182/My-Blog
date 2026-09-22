@@ -16,5 +16,12 @@ export default defineConfig({
     url: "http://127.0.0.1:3001/",
     timeout: 120_000,
   },
-  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
+  projects: [
+    { name: "chromium", use: { ...devices["Desktop Chrome"] } },
+    {
+      name: "firefox",
+      testMatch: "**/compatibility.spec.ts",
+      use: { ...devices["Desktop Firefox"] },
+    },
+  ],
 });
