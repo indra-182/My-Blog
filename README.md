@@ -52,6 +52,4 @@ Run the full quality gate before handoff:
 pnpm verify
 ```
 
-GitHub Actions runs the same gate on pull requests and pushes to `master`.
-
 Hermes scheduling, CMS publishing, analytics, comments, newsletter, and deployment automation are outside this MVP.
